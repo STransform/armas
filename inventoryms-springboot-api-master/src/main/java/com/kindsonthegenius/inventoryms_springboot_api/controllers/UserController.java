@@ -21,7 +21,7 @@ public class UserController {
 
     @GetMapping
     public List<User> getAllUsers() {
-        return userService.getAllUsers(); // Should use findAllWithOrganizationsAndDirectorates
+        return userService.getAllUsers(); 
     }
 
     @GetMapping("/{id}")

@@ -22,6 +22,8 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PostLoad;
+import jakarta.persistence.Transient;
 
 @Entity
 public class User implements Serializable {
@@ -65,15 +67,27 @@ public class User implements Serializable {
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "user", orphanRemoval = true)
     private List<MasterTransaction> transactions = new ArrayList<>();
 
-    @ManyToOne(fetch = FetchType.EAGER) // Changed to EAGER
-    @JoinColumn(name = "org_id")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // Ignore lazy proxies
+    @ManyToOne
+    @JoinColumn(name = "orgname") 
     private Organization organization;
+    @Transient // Not persisted in the database, derived from organization
+    private String orgname;
 
-    @ManyToOne(fetch = FetchType.EAGER) // Changed to EAGER
-    @JoinColumn(name = "user_dir_name")
-    @JsonIgnoreProperties({"documents", "hibernateLazyInitializer", "handler"}) // Ignore documents to avoid circular reference
+    @ManyToOne
+    @JoinColumn(name = "directoratename") // This maps to the foreign key column
     private Directorate directorate;
+    @Transient // Not persisted in the database, derived from directorate
+    private String directoratename;
+    
+    @PostLoad
+    public void populateTransientFields() {
+        if (organization != null) {
+            this.orgname = organization.getOrgname();
+        }
+        if (directorate != null) {
+            this.directoratename = directorate.getDirectoratename();
+        }
+    }
 
     // Constructors
     public User() {
@@ -111,6 +125,10 @@ public class User implements Serializable {
     public void setOrganization(Organization organization) { this.organization = organization; }
     public Directorate getDirectorate() { return directorate; }
     public void setDirectorate(Directorate directorate) { this.directorate = directorate; }
+    public String getOrgname() { return orgname; }
+    public void setOrgname(String orgname) { this.orgname = orgname; }
+    public String getdirectoratename() {return directoratename;}
+    public void setdirectoratename(String directoratename) {this.directoratename = directoratename;}
     public Set<Role> getRoles() { return roles; }
     public void setRoles(Set<Role> roles) { this.roles = roles; }
 

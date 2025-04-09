@@ -43,7 +43,7 @@ public class UserService {
     }
 
     public List<User> getAllUsers() {
-        return userRepository.findAllWithOrganizationsAndDirectorates();
+        return userRepository.findAll();
     }
 
     public User getUserById(Long id) {

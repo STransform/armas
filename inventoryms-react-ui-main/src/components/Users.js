@@ -8,7 +8,7 @@ import {
     CForm,
     CFormLabel,
     CFormInput,
-    CFormSelect, // Added for dropdowns
+    CFormSelect,
 } from '@coreui/react';
 import {
     TextField,
@@ -32,12 +32,14 @@ import {
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import axiosInstance from "../../axiosConfig"; // Assuming you have this configured
+import axiosInstance from "../../axiosConfig";
 
 export default function User() {
     const [users, setUsers] = useState([]);
-    const [organizations, setOrganizations] = useState([]); // Store organization options
-    const [directorates, setDirectorates] = useState([]);   // Store directorate options
+    const [organizations, setOrganizations] = useState([]);
+    const [directorates, setDirectorates] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [filterText, setFilterText] = useState('');
@@ -54,39 +56,38 @@ export default function User() {
         lastName: '',
         username: '',
         password: '',
-        organization: null,  // Changed from org_id
-        directorate: null    // Changed from user_dir_name
+        organizationId: '',
+        directorateId: ''
     });
     const [formMode, setFormMode] = useState('');
 
-    // Fetch users, organizations, and directorates on component mount
     useEffect(() => {
-        // Fetch users
-        axiosInstance.get('/api/users')
-            .then((response) => {
-                setUsers(response.data);
-            })
-            .catch((error) => {
-                console.error('There was an error fetching the Users:', error);
-            });
+        console.log("Fetching data for Users page...");
+        setLoading(true);
 
-        // Fetch organizations
-        axiosInstance.get('/api/organizations')
-            .then((response) => {
-                setOrganizations(response.data); // Expecting [{id: '', name: ''}, ...]
-            })
-            .catch((error) => {
-                console.error('There was an error fetching the Organizations:', error);
-            });
+        const fetchData = async () => {
+            try {
+                const orgsResponse = await axiosInstance.get('/api/organizations');
+                console.log("Organizations fetched:", orgsResponse.data);
+                setOrganizations(Array.isArray(orgsResponse.data) ? orgsResponse.data : []);
 
-        // Fetch directorates
-        axiosInstance.get('/api/directorates')
-            .then((response) => {
-                setDirectorates(response.data); // Expecting [{name: ''}, ...]
-            })
-            .catch((error) => {
-                console.error('There was an error fetching the Directorates:', error);
-            });
+                const dirsResponse = await axiosInstance.get('/api/directorates');
+                console.log("Directorates fetched:", dirsResponse.data);
+                setDirectorates(Array.isArray(dirsResponse.data) ? dirsResponse.data : []);
+
+                const usersResponse = await axiosInstance.get('/api/users');
+                console.log("Users fetched:", usersResponse.data);
+                setUsers(Array.isArray(usersResponse.data) ? usersResponse.data : []);
+
+                setLoading(false);
+            } catch (error) {
+                console.error('Error fetching data:', error.response ? error.response.data : error.message);
+                setError('Failed to load data. Check the console for details.');
+                setLoading(false);
+            }
+        };
+
+        fetchData();
     }, []);
 
     const handleConfirmDeleteOpen = (id) => {
@@ -105,14 +106,14 @@ export default function User() {
 
     const handleDeleteUser = async (id) => {
         try {
+            setSnackbarOpen(true);
             await axiosInstance.delete(`/api/users/${id}`);
-            setUsers((users) => users.filter((user) => user.id !== id));
+            setUsers((prevUsers) => prevUsers.filter((user) => user.id !== id));
             setSnackbarMessage('The selected user has been deleted successfully!');
             setSnackbarSeverity('success');
-            setSnackbarOpen(true);
             handleConfirmDeleteClose();
         } catch (error) {
-            console.error('Error occurred deleting the user: ', error);
+            console.error('Error occurred deleting the user:', error);
             setSnackbarMessage('There was an error deleting the user! Please try again.');
             setSnackbarSeverity('warning');
             setSnackbarOpen(true);
@@ -126,8 +127,8 @@ export default function User() {
             lastName: '',
             username: '',
             password: '',
-            org_id: '',
-            user_dir_name: '',
+            organizationId: '',
+            directorateId: ''
         });
     };
 
@@ -146,52 +147,116 @@ export default function User() {
     };
 
     const handleOpenEdit = (user) => {
-        setCurrentUser(user);
+        setCurrentUser({
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            username: user.username,
+            password: '',
+            organizationId: user.organization?.id || '',
+            directorateId: user.directorate?.id || ''
+        });
         setFormMode('edit');
         setOpenAddEdit(true);
     };
 
     const handleOpenDetails = (user) => {
-        setCurrentUser(user);
+        setCurrentUser({
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            username: user.username,
+            organizationId: user.organization?.id || '',
+            directorateId: user.directorate?.id || ''
+        });
         setOpenDetails(true);
     };
 
     const handleChangeAdd = (e) => {
-        setCurrentUser({ ...currentUser, [e.target.id]: e.target.value });
+        const { id, value } = e.target;
+        setCurrentUser(prev => ({
+            ...prev,
+            [id]: value
+        }));
+    };
+
+    const handleOrganizationChange = (e) => {
+        const orgId = e.target.value;
+        setCurrentUser(prev => ({
+            ...prev,
+            organizationId: orgId
+        }));
+    };
+
+    const handleDirectorateChange = (e) => {
+        const dirId = e.target.value;
+        setCurrentUser(prev => ({
+            ...prev,
+            directorateId: dirId
+        }));
     };
 
     const handleAddUser = async () => {
         try {
-            const response = await axiosInstance.post('/api/users', currentUser);
-            setUsers([...users, response.data]);
+            setSnackbarOpen(true);
+            const payload = {
+                firstName: currentUser.firstName,
+                lastName: currentUser.lastName,
+                username: currentUser.username,
+                password: currentUser.password,
+                organization: { id: currentUser.organizationId },
+                directorate: { id: currentUser.directorateId }
+            };
+            
+            console.log("Sending payload for add:", payload);
+            const response = await axiosInstance.post('/api/users', payload);
+            const fullUser = await axiosInstance.get(`/api/users/${response.data.id}`);
+            console.log("Added user data:", fullUser.data);
+            
+            setUsers((prevUsers) => [...prevUsers, fullUser.data]);
             clearForm();
             setSnackbarMessage('User was added successfully!');
             setSnackbarSeverity('success');
-            setSnackbarOpen(true);
             handleCloseAddEdit();
         } catch (error) {
-            console.log('There was an error adding the user!', error);
-            setSnackbarMessage('There was an error adding the user! Please try again.');
-            setSnackbarSeverity('warning');
+            console.error('Failed to add user:', error);
+            setSnackbarMessage(
+                error.response?.data?.message || 
+                `Failed to add user: ${error.message}`
+            );
+            setSnackbarSeverity('error');
             setSnackbarOpen(true);
         }
     };
 
     const handleEditUser = async () => {
         try {
-            const response = await axiosInstance.put(`/api/users/${currentUser.id}`, currentUser);
-            setUsers(users.map(user =>
-                user.id === currentUser.id ? response.data : user
-            ));
+            setSnackbarOpen(true);
+            const payload = {
+                firstName: currentUser.firstName,
+                lastName: currentUser.lastName,
+                username: currentUser.username,
+                password: currentUser.password,
+                organization: { id: currentUser.organizationId },
+                directorate: { id: currentUser.directorateId }
+            };
+            
+            console.log("Sending payload for edit:", payload);
+            const response = await axiosInstance.put(`/api/users/${currentUser.id}`, payload);
+            const updatedUser = await axiosInstance.get(`/api/users/${currentUser.id}`);
+            console.log("Updated user data:", updatedUser.data);
+            
+            setUsers((prevUsers) =>
+                prevUsers.map((user) => (user.id === currentUser.id ? updatedUser.data : user))
+            );
             clearForm();
             setSnackbarMessage('User was updated successfully!');
             setSnackbarSeverity('success');
-            setSnackbarOpen(true);
             handleCloseAddEdit();
         } catch (error) {
-            console.log('There was an error updating the user!', error);
+            console.error('Failed to update user:', error);
             setSnackbarMessage('There was an error updating the user! Please try again.');
-            setSnackbarSeverity('warning');
+            setSnackbarSeverity('error');
             setSnackbarOpen(true);
         }
     };
@@ -212,7 +277,10 @@ export default function User() {
 
     const filteredUsers = users.filter(user =>
         (user.username || '').toLowerCase().includes(filterText.toLowerCase()) ||
-        (user.firstName || '').toLowerCase().includes(filterText.toLowerCase())
+        (user.firstName || '').toLowerCase().includes(filterText.toLowerCase()) ||
+        (user.lastName || '').toLowerCase().includes(filterText.toLowerCase()) ||
+        (user.organization?.orgname || user.orgname || '').toLowerCase().includes(filterText.toLowerCase()) ||
+        (user.directorate?.directoratename || user.directoratename || '').toLowerCase().includes(filterText.toLowerCase())
     );
 
     return (
@@ -224,108 +292,115 @@ export default function User() {
                             <strong>Users</strong>
                         </CCardHeader>
                         <CCardBody>
-                            {filteredUsers != null ? (
+                            <Box display="flex" justifyContent="flex-start" sx={{ mb: 2 }}>
+                                <Button variant="contained" onClick={handleOpenAddEdit}>New User</Button>
+                            </Box>
+                            {loading ? (
+                                <div>Loading...</div>
+                            ) : error ? (
+                                <div>{error}</div>
+                            ) : (
                                 <TableContainer>
-                                    <Box display="flex" justifyContent="flex-start">
-                                        <Button variant='contained' onClick={handleOpenAddEdit}>New User</Button>
-                                    </Box>
                                     <Box display="flex" justifyContent="flex-end" sx={{ padding: '6px' }}>
                                         <TextField
                                             label="Search Users"
                                             variant="outlined"
                                             value={filterText}
                                             onChange={handleFilterChange}
-                                            sx={{ padding: '0px', width: '40%' }}
+                                            sx={{ width: '40%' }}
                                         />
                                     </Box>
-                                    <Table sx={{
-                                        fontSize: '2rem',
-                                        '& td': { fontSize: '1rem' },
-                                        '& th': { fontWeight: 'bold', fontSize: '1rem', backgroundColor: '#f5f5f5' },
-                                        '& tr:nth-of-type(odd)': { backgroundColor: '#f9f9f9' }
-                                    }}>
-                                        <TableHead>
-                                            <TableRow>
-                                                <TableCell scope="col">#</TableCell>
-                                                <TableCell scope="col">First Name</TableCell>
-                                                <TableCell scope="col">Last Name</TableCell>
-                                                <TableCell scope="col">Username</TableCell>
-                                                <TableCell scope="col">Organization</TableCell>
-                                                <TableCell scope="col">Directorate</TableCell>
-                                                <TableCell scope="col"></TableCell>
-                                            </TableRow>
-                                        </TableHead>
-                                        <TableBody>
-                                            {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((user, index) => (
-                                                <TableRow key={user.id}>
-                                                    <TableCell scope="row">{page * rowsPerPage + index + 1}</TableCell>
-                                                    <TableCell>{user.firstName}</TableCell>
-                                                    <TableCell>{user.lastName}</TableCell>
-                                                    <TableCell>{user.username}</TableCell>
-                                                    <TableCell>{user.organization?.name || 'N/A'}</TableCell> {/* Could display organization name if joined */}
-                                                    <TableCell>{user.directorate?.name || 'N/A'}</TableCell>
-                                                    <TableCell>
-                                                        <Box display="flex" justifyContent="flex-end">
-                                                            <Button
-                                                                variant="contained"
-                                                                color="success"
-                                                                size="small"
-                                                                startIcon={<VisibilityIcon />}
-                                                                onClick={() => handleOpenDetails(user)}
-                                                                style={{ marginRight: '8px' }}
-                                                            >
-                                                                Details
-                                                            </Button>
-                                                            <Button
-                                                                variant="contained"
-                                                                color="primary"
-                                                                size="small"
-                                                                startIcon={<EditIcon />}
-                                                                onClick={() => handleOpenEdit(user)}
-                                                                style={{ marginRight: '8px' }}
-                                                            >
-                                                                Edit
-                                                            </Button>
-                                                            <Button
-                                                                variant="contained"
-                                                                color="error"
-                                                                size="small"
-                                                                startIcon={<DeleteIcon />}
-                                                                onClick={() => handleConfirmDeleteOpen(user.id)}
-                                                            >
-                                                                Delete
-                                                            </Button>
-                                                        </Box>
-                                                    </TableCell>
+                                    {filteredUsers.length > 0 ? (
+                                        <Table sx={{
+                                            fontSize: '2rem',
+                                            '& td': { fontSize: '1rem' },
+                                            '& th': { fontWeight: 'bold', fontSize: '1rem', backgroundColor: '#f5f5f5' },
+                                            '& tr:nth-of-type(odd)': { backgroundColor: '#f9f9f9' }
+                                        }}>
+                                            <TableHead>
+                                                <TableRow>
+                                                    <TableCell scope="col">#</TableCell>
+                                                    <TableCell scope="col">First Name</TableCell>
+                                                    <TableCell scope="col">Last Name</TableCell>
+                                                    <TableCell scope="col">Username</TableCell>
+                                                    <TableCell scope="col">Organization</TableCell>
+                                                    <TableCell scope="col">Directorate</TableCell>
+                                                    <TableCell scope="col"></TableCell>
                                                 </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                    <TablePagination
-                                        sx={{
-                                            ".MuiTablePagination-displayedRows, .MuiTablePagination-selectLabel": {
-                                                "marginTop": "1em",
-                                                "marginBottom": "1em"
-                                            }
-                                        }}
-                                        component="div"
-                                        count={filteredUsers.length}
-                                        page={page}
-                                        onPageChange={handleChangePage}
-                                        rowsPerPage={rowsPerPage}
-                                        onRowsPerPageChange={handleChangeRowsPerPage}
-                                        rowsPerPageOptions={[5, 10, 25]}
-                                    />
+                                            </TableHead>
+                                            <TableBody>
+                                                {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((user, index) => (
+                                                    <TableRow key={user.id}>
+                                                        <TableCell scope="row">{page * rowsPerPage + index + 1}</TableCell>
+                                                        <TableCell>{user.firstName}</TableCell>
+                                                        <TableCell>{user.lastName}</TableCell>
+                                                        <TableCell>{user.username}</TableCell>
+                                                        <TableCell>{user.organization?.orgname || user.orgname || 'N/A'}</TableCell>
+                                                        <TableCell>{user.directorate?.directoratename || user.directoratename || 'N/A'}</TableCell>
+                                                        <TableCell>
+                                                            <Box display="flex" justifyContent="flex-end">
+                                                                <Button
+                                                                    variant="contained"
+                                                                    color="success"
+                                                                    size="small"
+                                                                    startIcon={<VisibilityIcon />}
+                                                                    onClick={() => handleOpenDetails(user)}
+                                                                    style={{ marginRight: '8px' }}
+                                                                >
+                                                                    Details
+                                                                </Button>
+                                                                <Button
+                                                                    variant="contained"
+                                                                    color="primary"
+                                                                    size="small"
+                                                                    startIcon={<EditIcon />}
+                                                                    onClick={() => handleOpenEdit(user)}
+                                                                    style={{ marginRight: '8px' }}
+                                                                >
+                                                                    Edit
+                                                                </Button>
+                                                                <Button
+                                                                    variant="contained"
+                                                                    color="error"
+                                                                    size="small"
+                                                                    startIcon={<DeleteIcon />}
+                                                                    onClick={() => handleConfirmDeleteOpen(user.id)}
+                                                                >
+                                                                    Delete
+                                                                </Button>
+                                                            </Box>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    ) : (
+                                        <div>No users found.</div>
+                                    )}
+                                    {filteredUsers.length > 0 && (
+                                        <TablePagination
+                                            sx={{
+                                                ".MuiTablePagination-displayedRows, .MuiTablePagination-selectLabel": {
+                                                    "marginTop": "1em",
+                                                    "marginBottom": "1em"
+                                                }
+                                            }}
+                                            component="div"
+                                            count={filteredUsers.length}
+                                            page={page}
+                                            onPageChange={handleChangePage}
+                                            rowsPerPage={rowsPerPage}
+                                            onRowsPerPageChange={handleChangeRowsPerPage}
+                                            rowsPerPageOptions={[5, 10, 25]}
+                                        />
+                                    )}
                                 </TableContainer>
-                            ) : (
-                                <div>Loading...</div>
                             )}
                         </CCardBody>
                     </CCard>
                 </CCol>
             </CRow>
 
-            {/* Confirmation Dialog for Deletion */}
             <Dialog
                 maxWidth="sm"
                 fullWidth
@@ -352,7 +427,6 @@ export default function User() {
                 </DialogActions>
             </Dialog>
 
-            {/* Modal Dialog for Add and Edit User */}
             <Dialog
                 open={openAddEdit}
                 onClose={handleCloseAddEdit}
@@ -366,64 +440,72 @@ export default function User() {
                     <CForm className="row g-3">
                         <CCol xs={12}>
                             <CFormLabel htmlFor="firstName">First Name</CFormLabel>
-                            <CFormInput id="firstName" value={currentUser.firstName} onChange={handleChangeAdd} placeholder="First Name" />
+                            <CFormInput 
+                                id="firstName" 
+                                value={currentUser.firstName} 
+                                onChange={handleChangeAdd} 
+                                placeholder="First Name" 
+                            />
                         </CCol>
                         <CCol xs={12}>
                             <CFormLabel htmlFor="lastName">Last Name</CFormLabel>
-                            <CFormInput id="lastName" value={currentUser.lastName} onChange={handleChangeAdd} placeholder="Last Name" />
+                            <CFormInput 
+                                id="lastName" 
+                                value={currentUser.lastName} 
+                                onChange={handleChangeAdd} 
+                                placeholder="Last Name" 
+                            />
                         </CCol>
                         <CCol xs={12}>
                             <CFormLabel htmlFor="username">Username</CFormLabel>
-                            <CFormInput id="username" value={currentUser.username} onChange={handleChangeAdd} placeholder="Username" />
+                            <CFormInput 
+                                id="username" 
+                                value={currentUser.username} 
+                                onChange={handleChangeAdd} 
+                                placeholder="Username" 
+                            />
                         </CCol>
                         {formMode === 'new' && (
                             <CCol xs={12}>
                                 <CFormLabel htmlFor="password">Password</CFormLabel>
-                                <CFormInput id="password" type="password" value={currentUser.password} onChange={handleChangeAdd} placeholder="Password" />
+                                <CFormInput 
+                                    id="password" 
+                                    type="password" 
+                                    value={currentUser.password} 
+                                    onChange={handleChangeAdd} 
+                                    placeholder="Password" 
+                                />
                             </CCol>
                         )}
                         <CCol xs={12}>
-                            <CFormLabel htmlFor="org_id">Organization</CFormLabel>
+                            <CFormLabel htmlFor="organization">Organization</CFormLabel>
                             <CFormSelect
                                 id="organization"
-                                value={currentUser.organization?.id || ''}
-                                onChange={(e) => {
-                                    const orgId = e.target.value;
-                                    setCurrentUser({
-                                        ...currentUser,
-                                        organization: organizations.find(o => o.id === orgId) || null
-                                    });
-                                }}
+                                value={currentUser.organizationId || ''}
+                                onChange={handleOrganizationChange}
                             >
                                 <option value="">Select Organization</option>
                                 {organizations.map((org) => (
                                     <option key={org.id} value={org.id}>
-                                        {org.name}
+                                        {org.orgname}
                                     </option>
                                 ))}
                             </CFormSelect>
                         </CCol>
                         <CCol xs={12}>
-                            <CFormLabel htmlFor="user_dir_name">Directorate</CFormLabel>
+                            <CFormLabel htmlFor="directorate">Directorate</CFormLabel>
                             <CFormSelect
                                 id="directorate"
-                                value={currentUser.directorate?.name || ''}
-                                onChange={(e) => {
-                                    const dirName = e.target.value;
-                                    setCurrentUser({
-                                        ...currentUser,
-                                        directorate: directorates.find(d => d.name === dirName) || null
-                                    });
-                                }}
+                                value={currentUser.directorateId || ''}
+                                onChange={handleDirectorateChange}
                             >
                                 <option value="">Select Directorate</option>
                                 {directorates.map((dir) => (
-                                    <option key={dir.name} value={dir.name}>
-                                        {dir.name}
+                                    <option key={dir.id} value={dir.id}>
+                                        {dir.directoratename}
                                     </option>
                                 ))}
                             </CFormSelect>
-
                         </CCol>
                     </CForm>
                 </DialogContent>
@@ -432,13 +514,18 @@ export default function User() {
                     <Button onClick={handleCloseAddEdit} color="primary">
                         Cancel
                     </Button>
-                    <Button onClick={formMode === 'new' ? handleAddUser : handleEditUser} color="primary" variant="contained">
+                    <Button 
+                        onClick={formMode === 'new' ? handleAddUser : handleEditUser} 
+                        color="primary" 
+                        variant="contained"
+                        disabled={!currentUser.firstName || !currentUser.lastName || !currentUser.username || 
+                                (formMode === 'new' && !currentUser.password)}
+                    >
                         {formMode === 'edit' ? 'Update User' : 'Add User'}
                     </Button>
                 </DialogActions>
             </Dialog>
 
-            {/* Modal Dialog for Viewing Details of a User */}
             <Dialog
                 open={openDetails}
                 onClose={handleCloseDetails}
@@ -467,15 +554,18 @@ export default function User() {
                             <CFormInput value={currentUser.username} readOnly={true} />
                         </CCol>
                         <CCol md={6}>
-                            <CFormLabel htmlFor="org_id">Organization</CFormLabel>
-                            <CFormInput
-                                value={organizations.find(org => org.id === currentUser.org_id)?.name || currentUser.org_id}
-                                readOnly={true}
+                            <CFormLabel htmlFor="organization">Organization</CFormLabel>
+                            <CFormInput 
+                                value={organizations.find(org => org.id === currentUser.organizationId)?.orgname || 'N/A'} 
+                                readOnly={true} 
                             />
                         </CCol>
                         <CCol md={6}>
-                            <CFormLabel htmlFor="user_dir_name">Directorate</CFormLabel>
-                            <CFormInput value={currentUser.user_dir_name} readOnly={true} />
+                            <CFormLabel htmlFor="directorate">Directorate</CFormLabel>
+                            <CFormInput 
+                                value={directorates.find(dir => dir.id === currentUser.directorateId)?.directoratename || 'N/A'} 
+                                readOnly={true} 
+                            />
                         </CCol>
                     </CForm>
                 </DialogContent>
@@ -487,7 +577,6 @@ export default function User() {
                 </DialogActions>
             </Dialog>
 
-            {/* Snackbar Notification */}
             <Snackbar
                 open={snackbarOpen}
                 autoHideDuration={4000}
