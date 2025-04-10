@@ -113,7 +113,16 @@ const _nav = [
         name: 'Users',
         to: '/buttons/users',
     },
-      
+    {
+      component: CNavItem,
+      name: 'Role',
+      to: '/buttons/roles',
+  },
+  {
+    component: CNavItem,
+    name: 'AssignRole',
+    to: '/buttons/assign',
+   },
     ],
   },
   {

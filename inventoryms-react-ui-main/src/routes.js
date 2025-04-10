@@ -6,6 +6,8 @@ import Directorate from './components/Directorate';
 import Document from './components/Document';
 import MasterTransaction from './components/MasterTransaction';
 const User = React.lazy(() => import('./components/Users'));
+import Role from './components/Role';
+import AssignRole from './components/AssignRole';
 import RegistrationSuccessful from './views/pages/register/RegistrationSuccessful'
 import VerificationSuccessful from './views/pages/register/VerificationSuccessful'
 
@@ -43,6 +45,8 @@ const routes = [
   { path: '/buttons/documents', name: 'Documents', element: Document },
   { path: '/buttons/master-transaction', name: 'Master Transaction', element: MasterTransaction },
   { path: '/buttons/users', name: 'Users', element: User },
+  { path:'/buttons/roles' , name:'Role', element:Role},
+  { path:'/buttons/assign' , name:'AssignRole', element:AssignRole},
   { path: '/dashboard', name: 'Dashboard', element: Dashboard },
   { path: '/theme', name: 'Theme', element: Colors, exact: true },
   { path: '/theme/colors', name: 'Colors', element: Colors },

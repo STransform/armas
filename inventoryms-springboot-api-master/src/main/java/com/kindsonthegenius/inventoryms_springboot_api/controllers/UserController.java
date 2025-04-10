@@ -7,9 +7,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
@@ -34,22 +36,35 @@ public class UserController {
         return user != null ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
     }
 
-    @PostMapping
-    public ResponseEntity<?> createUser(@RequestBody User user) {
+     @PostMapping
+    @PreAuthorize("hasAuthority('CREATE')")
+    public ResponseEntity<?> createUser(@RequestBody Map<String, Object> requestBody) {
         try {
-            logger.info("Attempting to register user: {}", user.getUsername());
+            logger.info("Attempting to register user: {}", requestBody.get("username"));
+            User user = new User();
+            user.setFirstName((String) requestBody.get("firstName"));
+            user.setLastName((String) requestBody.get("lastName"));
+            user.setUsername((String) requestBody.get("username"));
+            user.setPassword((String) requestBody.get("password"));
             User registeredUser = userService.register(user);
             logger.info("User registered successfully: {}", registeredUser.getUsername());
             return ResponseEntity.status(201).body(registeredUser);
         } catch (UserAlreadyExistException e) {
             logger.warn("User registration failed: {}", e.getMessage());
             return ResponseEntity.status(409).body("User already exists: " + e.getMessage());
-        } catch (IllegalArgumentException e) {
-            logger.warn("Validation error: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
             logger.error("Unexpected error during user registration", e);
             return ResponseEntity.status(500).body("Failed to register user: " + e.getMessage());
+        }
+    }
+    @PostMapping("/{userId}/roles/{roleId}")
+    @PreAuthorize("hasAuthority('MANAGE_ORGANIZATION')") // Restrict to admins
+    public ResponseEntity<User> assignRoleToUser(@PathVariable Long userId, @PathVariable Long roleId) {
+        try {
+            User updatedUser = userService.assignRoleToUser(userId, roleId);
+            return ResponseEntity.ok(updatedUser);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(null);
         }
     }
 

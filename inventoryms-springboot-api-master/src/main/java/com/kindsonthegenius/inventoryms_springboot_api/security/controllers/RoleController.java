@@ -1,5 +1,6 @@
 package com.kindsonthegenius.inventoryms_springboot_api.security.controllers;
 
+import com.kindsonthegenius.inventoryms_springboot_api.models.User;
 import com.kindsonthegenius.inventoryms_springboot_api.security.models.Privilege;
 import com.kindsonthegenius.inventoryms_springboot_api.security.repositories.PrivilegeRepository;
 import com.kindsonthegenius.inventoryms_springboot_api.security.services.RoleService;
@@ -7,6 +8,8 @@ import com.kindsonthegenius.inventoryms_springboot_api.security.models.Role;
 import com.kindsonthegenius.inventoryms_springboot_api.services.UserService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.parameters.P;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
+@RequestMapping("/api/roles")
 @Transactional
 public class RoleController {
 
@@ -21,46 +25,52 @@ public class RoleController {
     private final RoleService roleService;
     private final UserService userService;
 
+    @Autowired
     public RoleController(PrivilegeRepository privilegeRepository, RoleService roleService, UserService userService) {
         this.privilegeRepository = privilegeRepository;
         this.roleService = roleService;
         this.userService = userService;
     }
 
-    @GetMapping("/roles")
-    public List<Role> parameters(Model model) {
+    @GetMapping
+    public List<Role> getAllRoles() {
         return roleService.findAll();
     }
 
-    @GetMapping("/role/{id}")
-    public Role getById(@PathVariable Long id) {
-        return roleService.findById(id);
+    @GetMapping("/{id}")
+    public ResponseEntity<Role> getRoleById(@PathVariable Long id) {
+        Role role = roleService.findById(id);
+        return role != null ? ResponseEntity.ok(role) : ResponseEntity.notFound().build();
     }
 
-    @PostMapping("/roles")
-    public Role save(Role role) {
-        return roleService.save(role);
+    @PostMapping
+    public ResponseEntity<Role> createRole(@RequestBody Role role) {
+        Role savedRole = roleService.save(role);
+        return ResponseEntity.status(201).body(savedRole);
     }
 
-    @DeleteMapping("/role/{id}")
-    public void delete(@PathVariable Long id) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
         roleService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/role/{roleid}/assign/user/{userid}")
-    public void assignUserRole(@PathVariable("roleid") Long roleid, @PathVariable("userid") Long userid) {
-        roleService.assignUserRole(userid, roleid);
+    @PostMapping("/{roleId}/assign/user/{userId}")
+    public ResponseEntity<User> assignUserRole(@PathVariable("roleId") Long roleId, @PathVariable("userId") Long userId) {
+        roleService.assignUserRole(userId, roleId);
+        User updatedUser = userService.getUserById(userId);
+        return ResponseEntity.ok(updatedUser);
     }
 
-    @Transactional
-    @DeleteMapping("/role/{roleid}/unAssign/user/{userid}")
-    public void unAssignUserRole(@PathVariable("roleid") Long roleid, @PathVariable("userid") Long userid) {
-        roleService.unAssignUserRole(userid, roleid);
+    @DeleteMapping("/{roleId}/unassign/user/{userId}")
+    public ResponseEntity<User> unAssignUserRole(@PathVariable("roleId") Long roleId, @PathVariable("userId") Long userId) {
+        roleService.unAssignUserRole(userId, roleId);
+        User updatedUser = userService.getUserById(userId);
+        return ResponseEntity.ok(updatedUser);
     }
 
-    @GetMapping("role/{roleid}/privileges")
-    public List<Privilege> getPrivilegesInRole(@PathVariable("roleid") Long roleid) {
-        return roleService.getPrivilegesInRole(roleid);
+    @GetMapping("/{roleId}/privileges")
+    public List<Privilege> getPrivilegesInRole(@PathVariable("roleId") Long roleId) {
+        return roleService.getPrivilegesInRole(roleId);
     }
-
 }

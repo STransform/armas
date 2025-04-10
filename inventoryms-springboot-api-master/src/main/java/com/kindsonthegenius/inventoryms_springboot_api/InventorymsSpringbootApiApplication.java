@@ -2,6 +2,9 @@ package com.kindsonthegenius.inventoryms_springboot_api;
 
 import com.kindsonthegenius.inventoryms_springboot_api.security.RsaKeyProperties;
 import com.kindsonthegenius.inventoryms_springboot_api.security.SpringSecurityAuditorAware;
+import com.kindsonthegenius.inventoryms_springboot_api.security.services.RoleService;
+
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -23,6 +26,9 @@ public class InventorymsSpringbootApiApplication {
 		SpringApplication.run(InventorymsSpringbootApiApplication.class, args);
 	}
 	
-	
+	@Bean
+    CommandLineRunner init(RoleService roleService) {
+        return args -> roleService.initializeRolesAndPrivileges();
+    }
 
 }
