@@ -32,4 +32,9 @@ public class OrganizationService {
     public void deleteOrganization(String id) {
         organizationRepository.deleteById(id);
     }
+
+    public Object findById(String id) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'findById'");
+    }
 }

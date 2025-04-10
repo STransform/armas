@@ -1,7 +1,10 @@
 package com.kindsonthegenius.inventoryms_springboot_api.controllers;
 
+import com.kindsonthegenius.inventoryms_springboot_api.exception.UserAlreadyExistException;
 import com.kindsonthegenius.inventoryms_springboot_api.models.User;
 import com.kindsonthegenius.inventoryms_springboot_api.services.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +15,7 @@ import java.util.List;
 @RequestMapping("/api/users")
 public class UserController {
 
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
     private final UserService userService;
 
     @Autowired
@@ -21,19 +25,32 @@ public class UserController {
 
     @GetMapping
     public List<User> getAllUsers() {
-        return userService.getAllUsers(); 
+        return userService.getAllUsers();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
-        User user = userService.getUserWithRelations(id); // Use method with relations
+        User user = userService.getUserWithRelations(id);
         return user != null ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
     }
 
     @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user) {
-        User savedUser = userService.save(user);
-        return ResponseEntity.status(201).body(savedUser);
+    public ResponseEntity<?> createUser(@RequestBody User user) {
+        try {
+            logger.info("Attempting to register user: {}", user.getUsername());
+            User registeredUser = userService.register(user);
+            logger.info("User registered successfully: {}", registeredUser.getUsername());
+            return ResponseEntity.status(201).body(registeredUser);
+        } catch (UserAlreadyExistException e) {
+            logger.warn("User registration failed: {}", e.getMessage());
+            return ResponseEntity.status(409).body("User already exists: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            logger.warn("Validation error: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            logger.error("Unexpected error during user registration", e);
+            return ResponseEntity.status(500).body("Failed to register user: " + e.getMessage());
+        }
     }
 
     @PutMapping("/{id}")

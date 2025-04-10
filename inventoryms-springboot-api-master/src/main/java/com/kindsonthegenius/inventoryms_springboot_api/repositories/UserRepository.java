@@ -17,8 +17,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u JOIN FETCH u.organization JOIN FETCH u.directorate")
     List<User> findAllWithOrganizationsAndDirectorates();
 
-    // Fixed method: Use a standard name and rely on @EntityGraph
-    @EntityGraph(attributePaths = {"organization", "directorate"})
-    Optional<User> findById(Long id); // Changed from findByIdWithOrganizationsAndDirectorates
-
 }

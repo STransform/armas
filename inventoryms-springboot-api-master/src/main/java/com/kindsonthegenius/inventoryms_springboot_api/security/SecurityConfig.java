@@ -26,9 +26,10 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.http.HttpMethod;
+
 @EnableWebSecurity
 @Configuration
-public class SecurityConfig  {
+public class SecurityConfig {
 
     private final RsaKeyProperties properties;
 
@@ -54,19 +55,21 @@ public class SecurityConfig  {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/register", "/api/v1/register").permitAll()
-                        .requestMatchers("/login",  "/api/v1/login").permitAll()
-                        .requestMatchers("/register/verify",  "/api/v1/register/verify").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/users").permitAll() // Explicitly allow POST
+                        .requestMatchers(HttpMethod.GET, "/api/users").permitAll()  // Allow GET
+                        .requestMatchers("/login", "/api/v1/login").permitAll()
+                        .requestMatchers("/register/verify", "/api/v1/register/verify").permitAll()
                         .requestMatchers(HttpMethod.GET, "/products", "/products/**").hasAuthority("VIEW_PRODUCT")
                         .requestMatchers(HttpMethod.POST, "/products", "/products/**").hasAuthority("CREATE_PRODUCT")
                         .requestMatchers(HttpMethod.PUT, "/products", "/products/**").hasAuthority("UPDATE_PRODUCT")
-                        .requestMatchers(HttpMethod.DELETE, "/products", "/products/**").hasAuthority("DELETE_PRODUCT") 
+                        .requestMatchers(HttpMethod.DELETE, "/products", "/products/**").hasAuthority("DELETE_PRODUCT")
                         .requestMatchers(HttpMethod.GET, "/organizations", "/organizations/**").hasAuthority("VIEW_ORGANIZATION")
                         .requestMatchers(HttpMethod.POST, "/organizations", "/organizations/**").hasAuthority("MANAGE_ORGANIZATION")
                         .requestMatchers(HttpMethod.PUT, "/organizations", "/organizations/**").hasAuthority("MANAGE_ORGANIZATION")
-                        .requestMatchers(HttpMethod.DELETE, "/organizations", "/organizations/**").hasAuthority("MANAGE_ORGANIZATION") 
+                        .requestMatchers(HttpMethod.DELETE, "/organizations", "/organizations/**").hasAuthority("MANAGE_ORGANIZATION")
                         .anyRequest().authenticated()
                 )
-                .oauth2ResourceServer(oauth2 ->oauth2.jwt(Customizer.withDefaults()))
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .httpBasic(Customizer.withDefaults())
                 .build();
@@ -76,7 +79,7 @@ public class SecurityConfig  {
     private UserDetailsService userDetailsService;
 
     @Bean
-    public BCryptPasswordEncoder bCryptPasswordEncoder(){
+    public BCryptPasswordEncoder bCryptPasswordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
@@ -101,6 +104,4 @@ public class SecurityConfig  {
             }
         };
     }
-
-
 }

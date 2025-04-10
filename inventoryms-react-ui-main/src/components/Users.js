@@ -56,8 +56,8 @@ export default function User() {
         lastName: '',
         username: '',
         password: '',
-        organizationId: '',
-        directorateId: ''
+        organizationId: '', // Renamed for clarity
+        directorateId: ''   // Renamed for clarity
     });
     const [formMode, setFormMode] = useState('');
 
@@ -154,7 +154,7 @@ export default function User() {
             username: user.username,
             password: '',
             organizationId: user.organization?.id || '',
-            directorateId: user.directorate?.id || ''
+            directorateId: user.directorate?.directoratename || '' // Use directoratename as ID
         });
         setFormMode('edit');
         setOpenAddEdit(true);
@@ -167,7 +167,7 @@ export default function User() {
             lastName: user.lastName,
             username: user.username,
             organizationId: user.organization?.id || '',
-            directorateId: user.directorate?.id || ''
+            directorateId: user.directorate?.directoratename || ''
         });
         setOpenDetails(true);
     };
@@ -204,26 +204,32 @@ export default function User() {
                 lastName: currentUser.lastName,
                 username: currentUser.username,
                 password: currentUser.password,
-                organization: { id: currentUser.organizationId },
-                directorate: { id: currentUser.directorateId }
+                confirmPassword: currentUser.password,
+                organization: currentUser.organizationId ? { id: currentUser.organizationId } : null,
+                directorate: currentUser.directorateId ? { id: currentUser.directorateId } : null
             };
-            
+
             console.log("Sending payload for add:", payload);
             const response = await axiosInstance.post('/api/users', payload);
             const fullUser = await axiosInstance.get(`/api/users/${response.data.id}`);
             console.log("Added user data:", fullUser.data);
-            
+
             setUsers((prevUsers) => [...prevUsers, fullUser.data]);
             clearForm();
-            setSnackbarMessage('User was added successfully!');
+            setSnackbarMessage('User was added successfully! Please check your email for verification.');
             setSnackbarSeverity('success');
             handleCloseAddEdit();
         } catch (error) {
             console.error('Failed to add user:', error);
-            setSnackbarMessage(
-                error.response?.data?.message || 
-                `Failed to add user: ${error.message}`
-            );
+            let errorMessage = 'Failed to add user';
+            if (error.response) {
+                errorMessage = error.response.data || error.response.statusText;
+            } else if (error.request) {
+                errorMessage = 'No response from server';
+            } else {
+                errorMessage = error.message;
+            }
+            setSnackbarMessage(errorMessage);
             setSnackbarSeverity('error');
             setSnackbarOpen(true);
         }
@@ -236,16 +242,18 @@ export default function User() {
                 firstName: currentUser.firstName,
                 lastName: currentUser.lastName,
                 username: currentUser.username,
-                password: currentUser.password,
-                organization: { id: currentUser.organizationId },
-                directorate: { id: currentUser.directorateId }
+                organization: currentUser.organizationId ? { id: currentUser.organizationId } : null,
+                directorate: currentUser.directorateId ? { id: currentUser.directorateId } : null
             };
-            
+            if (currentUser.password) {
+                payload.password = currentUser.password;
+            }
+
             console.log("Sending payload for edit:", payload);
             const response = await axiosInstance.put(`/api/users/${currentUser.id}`, payload);
             const updatedUser = await axiosInstance.get(`/api/users/${currentUser.id}`);
             console.log("Updated user data:", updatedUser.data);
-            
+
             setUsers((prevUsers) =>
                 prevUsers.map((user) => (user.id === currentUser.id ? updatedUser.data : user))
             );
@@ -501,7 +509,7 @@ export default function User() {
                             >
                                 <option value="">Select Directorate</option>
                                 {directorates.map((dir) => (
-                                    <option key={dir.id} value={dir.id}>
+                                    <option key={dir.directoratename} value={dir.directoratename}>
                                         {dir.directoratename}
                                     </option>
                                 ))}
@@ -563,7 +571,7 @@ export default function User() {
                         <CCol md={6}>
                             <CFormLabel htmlFor="directorate">Directorate</CFormLabel>
                             <CFormInput 
-                                value={directorates.find(dir => dir.id === currentUser.directorateId)?.directoratename || 'N/A'} 
+                                value={directorates.find(dir => dir.directoratename === currentUser.directorateId)?.directoratename || 'N/A'} 
                                 readOnly={true} 
                             />
                         </CCol>
@@ -579,7 +587,7 @@ export default function User() {
 
             <Snackbar
                 open={snackbarOpen}
-                autoHideDuration={4000}
+                autoHideDuration={6000}
                 onClose={handleSnackbarClose}
                 anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
             >
@@ -596,7 +604,10 @@ export default function User() {
                         overflow: 'hidden',
                     }}
                 >
-                    {snackbarMessage}
+                    <div>
+                        <strong>{snackbarSeverity === 'error' ? 'Error' : 'Success'}</strong>
+                        <div>{snackbarMessage}</div>
+                    </div>
                 </Alert>
             </Snackbar>
         </div>

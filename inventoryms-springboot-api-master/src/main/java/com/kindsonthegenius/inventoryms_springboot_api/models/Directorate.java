@@ -23,6 +23,9 @@ public class Directorate {
 
 	@OneToMany(mappedBy = "directorate")
 	private List<Document> documents;
+     // Add getId() and setId() for JSON compatibility
+	public String getId() { return directoratename; }
+	public void setId(String id) { this.directoratename = id; }
 
 	public String getDirectoratename() {
 		return directoratename;
