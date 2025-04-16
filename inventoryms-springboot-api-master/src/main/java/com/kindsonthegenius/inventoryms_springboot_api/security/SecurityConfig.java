@@ -51,20 +51,24 @@ public class SecurityConfig {
         return httpSecurity
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
+                // Public endpoints
                 .requestMatchers("/register", "/api/v1/register").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/users").permitAll() // Ensure no JWT required
+                .requestMatchers(HttpMethod.POST, "/api/users").hasRole("ADMIN") // Only ADMIN can create users
+                .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN") // Only ADMIN can view users
                 .requestMatchers("/login", "/api/v1/login").permitAll()
                 .requestMatchers("/register/verify", "/api/v1/register/verify").permitAll()
-                .requestMatchers("/api/roles/**").permitAll() // Allow role management
-                .requestMatchers(HttpMethod.GET, "/products", "/products/**").hasAuthority("VIEW_PRODUCT")
-                .requestMatchers(HttpMethod.POST, "/products", "/products/**").hasAuthority("CREATE_PRODUCT")
-                .requestMatchers(HttpMethod.PUT, "/products", "/products/**").hasAuthority("UPDATE_PRODUCT")
-                .requestMatchers(HttpMethod.DELETE, "/products", "/products/**").hasAuthority("DELETE_PRODUCT")
-                .requestMatchers(HttpMethod.GET, "/organizations", "/organizations/**").hasAuthority("VIEW_ORGANIZATION")
-                .requestMatchers(HttpMethod.POST, "/organizations", "/organizations/**").hasAuthority("MANAGE_ORGANIZATION")
-                .requestMatchers(HttpMethod.PUT, "/organizations", "/organizations/**").hasAuthority("MANAGE_ORGANIZATION")
-                .requestMatchers(HttpMethod.DELETE, "/organizations", "/organizations/**").hasAuthority("MANAGE_ORGANIZATION")
+                .requestMatchers("/api/roles/**").hasRole("ADMIN") // Role management for ADMIN only
+                // Admin-only endpoints
+                .requestMatchers("/api/organizations/**").hasRole("ADMIN")
+                .requestMatchers("/api/directorates/**").hasRole("ADMIN")
+                .requestMatchers("/buttons/users/**").hasRole("ADMIN")
+                .requestMatchers("/api/documents/**").hasRole("ADMIN")
+                .requestMatchers("/api/master-transactions/**").hasRole("ADMIN")
+                .requestMatchers("/api/userPrivilegeAssignments/**").hasRole("ADMIN")
+                // User-only endpoints (if any specific APIs exist for Colors, Typography, Charts)
+                .requestMatchers("/api/theme/**").hasRole("USER")
+                .requestMatchers("/api/charts/**").hasRole("USER")
+                // Any other authenticated request
                 .anyRequest().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2

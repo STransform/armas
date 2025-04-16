@@ -14,6 +14,7 @@ import com.kindsonthegenius.inventoryms_springboot_api.security.models.Role;
 import com.kindsonthegenius.inventoryms_springboot_api.security.models.SecureToken;
 import com.kindsonthegenius.inventoryms_springboot_api.security.repositories.RoleRepository;
 import com.kindsonthegenius.inventoryms_springboot_api.security.repositories.SecureTokenRepository;
+import com.kindsonthegenius.inventoryms_springboot_api.security.services.RoleService;
 import com.kindsonthegenius.inventoryms_springboot_api.security.services.SecureTokenService;
 import jakarta.mail.MessagingException;
 import jakarta.transaction.Transactional;
@@ -41,6 +42,8 @@ public class UserService {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final SecureTokenService secureTokenService;
     private final EmailService emailService;
+    private final RoleService roleService;
+    private final BCryptPasswordEncoder passwordEncoder;
 
     @Autowired
     public UserService(UserRepository userRepository,
@@ -50,7 +53,9 @@ public class UserService {
             SecureTokenRepository secureTokenRepository,
             BCryptPasswordEncoder bCryptPasswordEncoder,
             SecureTokenService secureTokenService,
-            EmailService emailService) {
+            EmailService emailService,
+            RoleService roleService,
+            BCryptPasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.organizationRepository = organizationRepository;
         this.roleRepository = roleRepository;
@@ -59,52 +64,24 @@ public class UserService {
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.secureTokenService = secureTokenService;
         this.emailService = emailService;
+        this.roleService = roleService;
+        this.passwordEncoder = passwordEncoder;
     }
 
-    public User register(User user) throws UserAlreadyExistException {
-        // Validate required fields
-        if (StringUtils.isBlank(user.getUsername()) || StringUtils.isBlank(user.getPassword())) {
-            throw new IllegalArgumentException("Username and password are required");
-        }
-
-        if (!Objects.equals(user.getPassword(), user.getConfirmPassword())) {
-            throw new IllegalArgumentException("Passwords do not match");
-        }
-
-        if (checkIfUserExist(user.getUsername())) {
-            throw new UserAlreadyExistException("User already exists for this email: " + user.getUsername());
-        }
+    @Transactional
+    public User register(User user, String roleDescription) {
         if (userRepository.findByUsername(user.getUsername()) != null) {
-            throw new UserAlreadyExistException("User already exists: " + user.getUsername());
+            throw new UserAlreadyExistException("Username already exists: " + user.getUsername());
         }
 
-        // Fetch organization and directorate if provided
-        if (user.getOrganization() != null && StringUtils.isNotBlank(user.getOrganization().getId())) {
-            Organization org = organizationRepository.findById(user.getOrganization().getId())
-                    .orElseThrow(() -> new IllegalArgumentException(
-                            "Organization not found with id: " + user.getOrganization().getId()));
-            user.setOrganization(org);
-        } else {
-            user.setOrganization(null);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setEnabled(true); // Assuming account is enabled upon registration
+        Role role = roleService.findByDescription(roleDescription);
+        if (role == null) {
+            throw new IllegalArgumentException("Role not found: " + roleDescription);
         }
-
-        if (user.getDirectorate() != null && StringUtils.isNotBlank(user.getDirectorate().getId())) {
-            Directorate dir = directorateRepository.findById(user.getDirectorate().getId())
-                    .orElseThrow(() -> new IllegalArgumentException(
-                            "Directorate not found with id: " + user.getDirectorate().getId()));
-            user.setDirectorate(dir);
-        } else {
-            user.setDirectorate(null);
-        }
-
-        // Encode password and set defaults
-        user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
-        user.setEnabled(false); // Requires email verification
-
-        // Save the user
-        User newUser = userRepository.save(user);
-        sendRegistrationConfirmationEmail(newUser);
-        return newUser;
+        user.getRoles().add(role);
+        return userRepository.save(user);
     }
     @Transactional
     public User assignRoleToUser(Long userId, Long roleId) {
@@ -150,7 +127,7 @@ public class UserService {
             return userRepository.save(existingUser);
         }
         // For new users, use register instead
-        return register(user);
+        return register(user, "USER"); // Default role
     }
 
     public List<User> getAllUsers() {

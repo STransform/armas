@@ -15,6 +15,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
+@PreAuthorize("hasAuthority('ADMIN')")
 public class UserController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
@@ -36,8 +37,8 @@ public class UserController {
         return user != null ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
     }
 
-     @PostMapping
-    @PreAuthorize("hasAuthority('CREATE')")
+    @PostMapping
+    
     public ResponseEntity<?> createUser(@RequestBody Map<String, Object> requestBody) {
         try {
             logger.info("Attempting to register user: {}", requestBody.get("username"));
@@ -46,7 +47,11 @@ public class UserController {
             user.setLastName((String) requestBody.get("lastName"));
             user.setUsername((String) requestBody.get("username"));
             user.setPassword((String) requestBody.get("password"));
-            User registeredUser = userService.register(user);
+            String role = (String) requestBody.get("role"); // Expecting "ADMIN" or "USER"
+            if (!role.equals("ADMIN") && !role.equals("USER")) {
+                return ResponseEntity.badRequest().body("Invalid role: Must be ADMIN or USER");
+            }
+            User registeredUser = userService.register(user, role);
             logger.info("User registered successfully: {}", registeredUser.getUsername());
             return ResponseEntity.status(201).body(registeredUser);
         } catch (UserAlreadyExistException e) {
@@ -58,7 +63,7 @@ public class UserController {
         }
     }
     @PostMapping("/{userId}/roles/{roleId}")
-    @PreAuthorize("hasAuthority('MANAGE_ORGANIZATION')") // Restrict to admins
+    @PreAuthorize("hasAuthority('ADMIN')") // Restrict to admins
     public ResponseEntity<User> assignRoleToUser(@PathVariable Long userId, @PathVariable Long roleId) {
         try {
             User updatedUser = userService.assignRoleToUser(userId, roleId);

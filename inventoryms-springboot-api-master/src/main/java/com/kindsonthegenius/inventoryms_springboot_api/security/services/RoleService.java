@@ -77,8 +77,8 @@ public class RoleService {
 
     @Transactional
     public void initializeRolesAndPrivileges() {
-        List<String> privilegeNames = Arrays.asList("VIEW_PRODUCT", "CREATE_PRODUCT", "UPDATE_PRODUCT",
-                "DELETE_PRODUCT", "VIEW_ORGANIZATION", "MANAGE_ORGANIZATION", "CREATE");
+        List<String> privilegeNames = Arrays.asList( "CREATE_PRODUCT", "UPDATE_PRODUCT",
+                "DELETE_PRODUCT");
         privilegeNames.forEach(name -> {
             if (privilegeRepository.findByDescription(name) == null) {
                 Privilege privilege = new Privilege();
@@ -111,4 +111,7 @@ public class RoleService {
             roleRepository.save(newUserRole);
         }
     }
-}
+
+    public Role findByDescription(String roleDescription) {
+       return roleRepository.findByDescription(roleDescription);
+}}
