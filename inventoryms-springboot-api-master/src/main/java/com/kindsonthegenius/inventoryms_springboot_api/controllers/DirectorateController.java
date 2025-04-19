@@ -4,12 +4,14 @@ import com.kindsonthegenius.inventoryms_springboot_api.models.Directorate;
 import com.kindsonthegenius.inventoryms_springboot_api.services.DirectorateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/directorates")
+@RequestMapping("/directorates")
+@PreAuthorize("hasAuthority('ADMIN')")
 public class DirectorateController {
 
     private final DirectorateService directorateService;

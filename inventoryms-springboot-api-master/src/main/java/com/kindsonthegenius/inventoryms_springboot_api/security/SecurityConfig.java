@@ -10,6 +10,9 @@ import com.nimbusds.jose.proc.SecurityContext;
 
 import jakarta.servlet.http.HttpServletResponse;
 
+import java.util.Arrays;
+import java.util.logging.Logger;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,9 +31,15 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
@@ -39,7 +48,7 @@ public class SecurityConfig {
 
     private final RsaKeyProperties properties;
     private final UserDetailsService userDetailsService;
-
+    private static final Logger log = Logger.getLogger(SecurityConfig.class.getName());
     @Autowired
     public SecurityConfig(RsaKeyProperties properties, UserDetailsService userDetailsService) {
         this.properties = properties;
@@ -49,47 +58,69 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
-            .csrf(AbstractHttpConfigurer::disable)
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/register", "/api/v1/register").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/users").permitAll() // Ensure no JWT required
-                .requestMatchers("/login", "/api/v1/login").permitAll()
-                .requestMatchers("/register/verify", "/api/v1/register/verify").permitAll()
-                .requestMatchers("/api/roles/**").permitAll() // Allow role management
-                .requestMatchers(HttpMethod.GET, "/products", "/products/**").hasAuthority("VIEW_PRODUCT")
-                .requestMatchers(HttpMethod.POST, "/products", "/products/**").hasAuthority("CREATE_PRODUCT")
-                .requestMatchers(HttpMethod.PUT, "/products", "/products/**").hasAuthority("UPDATE_PRODUCT")
-                .requestMatchers(HttpMethod.DELETE, "/products", "/products/**").hasAuthority("DELETE_PRODUCT")
-                .requestMatchers(HttpMethod.GET, "/organizations", "/organizations/**").hasAuthority("VIEW_ORGANIZATION")
-                .requestMatchers(HttpMethod.POST, "/organizations", "/organizations/**").hasAuthority("MANAGE_ORGANIZATION")
-                .requestMatchers(HttpMethod.PUT, "/organizations", "/organizations/**").hasAuthority("MANAGE_ORGANIZATION")
-                .requestMatchers(HttpMethod.DELETE, "/organizations", "/organizations/**").hasAuthority("MANAGE_ORGANIZATION")
-                .anyRequest().authenticated()
-            )
-            .oauth2ResourceServer(oauth2 -> oauth2
-                .jwt(Customizer.withDefaults())
-                .authenticationEntryPoint((request, response, authException) -> {
-                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
-                })
-            )
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .httpBasic(Customizer.withDefaults())
-            .exceptionHandling(exceptions -> exceptions
-                .authenticationEntryPoint((request, response, authException) -> {
-                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication required");
-                })
-            )
-            .build();
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/register", "/login").permitAll() // Adjusted to match new mappings
+                        .requestMatchers(HttpMethod.POST, "/users").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/users").permitAll()
+                        .requestMatchers("/roles/**").permitAll()
+                        .requestMatchers("/organizations/**").hasRole("ADMIN")
+                        .requestMatchers("/directorates/**").hasRole("ADMIN")
+                        .requestMatchers("/documents/**").hasRole("ADMIN")
+                        .requestMatchers("/master-transactions/**").hasRole("ADMIN")
+                        .requestMatchers("/userPrivilegeAssignments/**").hasRole("ADMIN")
+                        .requestMatchers("/theme/**").hasRole("USER")
+                        .requestMatchers("/charts/**").hasRole("USER")
+                        .anyRequest().authenticated()
+                )
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+                        })
+                )
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .httpBasic(withDefaults())
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication required");
+                        })
+                )
+                .build();
     }
 
     @Bean
-    JwtDecoder jwtDecoder() {
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration); // Apply to all paths
+        return source;
+    }
+
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+        grantedAuthoritiesConverter.setAuthoritiesClaimName("scope");
+        grantedAuthoritiesConverter.setAuthorityPrefix("");
+        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+        return jwtAuthenticationConverter;
+    }
+
+    @Bean
+    public JwtDecoder jwtDecoder() {
         return NimbusJwtDecoder.withPublicKey(properties.publicKey()).build();
     }
 
     @Bean
-    JwtEncoder jwtEncoder() {
+    public JwtEncoder jwtEncoder() {
         JWK jwk = new RSAKey.Builder(properties.publicKey()).privateKey(properties.privateKey()).build();
         JWKSource<SecurityContext> jwkSource = new ImmutableJWKSet<>(new JWKSet(jwk));
         return new NimbusJwtEncoder(jwkSource);
@@ -106,19 +137,5 @@ public class SecurityConfig {
         provider.setUserDetailsService(userDetailsService);
         provider.setPasswordEncoder(bCryptPasswordEncoder());
         return provider;
-    }
-
-    @Bean
-    public WebMvcConfigurer corsConfigurer() {
-        return new WebMvcConfigurer() {
-            @Override
-            public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/**")
-                    .allowedOrigins("http://localhost:3000", "http://localhost:3001")
-                    .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                    .allowedHeaders("*")
-                    .allowCredentials(true);
-            }
-        };
     }
 }

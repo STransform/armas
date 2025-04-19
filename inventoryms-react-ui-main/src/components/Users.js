@@ -60,33 +60,45 @@ export default function User() {
         directorateId: ''   // Renamed for clarity
     });
     const [formMode, setFormMode] = useState('');
-
     useEffect(() => {
         console.log("Fetching data for Users page...");
         setLoading(true);
-
+    
         const fetchData = async () => {
             try {
-                const orgsResponse = await axiosInstance.get('/api/organizations');
-                console.log("Organizations fetched:", orgsResponse.data);
-                setOrganizations(Array.isArray(orgsResponse.data) ? orgsResponse.data : []);
-
-                const dirsResponse = await axiosInstance.get('/api/directorates');
-                console.log("Directorates fetched:", dirsResponse.data);
-                setDirectorates(Array.isArray(dirsResponse.data) ? dirsResponse.data : []);
-
-                const usersResponse = await axiosInstance.get('/api/users');
+                const usersResponse = await axiosInstance.get('/users');
                 console.log("Users fetched:", usersResponse.data);
                 setUsers(Array.isArray(usersResponse.data) ? usersResponse.data : []);
-
+    
+                try {
+                    const orgsResponse = await axiosInstance.get('/organizations');
+                    console.log("Organizations fetched:", orgsResponse.data);
+                    setOrganizations(Array.isArray(orgsResponse.data) ? orgsResponse.data : []);
+                } catch (orgError) {
+                    console.warn("Failed to fetch organizations:", orgError.message);
+                    setOrganizations([]);
+                }
+    
+                try {
+                    const dirsResponse = await axiosInstance.get('/directorates');
+                    console.log("Directorates fetched:", dirsResponse.data);
+                    setDirectorates(Array.isArray(dirsResponse.data) ? dirsResponse.data : []);
+                } catch (dirError) {
+                    console.warn("Failed to fetch directorates:", dirError.message);
+                    setDirectorates([]);
+                }
+    
                 setLoading(false);
             } catch (error) {
-                console.error('Error fetching data:', error.response ? error.response.data : error.message);
-                setError('Failed to load data. Check the console for details.');
+                const errorMessage = error.response
+                    ? `Error ${error.response.status}: ${error.response.data?.message || error.response.statusText}`
+                    : error.message;
+                console.error('Error fetching users:', errorMessage);
+                setError(errorMessage);
                 setLoading(false);
             }
         };
-
+    
         fetchData();
     }, []);
 
@@ -107,7 +119,7 @@ export default function User() {
     const handleDeleteUser = async (id) => {
         try {
             setSnackbarOpen(true);
-            await axiosInstance.delete(`/api/users/${id}`);
+            await axiosInstance.delete(`/users/${id}`);
             setUsers((prevUsers) => prevUsers.filter((user) => user.id !== id));
             setSnackbarMessage('The selected user has been deleted successfully!');
             setSnackbarSeverity('success');
@@ -210,8 +222,8 @@ export default function User() {
             };
 
             console.log("Sending payload for add:", payload);
-            const response = await axiosInstance.post('/api/users', payload);
-            const fullUser = await axiosInstance.get(`/api/users/${response.data.id}`);
+            const response = await axiosInstance.post('/users', payload);
+            const fullUser = await axiosInstance.get(`/users/${response.data.id}`);
             console.log("Added user data:", fullUser.data);
 
             setUsers((prevUsers) => [...prevUsers, fullUser.data]);
@@ -250,8 +262,8 @@ export default function User() {
             }
 
             console.log("Sending payload for edit:", payload);
-            const response = await axiosInstance.put(`/api/users/${currentUser.id}`, payload);
-            const updatedUser = await axiosInstance.get(`/api/users/${currentUser.id}`);
+            const response = await axiosInstance.put(`/users/${currentUser.id}`, payload);
+            const updatedUser = await axiosInstance.get(`/users/${currentUser.id}`);
             console.log("Updated user data:", updatedUser.data);
 
             setUsers((prevUsers) =>

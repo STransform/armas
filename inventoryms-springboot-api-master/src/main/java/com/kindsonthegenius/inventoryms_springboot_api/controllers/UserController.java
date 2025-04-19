@@ -14,7 +14,11 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/users")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001"}, 
+             methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS}, 
+             allowedHeaders = {"Authorization", "Content-Type", "*"}, 
+             allowCredentials = "true")
 public class UserController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
@@ -31,22 +35,34 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
         User user = userService.getUserWithRelations(id);
         return user != null ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
     }
 
-     @PostMapping
-    @PreAuthorize("hasAuthority('CREATE')")
+    @PostMapping
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<?> createUser(@RequestBody Map<String, Object> requestBody) {
+        String username = (String) requestBody.get("username");
+        String password = (String) requestBody.get("password");
+        logger.info("Creating user: {}, password: {}", username, password);
+        if ("admin".equals(password)) {
+            logger.warn("Attempt to use restricted password for user: {}", username);
+            return ResponseEntity.badRequest().body("Invalid password");
+        }
         try {
-            logger.info("Attempting to register user: {}", requestBody.get("username"));
             User user = new User();
             user.setFirstName((String) requestBody.get("firstName"));
             user.setLastName((String) requestBody.get("lastName"));
-            user.setUsername((String) requestBody.get("username"));
-            user.setPassword((String) requestBody.get("password"));
-            User registeredUser = userService.register(user);
+            user.setUsername(username);
+            user.setPassword(password);
+            user.setConfirmPassword(password);
+            String role = (String) requestBody.get("role");
+            if (!role.equals("ADMIN") && !role.equals("USER")) {
+                return ResponseEntity.badRequest().body("Invalid role: Must be ADMIN or USER");
+            }
+            User registeredUser = userService.register(user, role);
             logger.info("User registered successfully: {}", registeredUser.getUsername());
             return ResponseEntity.status(201).body(registeredUser);
         } catch (UserAlreadyExistException e) {
@@ -58,7 +74,7 @@ public class UserController {
         }
     }
     @PostMapping("/{userId}/roles/{roleId}")
-    @PreAuthorize("hasAuthority('MANAGE_ORGANIZATION')") // Restrict to admins
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<User> assignRoleToUser(@PathVariable Long userId, @PathVariable Long roleId) {
         try {
             User updatedUser = userService.assignRoleToUser(userId, roleId);
@@ -69,6 +85,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
         User existingUser = userService.getUserById(id);
         if (existingUser != null) {
@@ -79,6 +96,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         User existingUser = userService.getUserById(id);
         if (existingUser != null) {
