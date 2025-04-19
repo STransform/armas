@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
 import {
     CCard,
     CCardBody,
@@ -8,7 +8,7 @@ import {
     CForm,
     CFormLabel,
     CFormInput
-} from '@coreui/react'
+} from '@coreui/react';
 import {
     TextField,
     Dialog,
@@ -27,24 +27,26 @@ import {
     TableCell,
     TableBody,
     Button
-} from '@mui/material'
-import VisibilityIcon from '@mui/icons-material/Visibility'
-import EditIcon from '@mui/icons-material/Edit'
-import DeleteIcon from '@mui/icons-material/Delete'
+} from '@mui/material';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import axiosInstance from "../../axiosConfig";
 
 export default function Organization() {
-    const [organizations, setOrganizations] = useState([])
-    const [page, setPage] = useState(0)
-    const [rowsPerPage, setRowsPerPage] = useState(5)
-    const [filterText, setFilterText] = useState('')
-    const [deleteId, setDeleteId] = useState(null)
-    const [snackbarOpen, setSnackbarOpen] = useState(false)
-    const [snackbarMessage, setSnackbarMessage] = useState('')
-    const [snackbarSeverity, setSnackbarSeverity] = useState('success')
-    const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
-    const [openAddEdit, setOpenAddEdit] = useState(false)
-    const [openDetails, setOpenDetails] = useState(false)
+    const [organizations, setOrganizations] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
+    const [filterText, setFilterText] = useState('');
+    const [deleteId, setDeleteId] = useState(null);
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
+    const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+    const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+    const [openAddEdit, setOpenAddEdit] = useState(false);
+    const [openDetails, setOpenDetails] = useState(false);
     const [currentOrganization, setCurrentOrganization] = useState({
         id: '',
         orgname: '',
@@ -52,49 +54,62 @@ export default function Organization() {
         telephone: '',
         organizationhead: '',
         orgtype: ''
-    })
-    const [formMode, setFormMode] = useState('')
+    });
+    const [formMode, setFormMode] = useState('');
 
     // Fetch organizations on component mount
     useEffect(() => {
-        axiosInstance.get('/organizations')
-            .then((response) => {
-                setOrganizations(response.data)
-            })
-            .catch((error) => {
-                console.error('There was an error fetching the Organizations:', error)
-            })
-    }, [])
+        console.log("Fetching data for Organizations page...");
+        setLoading(true);
+
+        const fetchData = async () => {
+            try {
+                const response = await axiosInstance.get('/organizations');
+                console.log("Organizations fetched:", response.data);
+                setOrganizations(Array.isArray(response.data) ? response.data : []);
+                setLoading(false);
+            } catch (error) {
+                const errorMessage = error.response
+                    ? `Error ${error.response.status}: ${error.response.data?.message || error.response.data || error.response.statusText}`
+                    : error.message;
+                console.error('Error fetching organizations:', errorMessage);
+                setError(errorMessage);
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
 
     const handleConfirmDeleteOpen = (id) => {
-        setDeleteId(id)
-        setConfirmDeleteOpen(true)
-    }
+        setDeleteId(id);
+        setConfirmDeleteOpen(true);
+    };
 
     const handleConfirmDeleteClose = () => {
-        setDeleteId(null)
-        setConfirmDeleteOpen(false)
-    }
+        setDeleteId(null);
+        setConfirmDeleteOpen(false);
+    };
 
     const handleSnackbarClose = () => {
-        setSnackbarOpen(false)
-    }
+        setSnackbarOpen(false);
+    };
 
     const handleDeleteOrganization = async (id) => {
         try {
-            setSnackbarOpen(true)
-            await axiosInstance.delete(`/organizations/${id}`)
-            setOrganizations((organizations) => organizations.filter((org) => org.id !== id))
-            setSnackbarMessage('The selected organization has been deleted successfully!')
-            setSnackbarSeverity('success')
-            handleConfirmDeleteClose()
+            setSnackbarOpen(true);
+            await axiosInstance.delete(`/organizations/${id}`);
+            setOrganizations((prevOrganizations) => prevOrganizations.filter((org) => org.id !== id));
+            setSnackbarMessage('The selected organization has been deleted successfully!');
+            setSnackbarSeverity('success');
+            handleConfirmDeleteClose();
         } catch (error) {
-            console.error('Error occurred deleting the organization: ', error)
-            setSnackbarMessage('There was an error deleting the organization! Please try again.')
-            setSnackbarSeverity('warning')
-            setSnackbarOpen(true)
+            console.error('Error occurred deleting the organization:', error);
+            setSnackbarMessage('There was an error deleting the organization! Please try again.');
+            setSnackbarSeverity('warning');
+            setSnackbarOpen(true);
         }
-    }
+    };
 
     const clearForm = () => {
         setCurrentOrganization({
@@ -104,91 +119,91 @@ export default function Organization() {
             telephone: '',
             organizationhead: '',
             orgtype: ''
-        })
-    }
+        });
+    };
 
     const handleOpenAddEdit = () => {
-        setFormMode('new')
-        clearForm()
-        setOpenAddEdit(true)
-    }
+        setFormMode('new');
+        clearForm();
+        setOpenAddEdit(true);
+    };
 
     const handleCloseAddEdit = () => {
-        setOpenAddEdit(false)
-    }
+        setOpenAddEdit(false);
+    };
 
     const handleCloseDetails = () => {
-        setOpenDetails(false)
-    }
+        setOpenDetails(false);
+    };
 
     const handleOpenEdit = (organization) => {
-        setCurrentOrganization(organization)
-        setFormMode('edit')
-        setOpenAddEdit(true)
-    }
+        setCurrentOrganization(organization);
+        setFormMode('edit');
+        setOpenAddEdit(true);
+    };
 
     const handleOpenDetails = (organization) => {
-        setCurrentOrganization(organization)
-        setOpenDetails(true)
-    }
+        setCurrentOrganization(organization);
+        setOpenDetails(true);
+    };
 
     const handleChangeAdd = (e) => {
-        setCurrentOrganization({ ...currentOrganization, [e.target.id]: e.target.value })
-    }
+        setCurrentOrganization({ ...currentOrganization, [e.target.id]: e.target.value });
+    };
 
     const handleAddOrganization = async () => {
         try {
-            setSnackbarOpen(true)
-            const response = await axiosInstance.post('/organizations', currentOrganization)
-            setOrganizations([...organizations, response.data])
-            clearForm()
-            setSnackbarMessage('Organization was added successfully!')
-            setSnackbarSeverity('success')
-            handleCloseAddEdit()
+            setSnackbarOpen(true);
+            const response = await axiosInstance.post('/organizations', currentOrganization);
+            setOrganizations([...organizations, response.data]);
+            clearForm();
+            setSnackbarMessage('Organization was added successfully!');
+            setSnackbarSeverity('success');
+            handleCloseAddEdit();
         } catch (error) {
-            console.log('There was an error adding the organization!', error)
-            setSnackbarMessage('There was an error adding the organization! Please try again.')
-            setSnackbarSeverity('warning')
-            setSnackbarOpen(true)
+            console.error('There was an error adding the organization:', error);
+            setSnackbarMessage('There was an error adding the organization! Please try again.');
+            setSnackbarSeverity('warning');
+            setSnackbarOpen(true);
         }
-    }
+    };
 
     const handleEditOrganization = async () => {
-        setSnackbarOpen(true)
+        setSnackbarOpen(true);
         try {
-            const response = await axiosInstance.put(`/organizations/${currentOrganization.id}`, currentOrganization)
+            const response = await axiosInstance.put(`/organizations/${currentOrganization.id}`, currentOrganization);
             setOrganizations(organizations.map(org =>
                 org.id === currentOrganization.id ? response.data : org
-            ))
-            clearForm()
-            setSnackbarMessage('Organization was updated successfully!')
-            setSnackbarSeverity('success')
-            handleCloseAddEdit()
+            ));
+            clearForm();
+            setSnackbarMessage('Organization was updated successfully!');
+            setSnackbarSeverity('success');
+            handleCloseAddEdit();
         } catch (error) {
-            console.log('There was an error updating the organization!', error)
-            setSnackbarMessage('There was an error updating the organization! Please try again.')
-            setSnackbarSeverity('warning')
+            console.error('There was an error updating the organization:', error);
+            setSnackbarMessage('There was an error updating the organization! Please try again.');
+            setSnackbarSeverity('warning');
         }
-    }
+    };
 
     const handleChangePage = (event, newPage) => {
-        setPage(newPage)
-    }
+        setPage(newPage);
+    };
 
     const handleChangeRowsPerPage = (event) => {
-        setRowsPerPage(parseInt(event.target.value, 10))
-        setPage(0)
-    }
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
+    };
 
     const handleFilterChange = (event) => {
-        setFilterText(event.target.value)
-        setPage(0)
-    }
+        setFilterText(event.target.value);
+        setPage(0);
+    };
 
     const filteredOrganizations = organizations.filter(org =>
-        org.orgname.toLowerCase().includes(filterText.toLowerCase()) ||
-        org.email.toLowerCase().includes(filterText.toLowerCase())
-    )
+        (org.orgname || '').toLowerCase().includes(filterText.toLowerCase()) ||
+        (org.email || '').toLowerCase().includes(filterText.toLowerCase())
+    );
 
     return (
         <div>
@@ -199,10 +214,14 @@ export default function Organization() {
                             <strong>Organizations</strong>
                         </CCardHeader>
                         <CCardBody>
-                            {filteredOrganizations != null ?
+                            {loading ? (
+                                <div>Loading...</div>
+                            ) : error ? (
+                                <div>{error}</div>
+                            ) : filteredOrganizations.length > 0 ? (
                                 <TableContainer>
                                     <Box display="flex" justifyContent="flex-start">
-                                        <Button variant='contained' onClick={handleOpenAddEdit}>New Organization</Button>
+                                        <Button variant="contained" onClick={handleOpenAddEdit}>New Organization</Button>
                                     </Box>
                                     <Box display="flex" justifyContent="flex-end" sx={{ padding: '6px' }}>
                                         <TextField
@@ -293,9 +312,9 @@ export default function Organization() {
                                         rowsPerPageOptions={[5, 10, 25]}
                                     />
                                 </TableContainer>
-                                :
-                                <div>Loading...</div>
-                            }
+                            ) : (
+                                <div>No organizations found.</div>
+                            )}
                         </CCardBody>
                     </CCard>
                 </CCol>
@@ -426,7 +445,7 @@ export default function Organization() {
             {/* Snackbar Notification */}
             <Snackbar
                 open={snackbarOpen}
-                autoHideDuration={4000}
+                autoHideDuration={6000}
                 onClose={handleSnackbarClose}
                 anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
             >
@@ -443,9 +462,12 @@ export default function Organization() {
                         overflow: 'hidden',
                     }}
                 >
-                    {snackbarMessage}
+                    <div>
+                        <strong>{snackbarSeverity === 'error' ? 'Error' : 'Success'}</strong>
+                        <div>{snackbarMessage}</div>
+                    </div>
                 </Alert>
             </Snackbar>
         </div>
-    )
+    );
 }

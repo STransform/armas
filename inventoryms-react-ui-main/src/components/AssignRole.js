@@ -45,12 +45,12 @@ export default function AssignRole() {
         const fetchData = async () => {
             try {
                 console.log("Fetching users...");
-                const usersResponse = await axiosInstance.get('/api/users');
+                const usersResponse = await axiosInstance.get('/users');
                 console.log("Users response:", usersResponse.data);
                 setUsers(Array.isArray(usersResponse.data) ? usersResponse.data : []);
 
                 console.log("Fetching roles...");
-                const rolesResponse = await axiosInstance.get('/api/roles');
+                const rolesResponse = await axiosInstance.get('/roles');
                 console.log("Roles response:", rolesResponse.data);
                 setRoles(Array.isArray(rolesResponse.data) ? rolesResponse.data : []);
 
@@ -84,7 +84,7 @@ export default function AssignRole() {
         if (!selectedUser || !selectedRoleId) return;
         try {
             console.log(`Assigning role ${selectedRoleId} to user ${selectedUser.id}`);
-            await axiosInstance.post(`/api/users/${selectedUser.id}/roles/${selectedRoleId}`);
+            await axiosInstance.post(`/users/${selectedUser.id}/roles/${selectedRoleId}`);
             setUsers(prev => prev.map(u => 
                 u.id === selectedUser.id 
                     ? { ...u, roles: [...(u.roles || []), roles.find(r => r.id === parseInt(selectedRoleId))] } 

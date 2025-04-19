@@ -11,7 +11,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/directorates")
-@PreAuthorize("hasAuthority('ADMIN')")
 public class DirectorateController {
 
     private final DirectorateService directorateService;
@@ -27,6 +26,7 @@ public class DirectorateController {
     }
 
     @GetMapping("/{directoratename}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Directorate> getDirectorateById(@PathVariable String directoratename) {
         Directorate directorate = directorateService.getDirectorateById(directoratename);
         if (directorate != null) {
@@ -37,11 +37,13 @@ public class DirectorateController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Directorate createDirectorate(@RequestBody Directorate directorate) {
         return directorateService.save(directorate);
     }
 
     @PutMapping("/{directoratename}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Directorate> updateDirectorate(@PathVariable String directoratename, @RequestBody Directorate directorate) {
         Directorate existingDirectorate = directorateService.getDirectorateById(directoratename);
         if (existingDirectorate != null) {
@@ -53,6 +55,7 @@ public class DirectorateController {
     }
 
     @DeleteMapping("/{directoratename}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Void> deleteDirectorate(@PathVariable String directoratename) {
         Directorate existingDirectorate = directorateService.getDirectorateById(directoratename);
         if (existingDirectorate != null) {

@@ -53,7 +53,7 @@ export default function Role() {
         const fetchData = async () => {
             try {
                 console.log("Fetching roles...");
-                const rolesResponse = await axiosInstance.get('/api/roles');
+                const rolesResponse = await axiosInstance.get('/roles');
                 console.log("Roles response:", rolesResponse.data);
                 setRoles(Array.isArray(rolesResponse.data) ? rolesResponse.data : []);
                 setLoading(false);
@@ -83,7 +83,7 @@ export default function Role() {
     const handleAddRole = async () => {
         try {
             console.log("Adding role:", newRole);
-            const response = await axiosInstance.post('/api/roles', newRole);
+            const response = await axiosInstance.post('/roles', newRole);
             console.log("Role added:", response.data);
             setRoles(prev => [...prev, response.data]);
             setSnackbarMessage('Role added successfully!');
