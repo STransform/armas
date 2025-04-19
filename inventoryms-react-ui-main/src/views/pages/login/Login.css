@@ -1,0 +1,63 @@
+.login-page {
+    background-color: #f8f9fa;
+    width: 100vw;
+    overflow-x: hidden;
+  }
+  
+  @media (max-width: 768px) {
+    .login-page .card-group {
+      flex-direction: column;
+    }
+  
+    .login-page .signup-card {
+      display: none;
+    }
+  
+    .login-page .card {
+      border-radius: 0;
+      margin-bottom: 0;
+    }
+  }
+  
+  @media (min-width: 769px) {
+    .login-page .card-group {
+      flex-direction: row;
+    }
+  
+    .login-page .signup-card {
+      flex: 0 0 40%;
+      max-width: 40%;
+    }
+  
+    .login-page .card {
+      flex: 0 0 60%;
+      max-width: 60%;
+    }
+  }
+  
+  .login-page .card {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .login-page h1 {
+    font-size: 1.8rem;
+  }
+  
+  .login-page .btn {
+    font-size: 1rem;
+  }
+  
+  .login-page .form-control {
+    font-size: 1rem;
+  }
+  
+  @media (max-width: 576px) {
+    .login-page h1 {
+      font-size: 1.5rem;
+    }
+  
+    .login-page .btn,
+    .login-page .form-control {
+      font-size: 0.9rem;
+    }
+  }
