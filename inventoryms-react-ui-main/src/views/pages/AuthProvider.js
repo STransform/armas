@@ -1,57 +1,107 @@
-import axios from 'axios';
 import React, { createContext, useContext, useState } from 'react';
+import axiosInstance from '../../axiosConfig';
 
 const AuthContext = createContext();
 
 const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
+    const getInitialUser = () => {
+        try {
+            const storedUser = localStorage.getItem('user');
+            return storedUser ? JSON.parse(storedUser) : null;
+        } catch (error) {
+            console.error('Failed to parse user data:', error);
+            localStorage.removeItem('user');
+            return null;
+        }
+    };
+
+    const [user, setUser] = useState(getInitialUser);
     const [token, setToken] = useState(localStorage.getItem('token') || '');
-    const [roles, setRoles] = useState(JSON.parse(localStorage.getItem('roles')) || []);
     const [isAuthenticated, setIsAuthenticated] = useState(() => {
         return localStorage.getItem('isAuthenticated') === 'true';
     });
 
     const loginAction = async (data) => {
         try {
-            const baseURL = import.meta.env.VITE_REACT_APP_API_BASE_URL;
-            const response = await axios.post(`${baseURL}/login`, data);
+            console.log('Login request payload:', data);
+            const response = await axiosInstance.post('/login', data, {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            console.log('Full API response:', response);
+            console.log('Response data:', response.data);
+
             if (response.status === 200 || response.status === 201) {
-                const { token, roles, username } = response.data;
+                const authToken = response.data.token;
+                if (!authToken) {
+                    console.error('Token not found in:', response.data);
+                    throw new Error('No authentication token received.');
+                }
+
+                const userData = {
+                    id: response.data.id,
+                    username: response.data.username,
+                    email: response.data.email || '',
+                    roles: response.data.roles || ['USER'],
+                };
+
                 localStorage.setItem('isAuthenticated', 'true');
-                localStorage.setItem('token', token);
-                localStorage.setItem('roles', JSON.stringify(roles));
+                localStorage.setItem('token', authToken);
+                localStorage.setItem('user', JSON.stringify(userData));
+
                 setIsAuthenticated(true);
-                setUser({ username });
-                setToken(token);
-                setRoles(roles);
-                return roles; // Return roles for redirection
+                setToken(authToken);
+                setUser(userData);
+
+                console.log('Login successful, user roles:', userData.roles);
+                return userData.roles;
             }
-            throw new Error(response.message);
+            throw new Error(response.data?.error || 'Login failed');
         } catch (err) {
-            console.error('Login error:', err);
-            throw err;
+            const errorMsg = err.response?.data?.error || err.message || 'Network Error. Please check your connection or server status.';
+            console.error('Login error details:', {
+                error: err,
+                response: err.response,
+                request: err.request,
+                message: errorMsg,
+            });
+            throw new Error(errorMsg);
         }
     };
 
-    const logOut = () => {
-        setUser(null);
-        setToken('');
-        setRoles([]);
+    const logOut = async () => {
+        try {
+            await axiosInstance.post('/logout', {}, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+        } catch (err) {
+            console.error('Logout error:', err);
+        }
         localStorage.removeItem('token');
         localStorage.removeItem('isAuthenticated');
-        localStorage.removeItem('roles');
+        localStorage.removeItem('user');
+        setUser(null);
+        setToken('');
         setIsAuthenticated(false);
     };
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated, token, user, roles, loginAction, logOut }}>
+        <AuthContext.Provider value={{
+            isAuthenticated,
+            token,
+            user,
+            roles: user?.roles || [],
+            loginAction,
+            logOut,
+        }}>
             {children}
         </AuthContext.Provider>
     );
 };
 
 export default AuthProvider;
-
 export const useAuth = () => {
     return useContext(AuthContext);
 };

@@ -57,7 +57,7 @@ export default function Directorate() {
     useEffect(() => {
         console.log("Fetching directorates...");
         setLoading(true); // Set loading to true when fetch starts
-        axiosInstance.get('/api/directorates')
+        axiosInstance.get('/directorates')
             .then((response) => {
                 console.log("Directorates fetched:", response.data);
                 setDirectorates(response.data || []); // Ensure empty array if null
@@ -87,7 +87,7 @@ export default function Directorate() {
     const handleDeleteDirectorate = async (directoratename) => {
         try {
             setSnackbarOpen(true);
-            await axiosInstance.delete(`/api/directorates/${directoratename}`);
+            await axiosInstance.delete(`/directorates/${directoratename}`);
             setDirectorates((directorates) => directorates.filter((dir) => dir.directoratename !== directoratename));
             setSnackbarMessage('The selected directorate has been deleted successfully!');
             setSnackbarSeverity('success');
@@ -140,7 +140,7 @@ export default function Directorate() {
     const handleAddDirectorate = async () => {
         try {
             setSnackbarOpen(true);
-            const response = await axiosInstance.post('/api/directorates', currentDirectorate);
+            const response = await axiosInstance.post('/directorates', currentDirectorate);
             setDirectorates([...directorates, response.data]);
             clearForm();
             setSnackbarMessage('Directorate was added successfully!');
@@ -157,7 +157,7 @@ export default function Directorate() {
     const handleEditDirectorate = async () => {
         setSnackbarOpen(true);
         try {
-            const response = await axiosInstance.put(`/api/directorates/${currentDirectorate.directoratename}`, currentDirectorate);
+            const response = await axiosInstance.put(`/directorates/${currentDirectorate.directoratename}`, currentDirectorate);
             setDirectorates(directorates.map(dir =>
                 dir.directoratename === currentDirectorate.directoratename ? response.data : dir
             ));

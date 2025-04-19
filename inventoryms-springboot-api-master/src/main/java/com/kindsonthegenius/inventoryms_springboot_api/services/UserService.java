@@ -27,6 +27,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -43,19 +45,17 @@ public class UserService {
     private final SecureTokenService secureTokenService;
     private final EmailService emailService;
     private final RoleService roleService;
-    private final BCryptPasswordEncoder passwordEncoder;
 
     @Autowired
     public UserService(UserRepository userRepository,
-            OrganizationRepository organizationRepository,
-            RoleRepository roleRepository,
-            DirectorateRepository directorateRepository,
-            SecureTokenRepository secureTokenRepository,
-            BCryptPasswordEncoder bCryptPasswordEncoder,
-            SecureTokenService secureTokenService,
-            EmailService emailService,
-            RoleService roleService,
-            BCryptPasswordEncoder passwordEncoder) {
+                       OrganizationRepository organizationRepository,
+                       RoleRepository roleRepository,
+                       DirectorateRepository directorateRepository,
+                       SecureTokenRepository secureTokenRepository,
+                       BCryptPasswordEncoder bCryptPasswordEncoder,
+                       SecureTokenService secureTokenService,
+                       RoleService roleService,
+                       EmailService emailService) {
         this.userRepository = userRepository;
         this.organizationRepository = organizationRepository;
         this.roleRepository = roleRepository;
@@ -65,36 +65,94 @@ public class UserService {
         this.secureTokenService = secureTokenService;
         this.emailService = emailService;
         this.roleService = roleService;
-        this.passwordEncoder = passwordEncoder;
     }
 
-    @Transactional
-    public User register(User user, String roleDescription) {
-        if (userRepository.findByUsername(user.getUsername()) != null) {
-            throw new UserAlreadyExistException("Username already exists: " + user.getUsername());
+    public User register(User user, String roleDescription) throws UserAlreadyExistException {
+        if (StringUtils.isBlank(user.getUsername()) || StringUtils.isBlank(user.getPassword())) {
+            throw new IllegalArgumentException("Username and password are required");
         }
 
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setEnabled(true); // Assuming account is enabled upon registration
+        if (!Objects.equals(user.getPassword(), user.getConfirmPassword())) {
+            throw new IllegalArgumentException("Passwords do not match");
+        }
+
+        if (checkIfUserExist(user.getUsername())) {
+            throw new UserAlreadyExistException("User already exists: " + user.getUsername());
+        }
+
+        if (user.getOrganization() != null && StringUtils.isNotBlank(user.getOrganization().getId())) {
+            Organization org = organizationRepository.findById(user.getOrganization().getId())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Organization not found with id: " + user.getOrganization().getId()));
+            user.setOrganization(org);
+        } else {
+            user.setOrganization(null);
+        }
+
+        if (user.getDirectorate() != null && StringUtils.isNotBlank(user.getDirectorate().getId())) {
+            Directorate dir = directorateRepository.findById(user.getDirectorate().getId())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Directorate not found with id: " + user.getDirectorate().getId()));
+            user.setDirectorate(dir);
+        } else {
+            user.setDirectorate(null);
+        }
+
         Role role = roleService.findByDescription(roleDescription);
         if (role == null) {
             throw new IllegalArgumentException("Role not found: " + roleDescription);
         }
         user.getRoles().add(role);
+
+        user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+        user.setConfirmPassword(null); // Clear confirmPassword
+        user.setEnabled(true); // Require no email verification
+
+        User newUser = userRepository.save(user);
+        // sendRegistrationConfirmationEmail(newUser); // Disabled due to email config
+        return newUser;
+    }
+
+    @Transactional
+    public User registerNewUser(String username, String password, List<String> roleDescriptions) {
+        if (StringUtils.isBlank(username) || StringUtils.isBlank(password)) {
+            throw new IllegalArgumentException("Username and password are required");
+        }
+
+        if (checkIfUserExist(username)) {
+            throw new UserAlreadyExistException("User already exists: " + username);
+        }
+
+        User user = new User();
+        user.setUsername(username);
+        user.setPassword(bCryptPasswordEncoder.encode(password));
+        user.setEnabled(false); // Require email verification
+
+        Set<Role> roles = roleDescriptions.stream()
+                .map(desc -> {
+                    Role role = roleService.findByDescription(desc);
+                    if (role == null) {
+                        throw new IllegalArgumentException("Role not found: " + desc);
+                    }
+                    return role;
+                })
+                .collect(Collectors.toSet());
+        user.setRoles(roles);
+
         return userRepository.save(user);
     }
+
     @Transactional
     public User assignRoleToUser(Long userId, Long roleId) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         Role role = roleRepository.findById(roleId)
-            .orElseThrow(() -> new IllegalArgumentException("Role not found: " + roleId));
+                .orElseThrow(() -> new IllegalArgumentException("Role not found: " + roleId));
         user.getRoles().add(role);
         return userRepository.save(user);
     }
 
     public User save(User user) {
-        // For updates or manual saves
         if (user.getId() != null) {
             User existingUser = userRepository.findById(user.getId())
                     .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + user.getId()));
@@ -124,10 +182,10 @@ public class UserService {
                 existingUser.setDirectorate(null);
             }
 
+            existingUser.setConfirmPassword(null); // Clear confirmPassword
             return userRepository.save(existingUser);
         }
-        // For new users, use register instead
-        return register(user, "USER"); // Default role
+        return register(user, "USER");
     }
 
     public List<User> getAllUsers() {
@@ -170,7 +228,7 @@ public class UserService {
         try {
             emailService.sendMail(emailContext);
         } catch (MessagingException e) {
-            e.printStackTrace(); // Consider logging properly
+            e.printStackTrace();
         }
     }
 
@@ -186,7 +244,7 @@ public class UserService {
             throw new InvalidTokenException("User does not exist");
         }
 
-        user.setEnabled(true); // Enable user after verification
+        user.setEnabled(true);
         userRepository.save(user);
         secureTokenService.removeToken(secureToken);
         return true;

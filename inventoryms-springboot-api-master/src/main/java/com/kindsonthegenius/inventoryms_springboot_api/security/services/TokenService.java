@@ -13,29 +13,30 @@ import java.util.stream.Collectors;
 
 @Service
 public class TokenService {
-
     private final JwtEncoder jwtEncoder;
 
+   
     public TokenService(JwtEncoder jwtEncoder) {
         this.jwtEncoder = jwtEncoder;
     }
 
-    public String generateToken(Authentication authentication){
+    public String generateToken(Authentication authentication) {
         Instant now = Instant.now();
-        String scope = authentication.getAuthorities()
-                .stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.joining(" "));
+        long expiry = 3600L; // 1 hour
 
-        JwtClaimsSet claimsSet = JwtClaimsSet.builder()
-                .issuer("self")
-                .issuedAt(now)
-                .expiresAt(now.plus(1, ChronoUnit.HOURS))
-                .claim("scope", scope)
-                .build();
+        // Include authorities in the "scope" claim
+        String scope = authentication.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .collect(Collectors.joining(" "));
 
-        return this.jwtEncoder.encode(JwtEncoderParameters.from(claimsSet)).getTokenValue();
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+            .issuer("self")
+            .issuedAt(now)
+            .expiresAt(now.plusSeconds(expiry))
+            .subject(authentication.getName())
+            .claim("scope", scope)
+            .build();
+
+        return jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
     }
-
-
 }

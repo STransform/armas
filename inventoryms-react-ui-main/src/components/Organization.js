@@ -57,7 +57,7 @@ export default function Organization() {
 
     // Fetch organizations on component mount
     useEffect(() => {
-        axiosInstance.get('/api/organizations')
+        axiosInstance.get('/organizations')
             .then((response) => {
                 setOrganizations(response.data)
             })
@@ -83,7 +83,7 @@ export default function Organization() {
     const handleDeleteOrganization = async (id) => {
         try {
             setSnackbarOpen(true)
-            await axiosInstance.delete(`/api/organizations/${id}`)
+            await axiosInstance.delete(`/organizations/${id}`)
             setOrganizations((organizations) => organizations.filter((org) => org.id !== id))
             setSnackbarMessage('The selected organization has been deleted successfully!')
             setSnackbarSeverity('success')
@@ -139,7 +139,7 @@ export default function Organization() {
     const handleAddOrganization = async () => {
         try {
             setSnackbarOpen(true)
-            const response = await axiosInstance.post('/api/organizations', currentOrganization)
+            const response = await axiosInstance.post('/organizations', currentOrganization)
             setOrganizations([...organizations, response.data])
             clearForm()
             setSnackbarMessage('Organization was added successfully!')
@@ -156,7 +156,7 @@ export default function Organization() {
     const handleEditOrganization = async () => {
         setSnackbarOpen(true)
         try {
-            const response = await axiosInstance.put(`/api/organizations/${currentOrganization.id}`, currentOrganization)
+            const response = await axiosInstance.put(`/organizations/${currentOrganization.id}`, currentOrganization)
             setOrganizations(organizations.map(org =>
                 org.id === currentOrganization.id ? response.data : org
             ))

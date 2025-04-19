@@ -11,7 +11,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/organizations")
+@RequestMapping("/organizations")
+@PreAuthorize("hasAuthority('ADMIN')")
 public class OrganizationController {
 
     private final OrganizationService organizationService;
@@ -45,7 +46,7 @@ public class OrganizationController {
     public ResponseEntity<Organization> updateOrganization(@PathVariable String id, @RequestBody Organization organization) {
         Organization existingOrganization = organizationService.getOrganizationById(id);
         if (existingOrganization != null) {
-            organization.setId(id); // Ensure the ID is preserved
+            organization.setId(id);
             return ResponseEntity.ok(organizationService.save(organization));
         } else {
             return ResponseEntity.notFound().build();

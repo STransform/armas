@@ -2,31 +2,68 @@ package com.kindsonthegenius.inventoryms_springboot_api.security.models;
 
 import com.kindsonthegenius.inventoryms_springboot_api.models.User;
 import com.kindsonthegenius.inventoryms_springboot_api.security.services.UserPrivilegeAssignmentService;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class UserPrincipal implements UserDetails {
-
-    private final  UserPrivilegeAssignmentService assignmentService;
+    private static final Logger log = LoggerFactory.getLogger(UserPrincipal.class);
     private final User user;
+    private final UserPrivilegeAssignmentService userPrivilegeAssignmentService;
 
-    public UserPrincipal(UserPrivilegeAssignmentService assignmentService, User user) {
-        this.assignmentService = assignmentService;
+    public UserPrincipal(UserPrivilegeAssignmentService userPrivilegeAssignmentService, User user) {
+        if (user == null) {
+            log.error("User cannot be null in UserPrincipal");
+            throw new IllegalArgumentException("User cannot be null");
+        }
         this.user = user;
+        this.userPrivilegeAssignmentService = userPrivilegeAssignmentService;
     }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        List<Privilege> privilegeList = assignmentService.getUserPrivileges(user.getId());
+        Set<Role> roles = user.getRoles();
+        if (roles == null || roles.isEmpty()) {
+            log.warn("No roles found for user: {}", user.getUsername());
+            return Collections.emptyList();
+        }
 
-        return privilegeList.stream()
-                .map(privilege -> new SimpleGrantedAuthority(privilege.getDescription()))
-                .collect(Collectors.toList());
+        Set<GrantedAuthority> authorities = new HashSet<>();
+        roles.forEach(role -> {
+            if (role != null && role.getDescription() != null) {
+                authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getDescription()));
+                List<Privilege> privileges = role.getPrivileges();
+                if (privileges != null) {
+                    privileges.forEach(privilege -> {
+                        if (privilege != null && privilege.getDescription() != null) {
+                            authorities.add(new SimpleGrantedAuthority(privilege.getDescription()));
+                        }
+                    });
+                }
+            }
+        });
+
+        List<Privilege> userPrivileges = userPrivilegeAssignmentService.getUserPrivileges(user.getId());
+        if (userPrivileges != null) {
+            userPrivileges.forEach(privilege -> {
+                if (privilege != null && privilege.getDescription() != null) {
+                    authorities.add(new SimpleGrantedAuthority(privilege.getDescription()));
+                }
+            });
+        }
+
+        log.debug("Authorities for user {}: {}", user.getUsername(), authorities);
+        return authorities;
     }
 
     @Override
@@ -36,7 +73,7 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public String getUsername() {
-        return user.getPassword();
+        return user.getUsername();
     }
 
     @Override
@@ -54,8 +91,8 @@ public class UserPrincipal implements UserDetails {
         return true;
     }
 
-    // @Override
-    // public boolean isEnabled() {
-    //     return user.isAccountVerified();
-    // }
+    @Override
+    public boolean isEnabled() {
+        return user.isEnabled();
+    }
 }

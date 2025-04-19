@@ -56,11 +56,6 @@ export default function Role() {
                 const rolesResponse = await axiosInstance.get('/api/roles');
                 console.log("Roles response:", rolesResponse.data);
                 setRoles(Array.isArray(rolesResponse.data) ? rolesResponse.data : []);
-
-                // Assuming no /api/privileges endpoint yet; comment out for now
-                // const privilegesResponse = await axiosInstance.get('/api/privileges');
-                // setPrivileges(Array.isArray(privilegesResponse.data) ? privilegesResponse.data : []);
-
                 setLoading(false);
             } catch (error) {
                 console.error("Error fetching data:", error);

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/#/buttons/directorates")
+@RequestMapping("/directorates")
 @PreAuthorize("hasAuthority('ADMIN')")
 public class DirectorateController {
 
