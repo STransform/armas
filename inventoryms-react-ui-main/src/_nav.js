@@ -122,7 +122,7 @@ const Nav = () => {
     {
       component: CNavItem,
       name: 'Colors',
-      to: '/theme/colors',
+      to: '/forms/form-control',
       icon: <CIcon icon={cilDrop} customClassName="nav-icon" />,
     },
     {

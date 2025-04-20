@@ -2,7 +2,8 @@ package com.kindsonthegenius.inventoryms_springboot_api.controllers;
 
 import com.kindsonthegenius.inventoryms_springboot_api.models.Organization;
 import com.kindsonthegenius.inventoryms_springboot_api.services.OrganizationService;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -12,9 +13,13 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/organizations")
-@PreAuthorize("hasAuthority('ADMIN')")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001"},
+             methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS},
+             allowedHeaders = {"Authorization", "Content-Type", "*"},
+             allowCredentials = "true")
 public class OrganizationController {
 
+    private static final Logger logger = LoggerFactory.getLogger(OrganizationController.class);
     private final OrganizationService organizationService;
 
     @Autowired
@@ -24,11 +29,14 @@ public class OrganizationController {
 
     @GetMapping
     public List<Organization> getAllOrganizations() {
+        logger.info("Fetching all organizations");
         return organizationService.getAllOrganizations();
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Organization> getOrganizationById(@PathVariable String id) {
+        logger.info("Fetching organization with ID: {}", id);
         Organization organization = organizationService.getOrganizationById(id);
         if (organization != null) {
             return ResponseEntity.ok(organization);
@@ -38,12 +46,16 @@ public class OrganizationController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Organization createOrganization(@RequestBody Organization organization) {
+        logger.info("Creating organization: {}", organization.getOrgname());
         return organizationService.save(organization);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Organization> updateOrganization(@PathVariable String id, @RequestBody Organization organization) {
+        logger.info("Updating organization with ID: {}", id);
         Organization existingOrganization = organizationService.getOrganizationById(id);
         if (existingOrganization != null) {
             organization.setId(id);
@@ -54,7 +66,9 @@ public class OrganizationController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Void> deleteOrganization(@PathVariable String id) {
+        logger.info("Deleting organization with ID: {}", id);
         Organization existingOrganization = organizationService.getOrganizationById(id);
         if (existingOrganization != null) {
             organizationService.deleteOrganization(id);

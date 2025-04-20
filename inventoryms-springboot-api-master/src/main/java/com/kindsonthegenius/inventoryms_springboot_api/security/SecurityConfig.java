@@ -71,8 +71,8 @@ public class SecurityConfig {
                         .requestMatchers("/documents/**").hasRole("ADMIN")
                         .requestMatchers("/master-transactions/**").hasRole("ADMIN")
                         .requestMatchers("/userPrivilegeAssignments/**").hasRole("ADMIN")
-                        .requestMatchers("/theme/**").hasRole("USER")
-                        .requestMatchers("/charts/**").hasRole("USER")
+                        .requestMatchers("/buttons/forms/**").hasRole("USER")
+                        .requestMatchers("/buttons/charts/**").hasRole("USER")
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2

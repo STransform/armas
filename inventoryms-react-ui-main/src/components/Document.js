@@ -63,12 +63,12 @@ export default function Document() {
         const fetchData = async () => {
             try {
                 console.log("Fetching directorates...");
-                const directoratesResponse = await axiosInstance.get('/api/directorates');
+                const directoratesResponse = await axiosInstance.get('/directorates');
                 console.log("Directorates fetched:", directoratesResponse.data);
                 setDirectorates(Array.isArray(directoratesResponse.data) ? directoratesResponse.data : []);
 
                 console.log("Fetching documents...");
-                const documentsResponse = await axiosInstance.get('/api/documents');
+                const documentsResponse = await axiosInstance.get('/documents');
                 console.log("Documents fetched:", documentsResponse.data);
                 setDocuments(Array.isArray(documentsResponse.data) ? documentsResponse.data : []);
 
@@ -100,7 +100,7 @@ export default function Document() {
     const handleDeleteDocument = async (id) => {
         try {
             setSnackbarOpen(true);
-            await axiosInstance.delete(`/api/documents/${id}`);
+            await axiosInstance.delete(`/documents/${id}`);
             setDocuments((prevDocuments) => prevDocuments.filter((doc) => doc.id !== id));
             setSnackbarMessage('The selected document has been deleted successfully!');
             setSnackbarSeverity('success');
@@ -169,10 +169,10 @@ export default function Document() {
             };
             
             console.log("Sending payload:", payload);
-            const response = await axiosInstance.post('/api/documents', payload);
+            const response = await axiosInstance.post('/documents', payload);
             
             // Fetch the newly created document with its relations
-            const fullDocument = await axiosInstance.get(`/api/documents/${response.data.id}`);
+            const fullDocument = await axiosInstance.get(`/documents/${response.data.id}`);
             
             setDocuments((prevDocuments) => [...prevDocuments, fullDocument.data]);
             clearForm();
@@ -199,10 +199,10 @@ export default function Document() {
                 directoratename: currentDocument.directoratename
             };
             
-            const response = await axiosInstance.put(`/api/documents/${currentDocument.id}`, payload);
+            const response = await axiosInstance.put(`/documents/${currentDocument.id}`, payload);
             
             // Fetch the updated document with relations
-            const updatedDocument = await axiosInstance.get(`/api/documents/${currentDocument.id}`);
+            const updatedDocument = await axiosInstance.get(`/documents/${currentDocument.id}`);
             
             setDocuments((prevDocuments) =>
                 prevDocuments.map((doc) => (doc.id === currentDocument.id ? updatedDocument.data : doc))

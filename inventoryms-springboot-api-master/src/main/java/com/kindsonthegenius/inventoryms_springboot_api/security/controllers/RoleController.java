@@ -38,24 +38,28 @@ public class RoleController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Role> getRoleById(@PathVariable Long id) {
         Role role = roleService.findById(id);
         return role != null ? ResponseEntity.ok(role) : ResponseEntity.notFound().build();
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Role> createRole(@RequestBody Role role) {
         Role savedRole = roleService.save(role);
         return ResponseEntity.status(201).body(savedRole);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         roleService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{roleId}/assign/user/{userId}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<User> assignUserRole(@PathVariable("roleId") Long roleId, @PathVariable("userId") Long userId) {
         roleService.assignUserRole(userId, roleId);
         User updatedUser = userService.getUserById(userId);
@@ -70,6 +74,7 @@ public class RoleController {
     }
 
     @GetMapping("/{roleId}/privileges")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public List<Privilege> getPrivilegesInRole(@PathVariable("roleId") Long roleId) {
         return roleService.getPrivilegesInRole(roleId);
     }

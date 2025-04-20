@@ -13,8 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/documents")
-@PreAuthorize("hasAuthority('ADMIN')")
+@RequestMapping("/documents")
 public class DocumentController {
 
     private final DocumentService documentService;
@@ -32,6 +31,7 @@ public class DocumentController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Document> getDocumentById(@PathVariable String id) {
         Document document = documentService.getDocumentById(id);
         if (document != null) {
@@ -42,6 +42,7 @@ public class DocumentController {
     }
 
 @PostMapping
+@PreAuthorize("hasAuthority('ADMIN')")
 public ResponseEntity<Document> createDocument(@RequestBody Document documentRequest) {
     try {
         System.out.println("Received document request: " + documentRequest);
@@ -76,6 +77,7 @@ public ResponseEntity<Document> createDocument(@RequestBody Document documentReq
 }
     
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Document> updateDocument(@PathVariable String id, @RequestBody Document documentRequest) {
         try {
             // Validate request
@@ -108,6 +110,7 @@ public ResponseEntity<Document> createDocument(@RequestBody Document documentReq
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Void> deleteDocument(@PathVariable String id) {
         Document existingDocument = documentService.getDocumentById(id);
         if (existingDocument != null) {
