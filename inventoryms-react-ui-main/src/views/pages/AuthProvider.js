@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import axiosInstance from '../../axiosConfig';
 
 const AuthContext = createContext();
@@ -10,7 +10,7 @@ const AuthProvider = ({ children }) => {
             return storedUser ? JSON.parse(storedUser) : null;
         } catch (error) {
             console.error('Failed to parse user data:', error);
-            localStorage.removeItem('user');
+            clearAuthData();
             return null;
         }
     };
@@ -21,8 +21,41 @@ const AuthProvider = ({ children }) => {
         return localStorage.getItem('isAuthenticated') === 'true';
     });
 
+    // Clear all authentication data
+    const clearAuthData = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('isAuthenticated');
+        localStorage.removeItem('user');
+        setUser(null);
+        setToken('');
+        setIsAuthenticated(false);
+    };
+
+    // Validate token on initial load
+    useEffect(() => {
+        const validateToken = async () => {
+            const storedToken = localStorage.getItem('token');
+            if (storedToken) {
+                try {
+                    await axiosInstance.get('/validate-token', {
+                        headers: { Authorization: `Bearer ${storedToken}` }
+                    });
+                    // Token is valid, maintain current state
+                } catch (err) {
+                    console.log('Token validation failed, clearing auth data');
+                    clearAuthData();
+                }
+            }
+        };
+        
+        validateToken();
+    }, []);
+
     const loginAction = async (data) => {
         try {
+            // Clear existing credentials before new login attempt
+            clearAuthData();
+            
             console.log('Login request payload:', data);
             const response = await axiosInstance.post('/login', data, {
                 headers: {
@@ -60,7 +93,24 @@ const AuthProvider = ({ children }) => {
             }
             throw new Error(response.data?.error || 'Login failed');
         } catch (err) {
-            const errorMsg = err.response?.data?.error || err.message || 'Network Error. Please check your connection or server status.';
+            // Clear auth data on login failure
+            clearAuthData();
+            
+            let errorMsg = 'Network Error. Please check your connection or server status.';
+            
+            if (err.response) {
+                // Server responded with error status
+                errorMsg = err.response.data?.error || 
+                          err.response.data?.message || 
+                          `Server responded with ${err.response.status}`;
+            } else if (err.request) {
+                // Request was made but no response received
+                errorMsg = 'No response from server. Please try again.';
+            } else {
+                // Something happened in setting up the request
+                errorMsg = err.message || 'Login failed. Please try again.';
+            }
+
             console.error('Login error details:', {
                 error: err,
                 response: err.response,
@@ -79,12 +129,7 @@ const AuthProvider = ({ children }) => {
         } catch (err) {
             console.error('Logout error:', err);
         }
-        localStorage.removeItem('token');
-        localStorage.removeItem('isAuthenticated');
-        localStorage.removeItem('user');
-        setUser(null);
-        setToken('');
-        setIsAuthenticated(false);
+        clearAuthData();
     };
 
     return (
@@ -95,6 +140,7 @@ const AuthProvider = ({ children }) => {
             roles: user?.roles || [],
             loginAction,
             logOut,
+            clearAuthData, // Expose clear function if needed
         }}>
             {children}
         </AuthContext.Provider>
@@ -102,6 +148,7 @@ const AuthProvider = ({ children }) => {
 };
 
 export default AuthProvider;
+
 export const useAuth = () => {
     return useContext(AuthContext);
 };

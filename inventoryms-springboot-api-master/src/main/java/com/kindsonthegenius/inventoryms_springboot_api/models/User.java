@@ -33,7 +33,7 @@ public class User implements Serializable {
     private static final long serialVersionUID = 1671417246199538663L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "native")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @GenericGenerator(name = "native", strategy = "native")
     private Long id;
 

@@ -16,7 +16,7 @@ const AuthProvider = ({ children }) => {
 
   const loginAction = async ({ username, password }) => {
     try {
-      const response = await axios.post('http://localhost:8080/api/v1/login', {
+      const response = await axios.post('http://localhost:8080/login', {
         username,
         password,
       });

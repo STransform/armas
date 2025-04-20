@@ -39,7 +39,7 @@ const Login = () => {
       if (roles.includes('ADMIN')) {
         navigate('/buttons/users'); // Redirect ADMIN to admin area
       } else if (roles.includes('USER')) {
-        navigate('/theme/colors'); // Redirect USER to user area
+        navigate('/buttons/charts/'); // Redirect USER to user area
       } else {
         navigate('/dashboard'); // Fallback
       }
