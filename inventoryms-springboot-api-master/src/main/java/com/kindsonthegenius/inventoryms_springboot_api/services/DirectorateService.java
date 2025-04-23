@@ -11,24 +11,19 @@ import java.util.List;
 public class DirectorateService {
 
     private final DirectorateRepository directorateRepository;
-
     @Autowired
     public DirectorateService(DirectorateRepository directorateRepository) {
         this.directorateRepository = directorateRepository;
     }
-
     public List<Directorate> getAllDirectorates() {
         return directorateRepository.findAll();
     }
-
     public Directorate getDirectorateById(String directoratename) {
         return directorateRepository.findById(directoratename).orElse(null);
     }
-
     public Directorate save(Directorate directorate) {
         return directorateRepository.save(directorate);
     }
-
     public void deleteDirectorate(String directoratename) {
         directorateRepository.deleteById(directoratename);
     }

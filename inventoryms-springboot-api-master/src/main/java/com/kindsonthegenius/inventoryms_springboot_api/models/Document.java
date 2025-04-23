@@ -6,8 +6,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+import com.fasterxml.jackson.annotation.JsonBackReference;
 @Entity
 @Data
 @AllArgsConstructor
@@ -16,56 +15,35 @@ public class Document {
 
     @Id
     private String id;
-
     private String reportype;
 
-    @ManyToOne
-    @JoinColumn(name = "directoratename") // This maps to the foreign key column
+    @ManyToOne(fetch = FetchType.LAZY) // Ensure directorate is always fetched
+    @JoinColumn(name = "directoratename") // Foreign key column in document table
+    @JsonBackReference // Prevents infinite recursion in JSON
     private Directorate directorate;
-
-    @Transient // Not persisted in the database, derived from directorate
+     @Transient
     private String directoratename;
 
-    @PostLoad // Populate directorname after loading from DB
-    public void populateDirectorname() {
-        if (directorate != null) {
-            this.directoratename = directorate.getDirectoratename();
-        }
+     // Populate directoratename in getter
+    public String getDirectoratename() {
+        return directorate != null ? directorate.getDirectoratename() : directoratename;
+    }
+
+    // Set directoratename for deserialization
+    public void setDirectoratename(String directoratename) {
+        this.directoratename = directoratename;
     }
 
     // Getters and setters
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getReportype() {
-        return reportype;
-    }
-
-    public void setReportype(String reportype) {
-        this.reportype = reportype;
-    }
-
-    public Directorate getDirectorate() {
-        return directorate;
-    }
-
-    public void setDirectorate(Directorate directorate) {
-        this.directorate = directorate;
-        if (directorate != null) {
-            this.directoratename = directorate.getDirectoratename();
-        }
-    }
-
-    public String getdirectoratename() {
-        return directoratename;
-    }
-
-    public void setdirectoratename(String directoratename) {
-        this.directoratename = directoratename;
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getReportype() { return reportype; }
+    public void setReportype(String reportype) { this.reportype = reportype; }
+    public Directorate getDirectorate() { return directorate; }
+    public void setDirectorate(Directorate directorate) { this.directorate = directorate; }
+    //generate tostring
+    @Override
+    public String toString() {
+        return "Document [id=" + id + ", reportype=" + reportype + ", directorate=" + directorate + "]";
     }
 }
