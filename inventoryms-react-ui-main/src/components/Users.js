@@ -82,8 +82,13 @@ export default function User() {
 
     const handleOpenEdit = (user) => {
         setCurrentUser({
-            id: user.id, firstName: user.firstName, lastName: user.lastName, username: user.username, password: '',
-            organizationId: user.organization?.id || '', directorateId: user.directorate?.id || ''
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            username: user.username,
+            password: '',
+            organizationId: user.organization?.id || '',
+            directorateId: user.directorate?.id || ''
         });
         setFormMode('edit');
         setOpenAddEdit(true);
@@ -113,9 +118,9 @@ export default function User() {
                 username: currentUser.username,
                 password: currentUser.password,
                 confirmPassword: currentUser.password,
-                role: "USER",
-                organization: currentUser.organizationId ? { id: currentUser.organizationId } : null,
-                directorate: currentUser.directorateId ? { id: currentUser.directorateId } : null
+                organizationId: currentUser.organizationId || null,
+                directorateId: currentUser.directorateId || null,
+                role: "USER"
             };
             const response = await axiosInstance.post('/users', payload);
             const fullUser = await axiosInstance.get(`/users/${response.data.id}`);
@@ -126,7 +131,7 @@ export default function User() {
             setSnackbarOpen(true);
             handleCloseAddEdit();
         } catch (error) {
-            setSnackbarMessage('Error adding user: ' + (error.response?.data?.message || error.message));
+            setSnackbarMessage('Error adding user: ' + (error.response?.data || error.message));
             setSnackbarSeverity('error');
             setSnackbarOpen(true);
         }
