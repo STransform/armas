@@ -1,7 +1,12 @@
 package com.kindsonthegenius.inventoryms_springboot_api.controllers;
 
+import com.kindsonthegenius.inventoryms_springboot_api.dto.UserRequest;
 import com.kindsonthegenius.inventoryms_springboot_api.exception.UserAlreadyExistException;
+import com.kindsonthegenius.inventoryms_springboot_api.models.Directorate;
+import com.kindsonthegenius.inventoryms_springboot_api.models.Organization;
 import com.kindsonthegenius.inventoryms_springboot_api.models.User;
+import com.kindsonthegenius.inventoryms_springboot_api.repositories.DirectorateRepository;
+import com.kindsonthegenius.inventoryms_springboot_api.repositories.OrganizationRepository;
 import com.kindsonthegenius.inventoryms_springboot_api.services.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,10 +28,17 @@ public class UserController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
     private final UserService userService;
+    
+    @Autowired
+     private OrganizationRepository organizationRepository;
 
     @Autowired
-    public UserController(UserService userService) {
+    private DirectorateRepository directorateRepository;
+    @Autowired
+    public UserController(UserService userService,OrganizationRepository organizationRepository,DirectorateRepository directorateRepository) {
         this.userService = userService;
+        this.directorateRepository= directorateRepository;
+        this.organizationRepository= organizationRepository;
     }
 
     @GetMapping
@@ -41,39 +53,54 @@ public class UserController {
         return user != null ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
     }
 
-     // Removed @PreAuthorize to allow unauthenticated registration
-     @PostMapping
-     @PreAuthorize("hasAuthority('ADMIN')")
-     public ResponseEntity<?> createUser(@RequestBody Map<String, Object> requestBody) {
-         String username = (String) requestBody.get("username");
-         String password = (String) requestBody.get("password");
-         logger.info("Creating user: {}, password: {}", username, password);
-         if ("admin".equals(password)) {
-             logger.warn("Attempt to use restricted password for user: {}", username);
-             return ResponseEntity.badRequest().body("Invalid password");
-         }
-         try {
-             User user = new User();
-             user.setFirstName((String) requestBody.get("firstName"));
-             user.setLastName((String) requestBody.get("lastName"));
-             user.setUsername(username);
-             user.setPassword(password);
-             user.setConfirmPassword(password);
-             String role = (String) requestBody.get("role");
-             if (role == null || (!role.equals("ADMIN") && !role.equals("USER"))) {
-                 role = "USER"; // Default to USER if role is missing or invalid
-             }
-             User registeredUser = userService.register(user, role);
-             logger.info("User registered successfully: {}", registeredUser.getUsername());
-             return ResponseEntity.status(201).body(registeredUser);
-         } catch (UserAlreadyExistException e) {
-             logger.warn("User registration failed: {}", e.getMessage());
-             return ResponseEntity.status(409).body("User already exists: " + e.getMessage());
-         } catch (Exception e) {
-             logger.error("Unexpected error during user registration", e);
-             return ResponseEntity.status(500).body("Failed to register user: " + e.getMessage());
-         }
-     }
+@PostMapping
+@PreAuthorize("hasAuthority('ADMIN')")
+public ResponseEntity<?> createUser(@RequestBody UserRequest userRequest) {
+    logger.info("Creating user: {}, password: {}", userRequest.getUsername(), userRequest.getPassword());
+    if ("admin".equals(userRequest.getPassword())) {
+        logger.warn("Attempt to use restricted password for user: {}", userRequest.getUsername());
+        return ResponseEntity.badRequest().body("Invalid password");
+    }
+    try {
+        User user = new User();
+        user.setFirstName(userRequest.getFirstName());
+        user.setLastName(userRequest.getLastName());
+        user.setUsername(userRequest.getUsername());
+        user.setPassword(userRequest.getPassword());
+        user.setConfirmPassword(userRequest.getConfirmPassword());
+
+        // Handle organization
+        if (userRequest.getOrganizationId() != null && !userRequest.getOrganizationId().isBlank()) {
+            Organization org = organizationRepository.findById(userRequest.getOrganizationId())
+                    .orElseThrow(() -> new IllegalArgumentException("Organization not found: " + userRequest.getOrganizationId()));
+            user.setOrganization(org);
+        }
+
+        // Handle directorate
+        if (userRequest.getDirectorateId() != null && !userRequest.getDirectorateId().isBlank()) {
+            Directorate dir = directorateRepository.findById(userRequest.getDirectorateId())
+                    .orElseThrow(() -> new IllegalArgumentException("Directorate not found: " + userRequest.getDirectorateId()));
+            user.setDirectorate(dir);
+        }
+
+        String role = userRequest.getRole();
+        if (role == null || (!role.equals("ADMIN") && !role.equals("USER"))) {
+            role = "USER";
+        }
+        User registeredUser = userService.register(user, role);
+        logger.info("User registered successfully: {}", registeredUser.getUsername());
+        return ResponseEntity.status(201).body(registeredUser);
+    } catch (UserAlreadyExistException e) {
+        logger.warn("User registration failed: {}", e.getMessage());
+        return ResponseEntity.status(409).body("User already exists: " + e.getMessage());
+    } catch (IllegalArgumentException e) {
+        logger.warn("Invalid request: {}", e.getMessage());
+        return ResponseEntity.badRequest().body(e.getMessage());
+    } catch (Exception e) {
+        logger.error("Unexpected error during user registration", e);
+        return ResponseEntity.status(500).body("Failed to register user: " + e.getMessage());
+    }
+}
     @PostMapping("/{userId}/roles/{roleId}")
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<User> assignRoleToUser(@PathVariable Long userId, @PathVariable Long roleId) {
