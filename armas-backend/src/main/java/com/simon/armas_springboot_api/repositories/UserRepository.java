@@ -16,5 +16,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     
     @Query("SELECT u FROM User u JOIN FETCH u.organization JOIN FETCH u.directorate")
     List<User> findAllWithOrganizationsAndDirectorates();
-
+    @Query("SELECT u FROM User u JOIN FETCH u.roles")
+    List<User> findAll();
 }

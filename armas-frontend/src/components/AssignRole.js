@@ -84,12 +84,9 @@ export default function AssignRole() {
         if (!selectedUser || !selectedRoleId) return;
         try {
             console.log(`Assigning role ${selectedRoleId} to user ${selectedUser.id}`);
-            await axiosInstance.post(`/users/${selectedUser.id}/roles/${selectedRoleId}`);
-            setUsers(prev => prev.map(u => 
-                u.id === selectedUser.id 
-                    ? { ...u, roles: [...(u.roles || []), roles.find(r => r.id === parseInt(selectedRoleId))] } 
-                    : u
-            ));
+            const response = await axiosInstance.post(`/roles/${selectedRoleId}/assign/user/${selectedUser.id}`);
+            const updatedUser = response.data; // Backend returns UserDTO
+            setUsers(prev => prev.map(u => (u.id === updatedUser.id ? updatedUser : u)));
             setSnackbarMessage(`Role assigned to ${selectedUser.username} successfully!`);
             setSnackbarSeverity('success');
             setSnackbarOpen(true);
@@ -101,6 +98,8 @@ export default function AssignRole() {
             setSnackbarOpen(true);
         }
     };
+    
+    
 
     console.log("Rendering AssignRole component, users:", users, "roles:", roles);
 
@@ -126,26 +125,26 @@ export default function AssignRole() {
                                             </TableRow>
                                         </TableHead>
                                         <TableBody>
-                                            {users.map((user, index) => (
-                                                <TableRow key={user.id}>
-                                                    <TableCell>{index + 1}</TableCell>
-                                                    <TableCell>{user.username}</TableCell>
-                                                    <TableCell>
-                                                        {user.roles && user.roles.length > 0 
-                                                            ? user.roles.map(r => r.description).join(', ') 
-                                                            : 'None'}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Button
-                                                            variant="contained"
-                                                            onClick={() => handleOpenAssign(user)}
-                                                        >
-                                                            Assign Role
-                                                        </Button>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
+                                        {users.map((user, index) => (
+                                            <TableRow key={user.id}>
+                                                <TableCell>{index + 1}</TableCell>
+                                                <TableCell>{user.username}</TableCell>
+                                                <TableCell>
+                                                    {user.roles && user.roles.length > 0
+                                                        ? user.roles.map(r => r.description).join(', ')
+                                                        : 'None'}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Button
+                                                        variant="contained"
+                                                        onClick={() => handleOpenAssign(user)}
+                                                    >
+                                                        Assign Role
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
                                     </Table>
                                 ) : (
                                     <div>No users found.</div>

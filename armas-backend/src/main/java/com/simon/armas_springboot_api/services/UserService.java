@@ -24,7 +24,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-
+import com.simon.armas_springboot_api.dto.RoleDTO;
+import com.simon.armas_springboot_api.dto.UserDTO;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -143,13 +144,13 @@ public class UserService {
     }
 
     @Transactional
-    public User assignRoleToUser(Long userId, Long roleId) {
+    public void assignUserRole(Long userId, Long roleId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+            .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new IllegalArgumentException("Role not found: " + roleId));
+            .orElseThrow(() -> new IllegalArgumentException("Role not found: " + roleId));
         user.getRoles().add(role);
-        return userRepository.save(user);
+        userRepository.save(user);
     }
 
     public User save(User user) {
@@ -188,12 +189,38 @@ public class UserService {
         return register(user, "USER");
     }
 
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserDTO> getAllUsers() {
+        return userRepository.findAll().stream()
+            .map(this::convertToDTO)
+            .collect(Collectors.toList());
     }
 
-    public User getUserById(Long id) {
-        return userRepository.findById(id).orElse(null);
+    public UserDTO getUserById(Long id) {
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("User not found: " + id));
+        return convertToDTO(user);
+    }
+    public UserDTO convertToDTO(User user) {
+        UserDTO dto = new UserDTO();
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setFirstName(user.getFirstName());
+        dto.setLastName(user.getLastName());
+        // Adjust based on actual Organization and Directorate fields
+        dto.setOrgname(user.getOrganization() != null ? user.getOrganization().getOrgname() : null);
+        dto.setDirectoratename(user.getDirectorate() != null ? user.getDirectorate().getDirectoratename() : null);
+        dto.setEnabled(user.isEnabled());
+        Set<RoleDTO> roleDTOs = user.getRoles().stream()
+            .map(role -> {
+                RoleDTO roleDTO = new RoleDTO();
+                roleDTO.setId(role.getId());
+                roleDTO.setDescription(role.getDescription());
+                roleDTO.setDetails(role.getDetails());
+                return roleDTO;
+            })
+            .collect(Collectors.toSet());
+        dto.setRoles(roleDTOs);
+        return dto;
     }
 
     public void deleteUser(Long id) {
