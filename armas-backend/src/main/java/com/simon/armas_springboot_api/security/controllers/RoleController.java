@@ -1,6 +1,6 @@
 package com.simon.armas_springboot_api.security.controllers;
 
-import com.simon.armas_springboot_api.models.User;
+import com.simon.armas_springboot_api.dto.UserDTO;
 import com.simon.armas_springboot_api.security.models.Privilege;
 import com.simon.armas_springboot_api.security.repositories.PrivilegeRepository;
 import com.simon.armas_springboot_api.security.services.RoleService;
@@ -10,8 +10,6 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.parameters.P;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -60,16 +58,17 @@ public class RoleController {
 
     @PostMapping("/{roleId}/assign/user/{userId}")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<User> assignUserRole(@PathVariable("roleId") Long roleId, @PathVariable("userId") Long userId) {
+    public ResponseEntity<UserDTO> assignUserRole(@PathVariable("roleId") Long roleId, @PathVariable("userId") Long userId) {
         roleService.assignUserRole(userId, roleId);
-        User updatedUser = userService.getUserById(userId);
+        UserDTO updatedUser = userService.getUserById(userId);
         return ResponseEntity.ok(updatedUser);
     }
 
     @DeleteMapping("/{roleId}/unassign/user/{userId}")
-    public ResponseEntity<User> unAssignUserRole(@PathVariable("roleId") Long roleId, @PathVariable("userId") Long userId) {
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<UserDTO> unAssignUserRole(@PathVariable("roleId") Long roleId, @PathVariable("userId") Long userId) {
         roleService.unAssignUserRole(userId, roleId);
-        User updatedUser = userService.getUserById(userId);
+        UserDTO updatedUser = userService.getUserById(userId);
         return ResponseEntity.ok(updatedUser);
     }
 
