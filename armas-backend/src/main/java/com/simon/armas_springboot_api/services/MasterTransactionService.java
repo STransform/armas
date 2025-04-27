@@ -40,50 +40,51 @@ public class MasterTransactionService {
     private DocumentRepository documentRepository;
 
     public MasterTransaction uploadFile(MultipartFile file, String reportstatus, String fiscal_year,
-    String transactiondocumentid, Principal principal) throws IOException {
-    String username = principal.getName();
-    User user = userRepository.findByUsername(username);
-    if (user == null) {
-    throw new IllegalArgumentException("User not found: " + username);
-    }
+            String transactiondocumentid, Principal principal) throws IOException {
+        String username = principal.getName();
+        User user = userRepository.findByUsername(username);
+        if (user == null) {
+            throw new IllegalArgumentException("User not found: " + username);
+        }
 
-    String docname = file.getOriginalFilename();
-    if (docname == null || docname.isEmpty()) {
-    throw new IllegalArgumentException("File name cannot be empty");
-    }
-    if (masterTransactionRepository.existsByDocnameAndUser(docname, user)) {
-    throw new IllegalArgumentException("Document already exists for this user: " + docname);
-    }
+        String docname = file.getOriginalFilename();
+        if (docname == null || docname.isEmpty()) {
+            throw new IllegalArgumentException("File name cannot be empty");
+        }
+        if (masterTransactionRepository.existsByDocnameAndUser(docname, user)) {
+            throw new IllegalArgumentException("Document already exists for this user: " + docname);
+        }
 
-    Document document = documentRepository.findById(transactiondocumentid)
-    .orElseThrow(() -> new IllegalArgumentException("Document not found: " + transactiondocumentid));
+        Document document = documentRepository.findById(transactiondocumentid)
+                .orElseThrow(() -> new IllegalArgumentException("Document not found: " + transactiondocumentid));
 
-    MasterTransaction transaction = new MasterTransaction();
-    transaction.setUser(user);
-    Organization organization = user.getOrganization();
-    if (organization == null || organization.getId() == null) {
-    throw new IllegalArgumentException("User has no associated organization or organization ID is null");
-    }
-    transaction.setOrganization(organization);
-    transaction.setDocname(docname);
-    transaction.setReportstatus(reportstatus);
-    transaction.setFiscal_year(fiscal_year);
-    transaction.setReportcategory(document.getReportype());
-    transaction.setTransactiondocument(document);
+        MasterTransaction transaction = new MasterTransaction();
+        transaction.setUser(user);
+        transaction.setUser2(user); // Set user2 to the authenticated user
+        Organization organization = user.getOrganization();
+        if (organization == null || organization.getId() == null) {
+            throw new IllegalArgumentException("User has no associated organization or organization ID is null");
+        }
+        transaction.setOrganization(organization);
+        transaction.setDocname(docname);
+        transaction.setReportstatus(reportstatus);
+        transaction.setFiscal_year(fiscal_year);
+        transaction.setReportcategory(document.getReportype());
+        transaction.setTransactiondocument(document);
 
-    String filePath = fileStorageService.storeFile(file, transaction, principal);
-    if (filePath == null || filePath.isEmpty()) {
-    throw new IllegalArgumentException("File storage failed: Invalid file path");
-    }
-    transaction.setFilepath(filePath);
+        String filePath = fileStorageService.storeFile(file, transaction, principal);
+        if (filePath == null || filePath.isEmpty()) {
+            throw new IllegalArgumentException("File storage failed: Invalid file path");
+        }
+        transaction.setFilepath(filePath);
 
-    try {
-    return masterTransactionRepository.save(transaction);
-    } catch (DataIntegrityViolationException e) {
-    throw new IllegalArgumentException("Database error: Possible duplicate entry or invalid data. Details: " + e.getMostSpecificCause().getMessage(), e);
-    } catch (Exception e) {
-    throw new IllegalArgumentException("Unexpected error saving transaction: " + e.getMessage(), e);
-    }
+        try {
+            return masterTransactionRepository.save(transaction);
+        } catch (DataIntegrityViolationException e) {
+            throw new IllegalArgumentException("Database error: Possible duplicate entry or invalid data. Details: " + e.getMostSpecificCause().getMessage(), e);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Unexpected error saving transaction: " + e.getMessage(), e);
+        }
     }
 
     public Path getFilePath(Integer id) {

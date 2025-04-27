@@ -28,7 +28,6 @@ export const uploadFile = async (file, reportstatus, fiscal_year, transactiondoc
     }
 };
 
-
 export const getSentReports = async () => {
     const response = await axiosInstance.get('/transactions/sent-reports');
     return response.data;
