@@ -34,7 +34,7 @@ public class UserController {
     private final OrganizationRepository organizationRepository;
     private final DirectorateRepository directorateRepository;
     private final RoleRepository roleRepository;
-
+    
     @Autowired
     public UserController(UserService userService, RoleService roleService,
                           OrganizationRepository organizationRepository,

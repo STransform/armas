@@ -8,13 +8,15 @@ import MasterTransaction from './components/MasterTransaction';
 const User = React.lazy(() => import('./components/Users'));
 import Role from './components/Role';
 import AssignRole from './components/AssignRole';
+
 import RegistrationSuccessful from './views/pages/register/RegistrationSuccessful'
 import VerificationSuccessful from './views/pages/register/VerificationSuccessful'
 
 const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
 const Colors = React.lazy(() => import('./views/theme/colors/Colors'))
 const Typography = React.lazy(() => import('./views/theme/typography/Typography'))
-
+const FileUpload = React.lazy(() => import('./components/FileUpload'));
+const FileDownload = React.lazy(() => import('./components/FileDownload'));
 // Base
 const Accordion = React.lazy(() => import('./views/base/accordion/Accordion'))
 const Breadcrumbs = React.lazy(() => import('./views/base/breadcrumbs/Breadcrumbs'))
@@ -47,6 +49,8 @@ const routes = [
   { path: '/buttons/users', name: 'Users', element: User },
   { path:'/buttons/roles' , name:'Role', element:Role},
   { path:'/buttons/assign' , name:'AssignRole', element:AssignRole},
+  { path: '/buttons/file-upload', name: 'File Upload', element: FileUpload },
+  { path: '/buttons/file-download', name: 'File Download', element: FileDownload },
   { path: '/dashboard', name: 'Dashboard', element: Dashboard },
   { path: '/theme', name: 'Theme', element: Colors, exact: true },
   { path: '/theme/colors', name: 'Colors', element: Colors },
