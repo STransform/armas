@@ -31,7 +31,7 @@
     "@mui/icons-material": "^6.4.10",
     "@mui/material": "^6.4.10",
     "@popperjs/core": "^2.11.8",
-    "axios": "^1.8.4",
+    "axios": "^1.9.0",
     "chart.js": "^4.4.4",
     "classnames": "^2.5.1",
     "core-js": "^3.38.1",

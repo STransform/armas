@@ -11,11 +11,11 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.domain.AuditorAware;
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+// import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @EnableConfigurationProperties(RsaKeyProperties.class)
 @SpringBootApplication
-@EnableJpaAuditing(auditorAwareRef = "auditorAware")
+// @EnableJpaAuditing(auditorAwareRef = "auditorAware")
 @ComponentScan(basePackages = "com.simon.armas_springboot_api")
 public class ArmasSpringbootApiApplication {
 

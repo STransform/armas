@@ -1,55 +1,55 @@
 package com.simon.armas_springboot_api.repositories;
 
+import com.simon.armas_springboot_api.dto.SentReportResponseDTO;
+import com.simon.armas_springboot_api.models.MasterTransaction;
+import com.simon.armas_springboot_api.models.User;
 import org.springframework.data.jpa.repository.JpaRepository;
-// import org.springframework.data.jpa.repository.Modifying;
-// import org.springframework.data.jpa.repository.Query;
-// import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.simon.armas_springboot_api.models.MasterTransaction;
-
-// import java.util.List;
-
+import java.util.List;
 @Repository
 public interface MasterTransactionRepository extends JpaRepository<MasterTransaction, Integer> {
+    @Query("SELECT m FROM MasterTransaction m WHERE CONCAT(m.id, ' ', m.transactiondocument.id) LIKE %:keyword%")
+    List<MasterTransaction> findByTransactionDocumentIdKeyword(@Param("keyword") String keyword);
 
-    // @Query("SELECT p FROM MasterTransaction p WHERE CONCAT(p.id, ' ', p.transactiondocumentid) LIKE %?1%")
-    // List<MasterTransaction> findByDirectorate(String keyword);
+    @Query("SELECT z FROM MasterTransaction z WHERE CONCAT(z.id, ' ', z.createdBy) LIKE %?1%")
+    List<MasterTransaction> findTransactionByUsername(String orgtrans);
 
-    // @Query("SELECT z FROM MasterTransaction z WHERE CONCAT(z.id, ' ', z.createdBy) LIKE %?1%")
-    // List<MasterTransaction> findTransactionByUsername(String orgtrans);
+    @Query("FROM MasterTransaction m WHERE m.user.id = :userid")
+    List<MasterTransaction> findTransactionByOrg(@Param("userid") Long id);
 
-    // @Query("FROM MasterTransaction m WHERE m.user.id = :userid")
-    // List<MasterTransaction> findTransactionByOrg(@Param("userid") Long id);
+    @Query("FROM MasterTransaction m WHERE m.user2.id = :expertid")
+    List<MasterTransaction> findTransactionByExpert(@Param("expertid") Long expertId);
 
-    // @Query("FROM MasterTransaction m WHERE m.assigned_expert_user_id = :expertid")
-    // List<MasterTransaction> findTransactionByExpert(@Param("expertid") Long assigned_expert_user_id);
+    @Modifying
+    @Query("UPDATE MasterTransaction m SET m.reportstatus = :reportstatus WHERE m.id = :id")
+    void updateReportStatus(@Param("id") Integer id, @Param("reportstatus") String reportstatus);
 
-    // @Modifying
-    // @Query("UPDATE MasterTransaction m SET m.reportstatus = :reportstatus WHERE m.id = :id")
-    // void updateReportStatus(@Param("id") Integer id, @Param("reportstatus") String reportstatus);
+    @Query("SELECT m FROM MasterTransaction m WHERE m.organization.id = :orgcode")
+    List<MasterTransaction> findAllTransactionByOrg(@Param("orgcode") String orgcode);
+    @Query("SELECT m FROM MasterTransaction m INNER JOIN m.organization o WHERE o.orgname = ?1")
+    List<MasterTransaction> getOrganizationByOrganizationName(String orgname);
 
-    // @Query("FROM MasterTransaction m WHERE m.theOrg_id = :orgcode")
-    // List<MasterTransaction> findAllTransactionByOrg(@Param("orgcode") String theOrg_id);
+    @Query("FROM MasterTransaction m WHERE m.reportcategory = :reportcategory AND m.transactiondocument.id = :docid AND m.organization.id = :theoid AND m.fiscal_year = :fiscal_year")
+    List<MasterTransaction> findTransactionByDocumentId(@Param("reportcategory") String reportcategory, @Param("docid") String id, @Param("theoid") String oid, @Param("fiscal_year") String fiscal_year);
 
-    // @Query("SELECT m FROM MasterTransaction m INNER JOIN m.organization o WHERE o.orgname = ?1")
-    // List<MasterTransaction> getOrganizationByOrganizationName(String orgname);
+    @Query("FROM MasterTransaction m WHERE m.reportcategory = :reportcategory AND m.transactiondocument.id = :docid AND m.fiscal_year = :fiscal_year")
+    List<MasterTransaction> findNoneSendersByDocumentId(@Param("docid") String id, @Param("fiscal_year") String fiscal_year, @Param("reportcategory") String reportcategory);
 
-    // @Query("FROM MasterTransaction m WHERE m.reportcategory = :reportcategory AND m.transactiondocument.id = :docid AND m.organization.id = :theoid AND m.fiscal_year = :fiscal_year")
-    // List<MasterTransaction> findTransactionByDocumentId(@Param("reportcategory") String reportcategory, @Param("docid") String id, @Param("theoid") String oid, String fiscal_year);
+    @Query("SELECT new com.simon.armas_springboot_api.dto.SentReportResponseDTO(m.id, o.orgname, d.reportype, m.fiscal_year, m.createdDate, m.docname) " +
+           "FROM MasterTransaction m INNER JOIN m.organization o INNER JOIN m.transactiondocument d")
+    List<SentReportResponseDTO> fetchDataInnerJoin();
 
-    // @Query("FROM MasterTransaction m WHERE m.reportcategory = :reportcategory AND m.transactiondocument.id = :docid AND m.fiscal_year = :fiscal_year")
-    // List<MasterTransaction> findNoneSendersByDocumentId(@Param("docid") String id, @Param("fiscal_year") String fiscal_year, @Param("reportcategory") String reportcategory);
+    @Query("SELECT COUNT(DISTINCT mt.organization) FROM MasterTransaction mt WHERE mt.transactiondocument IS NOT NULL")
+    int countDistinctOrganizationsWithReports();
 
-    // @Query("SELECT new mofec.gov.et.dto.SentReportResponseDTO(m.id, o.orgname, d.reportype, m.fiscal_year) " +
-    //        "FROM MasterTransaction m INNER JOIN m.organization o INNER JOIN m.transactiondocument d")
-    // List<SentReportResponseDTO> fetchDataInnerJoin();
+    @Query("SELECT m FROM MasterTransaction m WHERE m.transactiondocument.id = :transactionDocumentId")
+    List<MasterTransaction> findByTransactionDocumentId(@Param("transactionDocumentId") String transactionDocumentId);
 
-    // @Query("SELECT COUNT(DISTINCT mt.organization) FROM MasterTransaction mt WHERE mt.transactiondocument IS NOT NULL")
-    // int countDistinctOrganizationsWithReports();
-
-    // @Query("SELECT m FROM MasterTransaction m WHERE m.transactiondocumentid = :transactiondocumentid")
-    // List<MasterTransaction> findByTransactionDocumentId(@Param("transactiondocumentid") String transactionDocumentId);
-
-    // boolean existsByDocname(String docname);
+    boolean existsByDocname(String docname);
+    boolean existsByDocnameAndUserId(String docname, Long userId);
+    boolean existsByDocnameAndUser(String docname, User user);
 }

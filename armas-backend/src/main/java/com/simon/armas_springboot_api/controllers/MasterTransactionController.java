@@ -1,86 +1,67 @@
 package com.simon.armas_springboot_api.controllers;
 
+import com.simon.armas_springboot_api.models.Document;
+import com.simon.armas_springboot_api.models.MasterTransaction;
+import com.simon.armas_springboot_api.repositories.DocumentRepository;
+import com.simon.armas_springboot_api.services.MasterTransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import com.simon.armas_springboot_api.models.MasterTransaction;
-import com.simon.armas_springboot_api.services.FileStorageService;
-import com.simon.armas_springboot_api.services.MasterTransactionService;
+//import SentReportResponseDTO;
+import com.simon.armas_springboot_api.dto.SentReportResponseDTO;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.security.Principal;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/master-transactions")
-@PreAuthorize("hasAuthority('ADMIN')")
+@RequestMapping("/transactions")
 public class MasterTransactionController {
-
+    @Autowired
+    private DocumentRepository documentRepository;
     @Autowired
     private MasterTransactionService masterTransactionService;
 
-    @Autowired
-    private FileStorageService fileStorageService;
-
-    // @GetMapping
-    // public List<MasterTransaction> getAllMasterTransactions(@RequestParam(required = false) String keyword) {
-    //     return masterTransactionService.getMasterTransactions(keyword);
-    // }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<MasterTransaction> getMasterTransactionById(@PathVariable Integer id) {
-        return masterTransactionService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @PostMapping
-    public ResponseEntity<MasterTransaction> createMasterTransaction(
-            @RequestPart("transaction") MasterTransaction transaction,
-            @RequestPart("file") MultipartFile file,
+    @PostMapping("/upload")
+    public ResponseEntity<MasterTransaction> uploadFile(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("reportstatus") String reportstatus,
+            @RequestParam("fiscal_year") String fiscal_year,
+            @RequestParam("transactiondocumentid") String transactiondocumentid,
             Principal principal) throws IOException {
-        // if (masterTransactionService.existsByDocname(file.getOriginalFilename())) {
-        //     return ResponseEntity.status(HttpStatus.CONFLICT).body(null);
-        // }
-        transaction.setDocname(file.getOriginalFilename());
-        transaction.setFilepath(fileStorageService.storeFile(file, transaction, principal));
-        MasterTransaction savedTransaction = masterTransactionService.save(transaction);
-        return ResponseEntity.ok(savedTransaction);
+        MasterTransaction transaction = masterTransactionService.uploadFile(file, reportstatus, fiscal_year, transactiondocumentid, principal);
+        return ResponseEntity.ok(transaction);
     }
+    @GetMapping("/download/{id}")
+    public ResponseEntity<Resource> downloadFile(@PathVariable Integer id) throws IOException {
+        Path filePath = masterTransactionService.getFilePath(id);
+        Resource resource = new UrlResource(filePath.toUri());
 
-    @PutMapping("/{id}")
-    public ResponseEntity<MasterTransaction> updateMasterTransaction(
-            @PathVariable Integer id,
-            @RequestBody MasterTransaction transaction) {
-        if (!masterTransactionService.findById(id).isPresent()) {
+        if (!resource.exists()) {
             return ResponseEntity.notFound().build();
         }
-        transaction.setId(id);
-        MasterTransaction updatedTransaction = masterTransactionService.save(transaction);
-        return ResponseEntity.ok(updatedTransaction);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                .body(resource);
     }
 
-    // @PutMapping("/{id}/status")
-    // public ResponseEntity<Void> updateReportStatus(
-    //         @PathVariable Integer id,
-    //         @RequestParam String reportstatus) {
-    //     if (!masterTransactionService.findById(id).isPresent()) {
-    //         return ResponseEntity.notFound().build();
-    //     }
-    //     masterTransactionService.updateReportStatus(id, reportstatus);
-    //     return ResponseEntity.noContent().build();
-    // }
+    @GetMapping("/sent-reports")
+    public ResponseEntity<List<SentReportResponseDTO>> getSentReports() {
+        return ResponseEntity.ok(masterTransactionService.getSentReportData());
+    }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteMasterTransaction(@PathVariable Integer id) {
-        if (!masterTransactionService.findById(id).isPresent()) {
-            return ResponseEntity.notFound().build();
-        }
-        masterTransactionService.delete(id);
-        return ResponseEntity.noContent().build();
+    @GetMapping("/listdocuments")
+    public ResponseEntity<List<Document>> getAllDocuments() {
+        List<Document> documents = documentRepository.findAll();
+        System.out.println("Fetched documents: " + documents);
+        return ResponseEntity.ok(documents);
     }
 }

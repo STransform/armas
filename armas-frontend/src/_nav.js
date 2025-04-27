@@ -12,6 +12,8 @@ import {
   cilPuzzle,
   cilSpeedometer,
   cilStar,
+  cilCloudUpload,
+  cilCloudDownload,
 } from '@coreui/icons';
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react';
 import { useAuth } from './views/pages/AuthProvider';
@@ -183,6 +185,19 @@ const Nav = () => {
           name: 'AssignRole',
           to: '/buttons/assign',
         },
+        {
+          component: CNavItem,
+          name: 'File Upload',
+          to: '/buttons/file-upload',
+          icon: <CIcon icon={cilCloudUpload} customClassName="nav-icon" />,
+        },
+        {
+          component: CNavItem,
+          name: 'File Download',
+          to: '/buttons/file-download',
+          icon: <CIcon icon={cilCloudDownload} customClassName="nav-icon" />,
+        },
+
       ],
     },
   ];
