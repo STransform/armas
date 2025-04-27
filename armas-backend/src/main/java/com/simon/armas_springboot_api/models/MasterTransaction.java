@@ -142,7 +142,5 @@ public class MasterTransaction extends Auditable<String> {
     }
     public void setTransactiondocument(Document transactiondocument) {
         this.transactiondocument = transactiondocument;
-    }
-    
-    
+    } 
 }
