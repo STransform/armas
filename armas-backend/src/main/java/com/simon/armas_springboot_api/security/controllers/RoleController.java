@@ -56,10 +56,10 @@ public class RoleController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/{roleId}/assign/user/{userId}")
+    @PostMapping("/assign/user/{userId}")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<UserDTO> assignUserRole(@PathVariable("roleId") Long roleId, @PathVariable("userId") Long userId) {
-        roleService.assignUserRole(userId, roleId);
+    public ResponseEntity<UserDTO> assignUserRoles(@PathVariable("userId") Long userId, @RequestBody List<Long> roleIds) {
+        roleService.assignUserRoles(userId, roleIds);
         UserDTO updatedUser = userService.getUserById(userId);
         return ResponseEntity.ok(updatedUser);
     }

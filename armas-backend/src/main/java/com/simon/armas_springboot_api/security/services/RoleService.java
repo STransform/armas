@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -51,15 +52,17 @@ public class RoleService {
     }
 
     @Transactional
-    public void assignUserRole(Long userId, Long roleId) {
+    public void assignUserRoles(Long userId, List<Long> roleIds) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
-        Role role = roleRepository.findById(roleId)
-            .orElseThrow(() -> new IllegalArgumentException("Role not found: " + roleId));
-        user.getRoles().add(role);
+        Set<Role> newRoles = roleIds.stream()
+            .map(roleId -> roleRepository.findById(roleId)
+                .orElseThrow(() -> new IllegalArgumentException("Role not found: " + roleId)))
+            .collect(Collectors.toSet());
+        user.getRoles().clear(); // Remove all existing roles
+        user.getRoles().addAll(newRoles); // Add the new roles
         userRepository.save(user);
     }
-
     @Transactional
     public void unAssignUserRole(Long userId, Long roleId) {
         User user = userRepository.findById(userId)
