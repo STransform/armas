@@ -13,12 +13,10 @@ import {
     Dialog,
     Snackbar,
     Alert,
-    Fade,
     DialogTitle,
     DialogContent,
     DialogActions,
     TableContainer,
-    Box,
     Table,
     TableHead,
     TableRow,
@@ -38,7 +36,7 @@ export default function AssignRole() {
     const [snackbarSeverity, setSnackbarSeverity] = useState('success');
     const [openAssign, setOpenAssign] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
-    const [selectedRoleId, setSelectedRoleId] = useState('');
+    const [selectedRoleIds, setSelectedRoleIds] = useState([]); // Changed to array for multiple roles
 
     useEffect(() => {
         console.log("AssignRole component mounted");
@@ -67,7 +65,7 @@ export default function AssignRole() {
     const handleOpenAssign = (user) => {
         console.log("Opening assign dialog for user:", user);
         setSelectedUser(user);
-        setSelectedRoleId('');
+        setSelectedRoleIds([]); // Reset to empty array
         setOpenAssign(true);
     };
 
@@ -77,17 +75,20 @@ export default function AssignRole() {
     };
 
     const handleRoleChange = (e) => {
-        setSelectedRoleId(e.target.value);
+        const options = e.target.selectedOptions;
+        const values = Array.from(options).map(option => option.value);
+        setSelectedRoleIds(values); // Store selected role IDs as an array
     };
 
     const handleAssignRole = async () => {
-        if (!selectedUser || !selectedRoleId) return;
+        if (!selectedUser || selectedRoleIds.length === 0) return;
         try {
-            console.log(`Assigning role ${selectedRoleId} to user ${selectedUser.id}`);
-            const response = await axiosInstance.post(`/roles/${selectedRoleId}/assign/user/${selectedUser.id}`);
+            console.log(`Assigning roles ${selectedRoleIds} to user ${selectedUser.id}`);
+            const roleIds = selectedRoleIds.map(id => parseInt(id, 10)); // Convert strings to numbers
+            const response = await axiosInstance.post(`/roles/assign/user/${selectedUser.id}`, roleIds);
             const updatedUser = response.data; // Backend returns UserDTO
             setUsers(prev => prev.map(u => (u.id === updatedUser.id ? updatedUser : u)));
-            setSnackbarMessage(`Role assigned to ${selectedUser.username} successfully!`);
+            setSnackbarMessage(`Role(s) assigned to ${selectedUser.username} successfully!`);
             setSnackbarSeverity('success');
             setSnackbarOpen(true);
             handleCloseAssign();
@@ -98,8 +99,6 @@ export default function AssignRole() {
             setSnackbarOpen(true);
         }
     };
-    
-    
 
     console.log("Rendering AssignRole component, users:", users, "roles:", roles);
 
@@ -125,26 +124,26 @@ export default function AssignRole() {
                                             </TableRow>
                                         </TableHead>
                                         <TableBody>
-                                        {users.map((user, index) => (
-                                            <TableRow key={user.id}>
-                                                <TableCell>{index + 1}</TableCell>
-                                                <TableCell>{user.username}</TableCell>
-                                                <TableCell>
-                                                    {user.roles && user.roles.length > 0
-                                                        ? user.roles.map(r => r.description).join(', ')
-                                                        : 'None'}
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Button
-                                                        variant="contained"
-                                                        onClick={() => handleOpenAssign(user)}
-                                                    >
-                                                        Assign Role
-                                                    </Button>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
+                                            {users.map((user, index) => (
+                                                <TableRow key={user.id}>
+                                                    <TableCell>{index + 1}</TableCell>
+                                                    <TableCell>{user.username}</TableCell>
+                                                    <TableCell>
+                                                        {user.roles && user.roles.length > 0
+                                                            ? user.roles.map(r => r.description).join(', ')
+                                                            : 'None'}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Button
+                                                            variant="contained"
+                                                            onClick={() => handleOpenAssign(user)}
+                                                        >
+                                                            Assign Role
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
                                     </Table>
                                 ) : (
                                     <div>No users found.</div>
@@ -156,17 +155,17 @@ export default function AssignRole() {
             </CRow>
 
             <Dialog open={openAssign} onClose={handleCloseAssign} maxWidth="sm" fullWidth>
-                <DialogTitle>Assign Role to {selectedUser?.username || 'User'}</DialogTitle>
+                <DialogTitle>Assign Role(s) to {selectedUser?.username || 'User'}</DialogTitle>
                 <DialogContent>
                     <CForm className="row g-3">
                         <CCol xs={12}>
-                            <CFormLabel htmlFor="role">Select Role</CFormLabel>
+                            <CFormLabel htmlFor="role">Select Role(s)</CFormLabel>
                             <CFormSelect
                                 id="role"
-                                value={selectedRoleId}
+                                multiple // Enable multiple selections
+                                value={selectedRoleIds}
                                 onChange={handleRoleChange}
                             >
-                                <option value="">Select a Role</option>
                                 {roles.map(role => (
                                     <option key={role.id} value={role.id}>
                                         {role.description}
@@ -178,10 +177,10 @@ export default function AssignRole() {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleCloseAssign}>Cancel</Button>
-                    <Button 
-                        onClick={handleAssignRole} 
-                        variant="contained" 
-                        disabled={!selectedRoleId}
+                    <Button
+                        onClick={handleAssignRole}
+                        variant="contained"
+                        disabled={selectedRoleIds.length === 0} // Disable if no roles selected
                     >
                         Assign
                     </Button>
