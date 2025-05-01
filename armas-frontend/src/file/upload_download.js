@@ -64,15 +64,19 @@ export const getUsersByRole = async (roleName) => {
 
 export const assignAuditor = async (transactionId, auditorUsername) => {
     try {
+        console.log('Calling assignAuditor API: transactionId=', transactionId, ', auditorUsername=', auditorUsername);
         const response = await axiosInstance.post(`/transactions/assign/${transactionId}`, null, {
             params: { auditorUsername }
         });
+        console.log('AssignAuditor response:', response.data);
         return response.data;
     } catch (error) {
         console.error('Error assigning auditor:', error.message, error.response?.status, error.response?.data);
         throw error;
     }
 };
+
+
 
 export const submitFindings = async (transactionId, findings, approverUsername) => {
     try {
@@ -107,10 +111,10 @@ export const rejectReport = async (transactionId, auditorUsername) => {
         throw error;
     }
 };
-
 export const getMyTasks = async () => {
     try {
         const response = await axiosInstance.get('/transactions/tasks');
+        console.log('Tasks fetched from API:', response.data);
         return response.data;
     } catch (error) {
         console.error('Error fetching tasks:', error.message, error.response?.status, error.response?.data);

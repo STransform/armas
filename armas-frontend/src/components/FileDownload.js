@@ -50,15 +50,20 @@ const FileDownload = () => {
         setError('');
         setSuccess('');
         setAuditors([]);
+        setSelectedAuditor('');
         try {
             const auditorsData = await getUsersByRole('SENIOR_AUDITOR');
             console.log('Auditors fetched:', auditorsData);
+            if (auditorsData.length === 0) {
+                setError('No auditors available to assign');
+                return;
+            }
             setAuditors(auditorsData);
             setShowAssignModal(true);
         } catch (err) {
-            const errorMessage = typeof err.response?.data === 'string' ? err.response.data : (err.response?.data?.message || err.message || 'Unknown error');
-            setError(`Failed to load auditors: ${errorMessage} (Status: ${err.response?.status || 'N/A'})`);
-            console.error('Error fetching auditors:', err.response?.status, err.response?.data, err);
+            const errorMessage = err.response?.data?.message || err.message || 'Unknown error';
+            setError(`Failed to load auditors: ${errorMessage}`);
+            console.error('Error fetching auditors:', err);
         }
     };
 
@@ -68,12 +73,12 @@ const FileDownload = () => {
             return;
         }
         try {
+            console.log('Assigning auditor: transactionId=', selectedReport.id, ', auditorUsername=', selectedAuditor);
             await assignAuditor(selectedReport.id, selectedAuditor);
             setSuccess('Auditor assigned successfully');
             setShowAssignModal(false);
             setSelectedAuditor('');
-            // Remove the assigned report from the reports state
-            setReports(reports.filter(report => report.id !== selectedReport.id));
+            await fetchReports(); // Refresh the list to remove the assigned task
             setError('');
         } catch (err) {
             const errorMessage = err.response?.data?.message || err.message || 'Unknown error';

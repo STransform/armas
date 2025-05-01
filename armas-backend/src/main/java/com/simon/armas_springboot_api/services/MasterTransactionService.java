@@ -118,16 +118,8 @@ public class MasterTransactionService {
     }
 
     public List<UserDTO> getUsersByRole(String roleName) {
-        if (roleName == null || roleName.trim().isEmpty()) {
-            System.err.println("Role name is null or empty");
-            throw new IllegalArgumentException("Role name cannot be null or empty");
-        }
         System.out.println("Fetching users for role: " + roleName);
         List<User> users = userRepository.findByRoleName(roleName);
-        if (users == null) {
-            System.out.println("No users found for role: " + roleName);
-            return new ArrayList<>();
-        }
         List<UserDTO> userDTOs = users.stream()
                 .map(user -> new UserDTO(user.getId(), user.getUsername(), user.getFirstName(), user.getLastName()))
                 .collect(Collectors.toList());
@@ -136,20 +128,31 @@ public class MasterTransactionService {
     }
 
     @Transactional
-    public MasterTransaction assignAuditor(Integer transactionId, String auditorUsername) {
-        MasterTransaction transaction = masterTransactionRepository.findById(transactionId)
-                .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + transactionId));
-        User auditor = userRepository.findByUsername(auditorUsername);
-        if (auditor == null) {
-            throw new IllegalArgumentException("Auditor not found: " + auditorUsername);
-        }
-        if (!"Submitted".equals(transaction.getReportstatus())) {
-            throw new IllegalStateException("Can only assign auditors to Submitted reports");
-        }
-        transaction.setUser2(auditor);
-        transaction.setReportstatus("Assigned");
-        return masterTransactionRepository.save(transaction);
+public MasterTransaction assignAuditor(Integer transactionId, String auditorUsername) {
+    System.out.println("Assigning auditor: transactionId=" + transactionId + ", auditorUsername=" + auditorUsername);
+    MasterTransaction transaction = masterTransactionRepository.findById(transactionId)
+            .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + transactionId));
+    User auditor = userRepository.findByUsername(auditorUsername.trim());
+    if (auditor == null) {
+        throw new IllegalArgumentException("Auditor not found: " + auditorUsername);
     }
+    boolean isSeniorAuditor = auditor.getRoles().stream()
+            .anyMatch(role -> "SENIOR_AUDITOR".equals(role.getDescription()));
+    if (!isSeniorAuditor) {
+        throw new IllegalArgumentException("User is not a SENIOR_AUDITOR: " + auditorUsername);
+    }
+    if (!"Submitted".equals(transaction.getReportstatus())) {
+        throw new IllegalStateException("Can only assign auditors to Submitted reports");
+    }
+    transaction.setUser2(auditor);
+    transaction.setReportstatus("Assigned");
+    MasterTransaction savedTransaction = masterTransactionRepository.save(transaction);
+    System.out.println("Transaction updated: id=" + savedTransaction.getId() + 
+                      ", status=" + savedTransaction.getReportstatus() + 
+                      ", assigned_expert_user_id=" + savedTransaction.getUser2().getId());
+    return savedTransaction;
+}
+
 
     @Transactional
     public MasterTransaction submitFindings(Integer transactionId, String findings, String approverUsername,
@@ -212,15 +215,22 @@ public class MasterTransactionService {
     public List<MasterTransaction> getTasks(String username, String role) {
         User user = userRepository.findByUsername(username);
         if (user == null) {
+            System.err.println("User not found: " + username);
             throw new IllegalArgumentException("User not found: " + username);
         }
+        System.out.println("Fetching tasks for user: " + username + ", role: " + role + ", userId: " + user.getId());
+        List<MasterTransaction> tasks;
         if ("SENIOR_AUDITOR".equals(role)) {
-            return masterTransactionRepository.findByUserAndStatuses(user.getId(),
-                    Arrays.asList("Assigned", "Rejected"));
+            tasks = masterTransactionRepository.findByUserAndStatuses(user.getId(), Arrays.asList("Assigned", "Rejected"));
         } else if ("APPROVER".equals(role)) {
-            return masterTransactionRepository.findByUserAndStatuses(user.getId(), Arrays.asList("Under Review"));
+            tasks = masterTransactionRepository.findByUserAndStatuses(user.getId(), Arrays.asList("Under Review"));
+        } else {
+            tasks = new ArrayList<>();
         }
-        return new ArrayList<>();
+        System.out.println("Tasks fetched: " + tasks);
+        return tasks;
     }
+
+
     
 }

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { getMyTasks, downloadFile, submitFindings, approveReport, rejectReport, getUsersByRole } from '../file/upload_download';
 import { format } from 'date-fns';
+import { useAuth } from '../views/pages/AuthProvider';
 
 const AuditorTasks = () => {
+    const { roles } = useAuth();
     const [tasks, setTasks] = useState([]);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -20,15 +22,21 @@ const AuditorTasks = () => {
             const data = await getMyTasks();
             console.log('Tasks fetched:', data);
             setTasks(data);
+            setError('');
+            if (data.length === 0) {
+                console.warn('No tasks returned for user. Check role and database.');
+            }
         } catch (err) {
-            setError('Failed to load tasks: ' + (err.response?.data?.message || err.message));
+            const errorMessage = err.response?.data?.message || err.message || 'Unknown error';
+            setError(`Failed to load tasks: ${errorMessage}`);
             console.error('Fetch error:', err.response?.data || err);
         }
     };
 
     useEffect(() => {
+        console.log('Current roles:', roles);
         fetchMyTasks();
-    }, []);
+    }, [roles]);
 
     const handleDownload = async (id, docname) => {
         try {
@@ -40,6 +48,7 @@ const AuditorTasks = () => {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            setError('');
         } catch (err) {
             setError('Failed to download file: ' + (err.response?.data?.message || err.message));
             console.error('Download error:', err.response?.data || err);
@@ -120,6 +129,9 @@ const AuditorTasks = () => {
         }
     };
 
+    const isSeniorAuditor = roles.includes('SENIOR_AUDITOR');
+    const isApprover = roles.includes('APPROVER');
+
     return (
         <div className="container mt-5">
             <h2>My Assigned Tasks</h2>
@@ -157,12 +169,12 @@ const AuditorTasks = () => {
                                     <button className="btn btn-primary mr-2" onClick={() => handleDownload(task.id, task.docname)}>
                                         Download
                                     </button>
-                                    {(task.reportstatus === 'Assigned' || task.reportstatus === 'Rejected') && (
+                                    {(isSeniorAuditor && (task.reportstatus === 'Assigned' || task.reportstatus === 'Rejected')) && (
                                         <button className="btn btn-secondary" onClick={() => handleSubmitFindings(task)}>
                                             Submit Findings
                                         </button>
                                     )}
-                                    {task.reportstatus === 'Under Review' && (
+                                    {(isApprover && task.reportstatus === 'Under Review') && (
                                         <>
                                             <button className="btn btn-success mr-2" onClick={() => handleApprove(task.id)}>
                                                 Approve
