@@ -17,6 +17,7 @@ const Colors = React.lazy(() => import('./views/theme/colors/Colors'))
 const Typography = React.lazy(() => import('./views/theme/typography/Typography'))
 const FileUpload = React.lazy(() => import('./components/FileUpload'));
 const FileDownload = React.lazy(() => import('./components/FileDownload'));
+const AuditorTasks = React.lazy(() => import('./components/AuditorTasks'))
 // Base
 const Accordion = React.lazy(() => import('./views/base/accordion/Accordion'))
 const Breadcrumbs = React.lazy(() => import('./views/base/breadcrumbs/Breadcrumbs'))
@@ -51,6 +52,7 @@ const routes = [
   { path:'/buttons/assign' , name:'AssignRole', element:AssignRole},
   { path: '/buttons/file-upload', name: 'File Upload', element: FileUpload },
   { path: '/buttons/file-download', name: 'File Download', element: FileDownload },
+  { path: '/transactions/auditor-tasks', name: 'Auditor tasks', element: AuditorTasks },
   { path: '/dashboard', name: 'Dashboard', element: Dashboard },
   { path: '/theme', name: 'Theme', element: Colors, exact: true },
   { path: '/theme/colors', name: 'Colors', element: Colors },

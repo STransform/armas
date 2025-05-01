@@ -3,7 +3,7 @@ import { getDocuments, uploadFile } from '../file/upload_download';
 
 const FileUpload = ({ onUploadSuccess }) => {
     const [formData, setFormData] = useState({
-        reportstatus: 'Report',
+        response_needed: 'Report',
         fiscal_year: '',
         transactiondocumentid: '',
     });
@@ -24,7 +24,7 @@ const FileUpload = ({ onUploadSuccess }) => {
                     setFormData(prev => ({ ...prev, transactiondocumentid: docs[0].id }));
                 }
             } catch (err) {
-                console.error('Failed to load documents:', err.message, err.response?.data);
+                console.error('Failed to load documents:', err.message, err.response?.status, err.response?.data);
                 setError(`Failed to load report types: ${err.message}`);
             }
         };
@@ -48,7 +48,7 @@ const FileUpload = ({ onUploadSuccess }) => {
         }
 
         try {
-            await uploadFile(file, formData.reportstatus, formData.fiscal_year, formData.transactiondocumentid);
+            await uploadFile(file, formData.response_needed, formData.fiscal_year, formData.transactiondocumentid);
             setSuccess('File uploaded successfully');
             setFile(null);
             e.target.reset();
@@ -67,7 +67,7 @@ const FileUpload = ({ onUploadSuccess }) => {
             <form onSubmit={handleSubmit}>
                 <div className="mb-3">
                     <label className="form-label">Type</label>
-                    <select className="form-select" name="reportstatus" value={formData.reportstatus} onChange={handleChange}>
+                    <select className="form-select" name="response_needed" value={formData.response_needed} onChange={handleChange}>
                         <option value="Report">Report</option>
                         <option value="Feedback">Feedback</option>
                     </select>

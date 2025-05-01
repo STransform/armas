@@ -9,13 +9,18 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.repository.query.Param;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
     User findByUsername(String username);
-    
+
     @Query("SELECT u FROM User u JOIN FETCH u.organization JOIN FETCH u.directorate")
     List<User> findAllWithOrganizationsAndDirectorates();
+
     @Query("SELECT u FROM User u JOIN FETCH u.roles")
     List<User> findAll();
+
+    @Query("SELECT u FROM User u JOIN u.roles r WHERE r.description = :roleName")
+    List<User> findByRoleName(@Param("roleName") String roleName);
 }

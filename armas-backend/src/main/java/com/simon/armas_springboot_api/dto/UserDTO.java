@@ -7,6 +7,10 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+//import hashset
+import java.util.HashSet;
+import jakarta.persistence.Column;
+
 
 import jakarta.persistence.Transient;
 import jakarta.persistence.Column;
@@ -28,7 +32,19 @@ public class UserDTO implements Serializable {
     private String directoratename;
     private boolean enabled;
     private Set<RoleDTO> roles;
+// Constructors
+public UserDTO() {}
 
+public UserDTO(Long id, String username, String firstName, String lastName) {
+    this.id = id;
+    this.username = username;
+    this.firstName = firstName;
+    this.lastName = lastName;
+    this.orgname = null;
+    this.directoratename = null;
+    this.enabled = false;
+    this.roles = new HashSet<>();
+}
     // Getters and setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

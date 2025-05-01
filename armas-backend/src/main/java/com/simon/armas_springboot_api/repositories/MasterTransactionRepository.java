@@ -24,12 +24,9 @@ public interface MasterTransactionRepository extends JpaRepository<MasterTransac
     @Query("FROM MasterTransaction m WHERE m.user2.id = :expertid")
     List<MasterTransaction> findTransactionByExpert(@Param("expertid") Long expertId);
 
-    @Modifying
-    @Query("UPDATE MasterTransaction m SET m.reportstatus = :reportstatus WHERE m.id = :id")
-    void updateReportStatus(@Param("id") Integer id, @Param("reportstatus") String reportstatus);
-
     @Query("SELECT m FROM MasterTransaction m WHERE m.organization.id = :orgcode")
     List<MasterTransaction> findAllTransactionByOrg(@Param("orgcode") String orgcode);
+
     @Query("SELECT m FROM MasterTransaction m INNER JOIN m.organization o WHERE o.orgname = ?1")
     List<MasterTransaction> getOrganizationByOrganizationName(String orgname);
 
@@ -39,15 +36,21 @@ public interface MasterTransactionRepository extends JpaRepository<MasterTransac
     @Query("FROM MasterTransaction m WHERE m.reportcategory = :reportcategory AND m.transactiondocument.id = :docid AND m.fiscal_year = :fiscal_year")
     List<MasterTransaction> findNoneSendersByDocumentId(@Param("docid") String id, @Param("fiscal_year") String fiscal_year, @Param("reportcategory") String reportcategory);
 
-    @Query("SELECT new com.simon.armas_springboot_api.dto.SentReportResponseDTO(m.id, o.orgname, d.reportype, m.fiscal_year, m.createdDate, m.docname) " +
-           "FROM MasterTransaction m INNER JOIN m.organization o INNER JOIN m.transactiondocument d")
-    List<SentReportResponseDTO> fetchDataInnerJoin();
+    @Query("SELECT new com.simon.armas_springboot_api.dto.SentReportResponseDTO(m.id, o.orgname, d.reportype, m.fiscal_year, m.createdDate, m.docname, m.reportstatus) " +
+           "FROM MasterTransaction m INNER JOIN m.organization o INNER JOIN m.transactiondocument d WHERE m.reportstatus IN :statuses")
+    List<SentReportResponseDTO> fetchDataByStatuses(@Param("statuses") List<String> statuses);
 
     @Query("SELECT COUNT(DISTINCT mt.organization) FROM MasterTransaction mt WHERE mt.transactiondocument IS NOT NULL")
     int countDistinctOrganizationsWithReports();
 
     @Query("SELECT m FROM MasterTransaction m WHERE m.transactiondocument.id = :transactionDocumentId")
     List<MasterTransaction> findByTransactionDocumentId(@Param("transactionDocumentId") String transactionDocumentId);
+
+    @Query("SELECT m FROM MasterTransaction m WHERE m.reportstatus = :status")
+    List<MasterTransaction> findByReportStatus(@Param("status") String status);
+
+    @Query("SELECT m FROM MasterTransaction m WHERE m.user2.id = :userId AND m.reportstatus IN :statuses")
+    List<MasterTransaction> findByUserAndStatuses(@Param("userId") Long userId, @Param("statuses") List<String> statuses);
 
     boolean existsByDocname(String docname);
     boolean existsByDocnameAndUserId(String docname, Long userId);
