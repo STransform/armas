@@ -14,6 +14,7 @@ import {
   cilStar,
   cilCloudUpload,
   cilCloudDownload,
+  cilTask,
 } from '@coreui/icons';
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react';
 import { useAuth } from './views/pages/AuthProvider';
@@ -25,6 +26,9 @@ const Nav = () => {
   const hasRole = (role) => Array.isArray(roles) && roles.includes(role);
   const isAdmin = hasRole('ADMIN');
   const isUser = hasRole('USER');
+  const isSeniorAuditor = hasRole('SENIOR_AUDITOR');
+  const isArchiver = hasRole('ARCHIVER');
+  const isApprover = hasRole('APPROVER');
 
   const commonItems = [
     {
@@ -197,7 +201,36 @@ const Nav = () => {
           to: '/buttons/file-download',
           icon: <CIcon icon={cilCloudDownload} customClassName="nav-icon" />,
         },
+      ],
+    },
+  ];
 
+  const transactionItems = [
+    {
+      component: CNavGroup,
+      name: 'Transactions',
+      icon: <CIcon icon={cilTask} customClassName="nav-icon" />,
+      items: [
+        ...(isArchiver
+          ? [
+              {
+                component: CNavItem,
+                name: 'File Download',
+                to: '/transactions/file-download',
+                icon: <CIcon icon={cilCloudDownload} customClassName="nav-icon" />,
+              },
+            ]
+          : []),
+        ...((isSeniorAuditor || isApprover)
+          ? [
+              {
+                component: CNavItem,
+                name: 'Auditor Tasks',
+                to: '/transactions/auditor-tasks',
+                icon: <CIcon icon={cilTask} customClassName="nav-icon" />,
+              },
+            ]
+          : []),
       ],
     },
   ];
@@ -206,6 +239,7 @@ const Nav = () => {
     ...commonItems,
     ...(isUser ? userItems : []),
     ...(isAdmin ? adminItems : []),
+    ...((isArchiver || isSeniorAuditor || isApprover) ? transactionItems : []),
   ];
 
   return navItems;

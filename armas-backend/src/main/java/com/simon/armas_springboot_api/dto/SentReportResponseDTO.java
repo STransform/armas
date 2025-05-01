@@ -11,14 +11,16 @@ public class SentReportResponseDTO {
     private String fiscal_year;
     private LocalDateTime createdDate;
     private String docname;
+    private String reportstatus;
 
-    public SentReportResponseDTO(Integer id, String orgname, String reportype, String fiscal_year, Date createdDate, String docname) {
+    public SentReportResponseDTO(Integer id, String orgname, String reportype, String fiscal_year, Date createdDate, String docname, String reportstatus) {
         this.id = id;
         this.orgname = orgname;
         this.reportype = reportype;
         this.fiscal_year = fiscal_year;
         this.createdDate = createdDate != null ? createdDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
         this.docname = docname;
+        this.reportstatus = reportstatus;
     }
 
     // Getters
@@ -28,4 +30,5 @@ public class SentReportResponseDTO {
     public String getFiscal_year() { return fiscal_year; }
     public LocalDateTime getCreatedDate() { return createdDate; }
     public String getDocname() { return docname; }
+    public String getReportstatus() { return reportstatus; }
 }

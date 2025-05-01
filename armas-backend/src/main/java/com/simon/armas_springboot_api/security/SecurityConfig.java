@@ -73,6 +73,20 @@ public class SecurityConfig {
                         .requestMatchers("/userPrivilegeAssignments/**").hasRole("ADMIN")
                         .requestMatchers("/buttons/forms/**").hasRole("USER")
                         .requestMatchers("/buttons/charts/**").hasRole("USER")
+
+                        .requestMatchers("/transactions/upload").hasRole("ADMIN")
+                        .requestMatchers("/transactions/sent-reports").hasAnyRole("ARCHIVER", "SENIOR_AUDITOR", "APPROVER")
+                        .requestMatchers("/transactions/listdocuments").hasRole("ADMIN")
+                        .requestMatchers("/transactions/users-by-role/**").hasAnyRole("ARCHIVER", "SENIOR_AUDITOR", "APPROVER")
+                        .requestMatchers("/transactions/assign/**").hasRole("ARCHIVER")
+                        .requestMatchers("/transactions/submit-findings/**").hasRole("SENIOR_AUDITOR")
+                        .requestMatchers("/transactions/approve/**").hasRole("APPROVER")
+                        .requestMatchers("/transactions/reject/**").hasRole("APPROVER")
+                        .requestMatchers("/transactions/tasks").hasAnyRole("SENIOR_AUDITOR", "APPROVER")
+                        .requestMatchers("/transactions/download/**").hasAnyRole("ARCHIVER", "SENIOR_AUDITOR", "APPROVER")
+                            
+
+                        
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
