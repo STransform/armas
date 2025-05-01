@@ -37,8 +37,8 @@ public interface MasterTransactionRepository extends JpaRepository<MasterTransac
     List<MasterTransaction> findNoneSendersByDocumentId(@Param("docid") String id, @Param("fiscal_year") String fiscal_year, @Param("reportcategory") String reportcategory);
 
     @Query("SELECT new com.simon.armas_springboot_api.dto.SentReportResponseDTO(m.id, o.orgname, d.reportype, m.fiscal_year, m.createdDate, m.docname, m.reportstatus) " +
-           "FROM MasterTransaction m INNER JOIN m.organization o INNER JOIN m.transactiondocument d WHERE m.reportstatus IN :statuses")
-    List<SentReportResponseDTO> fetchDataByStatuses(@Param("statuses") List<String> statuses);
+       "FROM MasterTransaction m INNER JOIN m.organization o INNER JOIN m.transactiondocument d WHERE m.reportstatus IN :statuses")
+List<SentReportResponseDTO> fetchDataByStatuses(@Param("statuses") List<String> statuses);
 
     @Query("SELECT COUNT(DISTINCT mt.organization) FROM MasterTransaction mt WHERE mt.transactiondocument IS NOT NULL")
     int countDistinctOrganizationsWithReports();
