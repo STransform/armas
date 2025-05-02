@@ -52,6 +52,10 @@ public class MasterTransaction extends Auditable<String> {
     @JoinColumn(name = "transactiondocumentid")
     private Document transactiondocument;
 
+    @ManyToOne
+    @JoinColumn(name = "submitted_by_auditor_id", nullable = true)
+    private User submittedByAuditor; // Tracks SENIOR_AUDITOR who submitted findings
+
     // Getters and Setters for all fields
     public Integer getId() {
         return id;
@@ -143,4 +147,6 @@ public class MasterTransaction extends Auditable<String> {
     public void setTransactiondocument(Document transactiondocument) {
         this.transactiondocument = transactiondocument;
     } 
+    public User getSubmittedByAuditor() { return submittedByAuditor; }
+    public void setSubmittedByAuditor(User submittedByAuditor) { this.submittedByAuditor = submittedByAuditor; }
 }

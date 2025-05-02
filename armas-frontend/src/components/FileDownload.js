@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { getSentReports, downloadFile, getUsersByRole, assignAuditor } from '../file/upload_download';
 
 const FileDownload = () => {
-    const [reports, setReports] = useState([]);
+    const [submittedReports, setSubmittedReports] = useState([]);
+    const [approvedReports, setApprovedReports] = useState([]);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [showAssignModal, setShowAssignModal] = useState(false);
@@ -12,9 +13,11 @@ const FileDownload = () => {
 
     const fetchReports = async () => {
         try {
-            const data = await getSentReports(); // Adjusted to fetch via /tasks in controller
-            const submittedReports = data.filter(report => report.reportstatus === 'Submitted');
-            setReports(submittedReports);
+            const data = await getSentReports();
+            const submitted = data.filter(report => report.reportstatus === 'Submitted');
+            const approved = data.filter(report => report.reportstatus === 'Approved');
+            setSubmittedReports(submitted);
+            setApprovedReports(approved);
         } catch (err) {
             setError('Failed to load reports: ' + (err.response?.data?.message || err.message));
         }
@@ -60,7 +63,7 @@ const FileDownload = () => {
             setSuccess('Auditor assigned successfully');
             setShowAssignModal(false);
             setSelectedAuditor('');
-            fetchReports(); // Refresh to remove assigned task
+            fetchReports();
         } catch (err) {
             setError('Failed to assign auditor: ' + (err.response?.data?.message || err.message));
         }
@@ -68,11 +71,13 @@ const FileDownload = () => {
 
     return (
         <div className="container mt-5">
-            <h2>Submitted Reports (Archiver View)</h2>
+            <h2>Archiver View</h2>
             {error && <div className="alert alert-danger">{error}</div>}
             {success && <div className="alert alert-success">{success}</div>}
-            {reports.length === 0 && <div className="alert alert-info">No submitted reports available.</div>}
-            {reports.length > 0 && (
+
+            <h3>Submitted Reports</h3>
+            {submittedReports.length === 0 && <div className="alert alert-info">No submitted reports available.</div>}
+            {submittedReports.length > 0 && (
                 <table className="table table-striped">
                     <thead>
                         <tr>
@@ -85,7 +90,7 @@ const FileDownload = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {reports.map(report => (
+                        {submittedReports.map(report => (
                             <tr key={report.id}>
                                 <td>{report.createdDate ? new Date(report.createdDate).toLocaleDateString() : 'N/A'}</td>
                                 <td>{report.orgname || 'N/A'}</td>
@@ -99,6 +104,40 @@ const FileDownload = () => {
                                     <button className="btn btn-secondary" onClick={() => handleAssignAuditor(report)}>
                                         Assign Auditor
                                     </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            )}
+
+            <h3>Approved Reports</h3>
+            {approvedReports.length === 0 && <div className="alert alert-info">No approved reports available.</div>}
+            {approvedReports.length > 0 && (
+                <table className="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Submitted Date</th>
+                            <th>Organization Name</th>
+                            <th>Budget Year</th>
+                            <th>Report Type</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {approvedReports.map(report => (
+                            <tr key={report.id}>
+                                <td>{report.createdDate ? new Date(report.createdDate).toLocaleDateString() : 'N/A'}</td>
+                                <td>{report.orgname || 'N/A'}</td>
+                                <td>{report.fiscal_year || 'N/A'}</td>
+                                <td>{report.reportype || 'N/A'}</td>
+                                <td>{report.reportstatus}</td>
+                                <td>
+                                    <button className="btn btn-primary mr-2" onClick={() => handleDownload(report.id, report.docname)}>
+                                        Download
+                                    </button>
+                                    <span className="text-muted">Approved</span>
                                 </td>
                             </tr>
                         ))}

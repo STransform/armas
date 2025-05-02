@@ -53,7 +53,6 @@ public class MasterTransactionController {
     }
 
     @GetMapping("/download/{id}")
-    // @PreAuthorize("hasAnyRole('ADMIN', 'ARCHIVER', 'SENIOR_AUDITOR', 'APPROVER')")
     public ResponseEntity<Resource> downloadFile(@PathVariable Integer id) throws IOException {
         Path filePath = masterTransactionService.getFilePath(id);
         Resource resource = new UrlResource(filePath.toUri());
@@ -69,10 +68,10 @@ public class MasterTransactionController {
     }
 
     @GetMapping("/sent-reports")
-    // @PreAuthorize("hasAnyRole('ARCHIVER', 'SENIOR_AUDITOR', 'APPROVER')")
     public ResponseEntity<List<SentReportResponseDTO>> getSentReports(Principal principal) {
         String role = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
+                .map(auth -> auth.replace("ROLE_", ""))
                 .filter(auth -> auth.equals("ARCHIVER") || auth.equals("SENIOR_AUDITOR") || auth.equals("APPROVER"))
                 .findFirst()
                 .orElse("USER");
@@ -81,7 +80,6 @@ public class MasterTransactionController {
     }
 
     @GetMapping("/listdocuments")
-    // @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Document>> getAllDocuments() {
         List<Document> documents = documentRepository.findAll();
         System.out.println("User: " + SecurityContextHolder.getContext().getAuthentication().getName());
@@ -91,7 +89,6 @@ public class MasterTransactionController {
     }
 
     @GetMapping("/users-by-role/{roleName}")
-    // @PreAuthorize("hasAnyRole('ARCHIVER', 'SENIOR_AUDITOR', 'APPROVER')")
     public ResponseEntity<?> getUsersByRole(@PathVariable String roleName) {
         try {
             System.out.println("Received request for users with role: " + roleName);
@@ -125,8 +122,7 @@ public class MasterTransactionController {
             Principal principal) {
         System.out.println("Received submit-findings request: transactionId=" + transactionId + ", principal=" + principal.getName());
         MasterTransaction transaction = masterTransactionService.submitFindings(
-            transactionId, findings, approverUsername, principal.getName()
-        );
+                transactionId, findings, approverUsername, principal.getName());
         return ResponseEntity.ok(transaction);
     }
 
@@ -137,8 +133,7 @@ public class MasterTransactionController {
             Principal principal) {
         System.out.println("Received approve request: transactionId=" + transactionId + ", principal=" + principal.getName());
         MasterTransaction transaction = masterTransactionService.approveReport(
-            transactionId, principal.getName()
-        );
+                transactionId, principal.getName());
         return ResponseEntity.ok(transaction);
     }
 
@@ -146,15 +141,12 @@ public class MasterTransactionController {
     @PreAuthorize("hasRole('APPROVER')")
     public ResponseEntity<MasterTransaction> rejectReport(
             @PathVariable Integer transactionId,
-            @RequestParam String auditorUsername,
             Principal principal) {
-        System.out.println("Received reject request: transactionId=" + transactionId + ", auditorUsername=" + auditorUsername + ", principal=" + principal.getName());
+        System.out.println("Received reject request: transactionId=" + transactionId + ", principal=" + principal.getName());
         MasterTransaction transaction = masterTransactionService.rejectReport(
-            transactionId, auditorUsername, principal.getName()
-        );
+                transactionId, principal.getName());
         return ResponseEntity.ok(transaction);
     }
-
 
     @GetMapping("/tasks")
     @PreAuthorize("hasAnyRole('ARCHIVER', 'SENIOR_AUDITOR', 'APPROVER')")
@@ -167,5 +159,4 @@ public class MasterTransactionController {
                 .orElseThrow(() -> new IllegalStateException("No valid role found"));
         List<MasterTransaction> tasks = masterTransactionService.getTasks(principal.getName(), role);
         return ResponseEntity.ok(tasks);
-    }
-}
+    }}
