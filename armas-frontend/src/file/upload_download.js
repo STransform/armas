@@ -76,80 +76,82 @@ export const assignAuditor = async (transactionId, auditorUsername) => {
     }
 };
 
-
-
 export const submitFindings = async (transactionId, findings, approverUsername) => {
     try {
-        const response = await axiosInstance.post(`/transactions/submit-findings/${transactionId}`, null, {
-            params: { findings, approverUsername }
-        });
+        console.log('Submitting findings:', { transactionId, findings, approverUsername });
+        const response = await axiosInstance.post(
+            `/transactions/submit-findings/${transactionId}`,
+            null,
+            {
+                params: {
+                    findings,
+                    approverUsername
+                }
+            }
+        );
+        console.log('Submit findings response:', response.data);
         return response.data;
     } catch (error) {
-        console.error('Error submitting findings:', error.message, error.response?.status, error.response?.data);
+        console.error('Error submitting findings:', {
+            message: error.message,
+            status: error.response?.status,
+            data: error.response?.data
+        });
         throw error;
     }
 };
 
+
 export const approveReport = async (transactionId) => {
     try {
+        console.log('Approving report: transactionId=', transactionId);
         const response = await axiosInstance.post(`/transactions/approve/${transactionId}`);
+        console.log('Approve report response:', response.data);
         return response.data;
     } catch (error) {
-        console.error('Error approving report:', error.message, error.response?.status, error.response?.data);
+        console.error('Error approving report:', {
+            message: error.message,
+            status: error.response?.status,
+            data: error.response?.data
+        });
         throw error;
     }
 };
 
 export const rejectReport = async (transactionId, auditorUsername) => {
     try {
-        const response = await axiosInstance.post(`/transactions/reject/${transactionId}`, null, {
-            params: { auditorUsername }
-        });
+        console.log('Rejecting report: transactionId=', transactionId, 'auditorUsername=', auditorUsername);
+        const response = await axiosInstance.post(
+            `/transactions/reject/${transactionId}`,
+            null,
+            {
+                params: { auditorUsername }
+            }
+        );
+        console.log('Reject report response:', response.data);
         return response.data;
     } catch (error) {
-        console.error('Error rejecting report:', error.message, error.response?.status, error.response?.data);
+        console.error('Error rejecting report:', {
+            message: error.message,
+            status: error.response?.status,
+            data: error.response?.data
+        });
         throw error;
     }
 };
+
 export const getMyTasks = async () => {
     try {
+        console.log('Fetching tasks');
         const response = await axiosInstance.get('/transactions/tasks');
-        console.log('Tasks fetched from API:', response.data);
+        console.log('Tasks response:', response.data);
         return response.data;
     } catch (error) {
-        console.error('Error fetching tasks:', error.message, error.response?.status, error.response?.data);
-        throw error;
-    }
-};
-
-export const getAssignedReportsForAuditor = async (userId) => {
-    try {
-        const response = await axiosInstance.get('/transactions/tasks');
-        return response.data.filter(report => report.user2?.id === userId && ['Assigned', 'Rejected'].includes(report.reportstatus));
-    } catch (error) {
-        console.error('Error fetching auditor reports:', error.message, error.response?.status, error.response?.data);
-        throw error;
-    }
-};
-
-export const getAssignedReportsForApprover = async (userId) => {
-    try {
-        const response = await axiosInstance.get('/transactions/tasks');
-        return response.data.filter(report => report.user2?.id === userId && report.reportstatus === 'Under Review');
-    } catch (error) {
-        console.error('Error fetching approver reports:', error.message, error.response?.status, error.response?.data);
-        throw error;
-    }
-};
-
-export const forwardToApprover = async (transactionId, approverUsername) => {
-    try {
-        const response = await axiosInstance.post(`/transactions/submit-findings/${transactionId}`, null, {
-            params: { findings: 'Findings submitted', approverUsername }
+        console.error('Error fetching tasks:', {
+            message: error.message,
+            status: error.response?.status,
+            data: error.response?.data
         });
-        return response.data;
-    } catch (error) {
-        console.error('Error forwarding to approver:', error.message, error.response?.status, error.response?.data);
         throw error;
     }
 };

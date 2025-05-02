@@ -12,14 +12,11 @@ const FileDownload = () => {
 
     const fetchReports = async () => {
         try {
-            const data = await getSentReports();
-            console.log('Reports fetched:', data);
-            setReports(data);
-            setError('');
+            const data = await getSentReports(); // Adjusted to fetch via /tasks in controller
+            const submittedReports = data.filter(report => report.reportstatus === 'Submitted');
+            setReports(submittedReports);
         } catch (err) {
-            const errorMessage = err.response?.data?.message || err.message || 'Unknown error';
-            setError(`Failed to load reports: ${errorMessage}`);
-            console.error('Error fetching reports:', err);
+            setError('Failed to load reports: ' + (err.response?.data?.message || err.message));
         }
     };
 
@@ -37,33 +34,19 @@ const FileDownload = () => {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            setError('');
         } catch (err) {
-            const errorMessage = err.response?.data?.message || err.message || 'Unknown error';
-            setError(`Failed to download file: ${errorMessage}`);
-            console.error('Error downloading file:', err);
+            setError('Failed to download file: ' + (err.response?.data?.message || err.message));
         }
     };
 
     const handleAssignAuditor = async (report) => {
         setSelectedReport(report);
-        setError('');
-        setSuccess('');
-        setAuditors([]);
-        setSelectedAuditor('');
         try {
             const auditorsData = await getUsersByRole('SENIOR_AUDITOR');
-            console.log('Auditors fetched:', auditorsData);
-            if (auditorsData.length === 0) {
-                setError('No auditors available to assign');
-                return;
-            }
             setAuditors(auditorsData);
             setShowAssignModal(true);
         } catch (err) {
-            const errorMessage = err.response?.data?.message || err.message || 'Unknown error';
-            setError(`Failed to load auditors: ${errorMessage}`);
-            console.error('Error fetching auditors:', err);
+            setError('Failed to load auditors: ' + (err.response?.data?.message || err.message));
         }
     };
 
@@ -73,28 +56,22 @@ const FileDownload = () => {
             return;
         }
         try {
-            console.log('Assigning auditor: transactionId=', selectedReport.id, ', auditorUsername=', selectedAuditor);
             await assignAuditor(selectedReport.id, selectedAuditor);
             setSuccess('Auditor assigned successfully');
             setShowAssignModal(false);
             setSelectedAuditor('');
-            await fetchReports(); // Refresh the list to remove the assigned task
-            setError('');
+            fetchReports(); // Refresh to remove assigned task
         } catch (err) {
-            const errorMessage = err.response?.data?.message || err.message || 'Unknown error';
-            setError(`Failed to assign auditor: ${errorMessage}`);
-            console.error('Error assigning auditor:', err);
+            setError('Failed to assign auditor: ' + (err.response?.data?.message || err.message));
         }
     };
 
     return (
         <div className="container mt-5">
-            <h2>Submitted Reports</h2>
+            <h2>Submitted Reports (Archiver View)</h2>
             {error && <div className="alert alert-danger">{error}</div>}
             {success && <div className="alert alert-success">{success}</div>}
-            {reports.length === 0 && !error && (
-                <div className="alert alert-info">No reports available.</div>
-            )}
+            {reports.length === 0 && <div className="alert alert-info">No submitted reports available.</div>}
             {reports.length > 0 && (
                 <table className="table table-striped">
                     <thead>
@@ -114,22 +91,14 @@ const FileDownload = () => {
                                 <td>{report.orgname || 'N/A'}</td>
                                 <td>{report.fiscal_year || 'N/A'}</td>
                                 <td>{report.reportype || 'N/A'}</td>
-                                <td>{report.reportstatus || 'N/A'}</td>
+                                <td>{report.reportstatus}</td>
                                 <td>
-                                    <button
-                                        className="btn btn-primary mr-2"
-                                        onClick={() => handleDownload(report.id, report.docname)}
-                                    >
+                                    <button className="btn btn-primary mr-2" onClick={() => handleDownload(report.id, report.docname)}>
                                         Download
                                     </button>
-                                    {report.reportstatus === 'Submitted' && (
-                                        <button
-                                            className="btn btn-secondary"
-                                            onClick={() => handleAssignAuditor(report)}
-                                        >
-                                            Assign Auditor
-                                        </button>
-                                    )}
+                                    <button className="btn btn-secondary" onClick={() => handleAssignAuditor(report)}>
+                                        Assign Auditor
+                                    </button>
                                 </td>
                             </tr>
                         ))}
@@ -146,22 +115,14 @@ const FileDownload = () => {
                                 <button type="button" className="btn-close" onClick={() => setShowAssignModal(false)}></button>
                             </div>
                             <div className="modal-body">
-                                <div className="form-group">
-                                    <label htmlFor="auditor">Select Auditor:</label>
-                                    <select
-                                        className="form-control"
-                                        id="auditor"
-                                        value={selectedAuditor}
-                                        onChange={(e) => setSelectedAuditor(e.target.value)}
-                                    >
-                                        <option value="">Select Auditor</option>
-                                        {auditors.map(auditor => (
-                                            <option key={auditor.id} value={auditor.username}>
-                                                {auditor.username} ({auditor.firstName} {auditor.lastName})
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                                <select className="form-control" value={selectedAuditor} onChange={(e) => setSelectedAuditor(e.target.value)}>
+                                    <option value="">Select Auditor</option>
+                                    {auditors.map(auditor => (
+                                        <option key={auditor.id} value={auditor.username}>
+                                            {auditor.username} ({auditor.firstName} {auditor.lastName})
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                             <div className="modal-footer">
                                 <button type="button" className="btn btn-secondary" onClick={() => setShowAssignModal(false)}>Close</button>

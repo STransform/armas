@@ -38,7 +38,7 @@ public class MasterTransaction extends Auditable<String> {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    private User user;
+    private User user; // Uploader
 
     @ManyToOne
     @JoinColumn(name = "theOrg_id")
@@ -46,7 +46,7 @@ public class MasterTransaction extends Auditable<String> {
 
     @ManyToOne
     @JoinColumn(name = "assigned_expert_user_id", nullable = true)
-    private User user2;
+    private User user2;// Current assignee (Senior Auditor or Approver)
 
     @ManyToOne
     @JoinColumn(name = "transactiondocumentid")

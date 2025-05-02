@@ -20,11 +20,21 @@ const AuditorTasks = () => {
     const fetchMyTasks = async () => {
         try {
             const data = await getMyTasks();
-            console.log('Tasks fetched:', data);
-            setTasks(data);
+            console.log('Raw tasks fetched:', data);
+            const validTasks = data.filter(task => 
+                task && 
+                task.id && 
+                task.reportstatus && 
+                task.createdDate && 
+                task.fiscal_year && 
+                task.transactiondocument?.reportype && 
+                task.organization?.orgname
+            );
+            console.log('Valid tasks after filtering:', validTasks);
+            setTasks(validTasks);
             setError('');
-            if (data.length === 0) {
-                console.warn('No tasks returned for user. Check role and database.');
+            if (validTasks.length === 0) {
+                console.warn('No valid tasks returned for user. Check role, database, or backend query.');
             }
         } catch (err) {
             const errorMessage = err.response?.data?.message || err.message || 'Unknown error';
@@ -75,6 +85,7 @@ const AuditorTasks = () => {
             return;
         }
         try {
+            console.log('Calling submitFindings: transactionId=', selectedTask.id, 'findings=', findings, 'approverUsername=', selectedApprover);
             await submitFindings(selectedTask.id, findings, selectedApprover);
             setSuccess('Findings submitted successfully');
             setShowFindingsModal(false);
@@ -82,19 +93,22 @@ const AuditorTasks = () => {
             setSelectedApprover('');
             await fetchMyTasks();
         } catch (err) {
-            setError('Failed to submit findings: ' + (err.response?.data?.message || err.message));
-            console.error('Submit error:', err.response?.data || err);
+            const errorMessage = err.response?.data?.message || err.message || 'Unknown error';
+            setError(`Failed to submit findings: ${errorMessage}`);
+            console.error('Submit error:', errorMessage, err.response?.data || err);
         }
     };
 
     const handleApprove = async (id) => {
         try {
+            console.log('Calling approveReport for transactionId:', id);
             await approveReport(id);
             setSuccess('Report approved successfully');
             await fetchMyTasks();
         } catch (err) {
-            setError('Failed to approve report: ' + (err.response?.data?.message || err.message));
-            console.error('Approve error:', err.response?.data || err);
+            const errorMessage = err.response?.data?.message || err.message || 'Unknown error';
+            setError(`Failed to approve report: ${errorMessage}`);
+            console.error('Approve error:', errorMessage, err.response?.data || err);
         }
     };
 
@@ -102,12 +116,14 @@ const AuditorTasks = () => {
         setSelectedTask(task);
         setError('');
         try {
+            console.log('Fetching auditors for reject: taskId=', task.id);
             const auditorsData = await getUsersByRole('SENIOR_AUDITOR');
             console.log('Auditors fetched:', auditorsData);
             setAuditors(auditorsData);
             setShowRejectModal(true);
         } catch (err) {
-            setError('Failed to load auditors: ' + (err.response?.data?.message || err.message));
+            const errorMessage = err.response?.data?.message || err.message || 'Unknown error';
+            setError(`Failed to load auditors: ${errorMessage}`);
             console.error('Error fetching auditors:', err.response?.data || err);
         }
     };
@@ -118,14 +134,16 @@ const AuditorTasks = () => {
             return;
         }
         try {
+            console.log('Calling rejectReport: transactionId=', selectedTask.id, 'auditorUsername=', selectedAuditor);
             await rejectReport(selectedTask.id, selectedAuditor);
             setSuccess('Report rejected successfully');
             setShowRejectModal(false);
             setSelectedAuditor('');
             await fetchMyTasks();
         } catch (err) {
-            setError('Failed to reject report: ' + (err.response?.data?.message || err.message));
-            console.error('Reject error:', err.response?.data || err);
+            const errorMessage = err.response?.data?.message || err.message || 'Unknown error';
+            setError(`Failed to reject report: ${errorMessage}`);
+            console.error('Reject error:', errorMessage, err.response?.data || err);
         }
     };
 
@@ -134,7 +152,7 @@ const AuditorTasks = () => {
 
     return (
         <div className="container mt-5">
-            <h2>My Assigned Tasks</h2>
+            <h2>{isSeniorAuditor ? 'Senior Auditor Tasks' : 'Approver Tasks'}</h2>
             {error && <div className="alert alert-danger">{error}</div>}
             {success && <div className="alert alert-success">{success}</div>}
             {tasks.length === 0 && !error && (
@@ -144,9 +162,11 @@ const AuditorTasks = () => {
                 <table className="table table-striped">
                     <thead>
                         <tr>
-                            <th>Submitted Date | Status</th>
-                            <th>Organization Name | Budget Year</th>
-                            <th>File Name | Report Type</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Organization</th>
+                            <th>Budget Year</th>
+                            <th>Report Type</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -154,32 +174,39 @@ const AuditorTasks = () => {
                         {tasks.map(task => (
                             <tr key={task.id}>
                                 <td>
-                                    {task.createdDate ? format(new Date(task.createdDate), 'MM/dd/yyyy') : 'N/A'} <br />
-                                    {task.reportstatus}
+                                <td>{task.createdDate ? new Date(task.createdDate).toLocaleDateString() : 'N/A'}</td>
                                 </td>
+                                <td>{task.reportstatus}</td>
+                                <td>{task.organization?.orgname || 'N/A'}</td>
+                                <td>{task.fiscal_year}</td>
+                                <td>{task.transactiondocument?.reportype || 'N/A'}</td>
                                 <td>
-                                    {task.organization?.orgname || 'N/A'} <br />
-                                    {task.fiscal_year}
-                                </td>
-                                <td>
-                                    {task.docname} <br />
-                                    {task.transactiondocument?.reportype || 'N/A'}
-                                </td>
-                                <td>
-                                    <button className="btn btn-primary mr-2" onClick={() => handleDownload(task.id, task.docname)}>
+                                    <button
+                                        className="btn btn-primary mr-2"
+                                        onClick={() => handleDownload(task.id, task.docname)}
+                                    >
                                         Download
                                     </button>
-                                    {(isSeniorAuditor && (task.reportstatus === 'Assigned' || task.reportstatus === 'Rejected')) && (
-                                        <button className="btn btn-secondary" onClick={() => handleSubmitFindings(task)}>
-                                            Submit Findings
+                                    {isSeniorAuditor && (task.reportstatus === 'Assigned' || task.reportstatus === 'Rejected' || task.reportstatus === 'Under Review') && (
+                                        <button
+                                            className="btn btn-secondary"
+                                            onClick={() => handleSubmitFindings(task)}
+                                        >
+                                            Evaluate
                                         </button>
                                     )}
-                                    {(isApprover && task.reportstatus === 'Under Review') && (
+                                    {isApprover && task.reportstatus === 'Under Review' && (
                                         <>
-                                            <button className="btn btn-success mr-2" onClick={() => handleApprove(task.id)}>
+                                            <button
+                                                className="btn btn-success mr-2"
+                                                onClick={() => handleApprove(task.id)}
+                                            >
                                                 Approve
                                             </button>
-                                            <button className="btn btn-danger" onClick={() => handleReject(task)}>
+                                            <button
+                                                className="btn btn-danger"
+                                                onClick={() => handleReject(task)}
+                                            >
                                                 Reject
                                             </button>
                                         </>
@@ -197,7 +224,11 @@ const AuditorTasks = () => {
                         <div className="modal-content">
                             <div className="modal-header">
                                 <h5 className="modal-title">Submit Findings</h5>
-                                <button type="button" className="btn-close" onClick={() => setShowFindingsModal(false)}></button>
+                                <button
+                                    type="button"
+                                    className="btn-close"
+                                    onClick={() => setShowFindingsModal(false)}
+                                ></button>
                             </div>
                             <div className="modal-body">
                                 <div className="form-group">
@@ -227,8 +258,20 @@ const AuditorTasks = () => {
                                 </div>
                             </div>
                             <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary" onClick={() => setShowFindingsModal(false)}>Close</button>
-                                <button type="button" className="btn btn-primary" onClick={handleFindingsSubmit}>Submit</button>
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    onClick={() => setShowFindingsModal(false)}
+                                >
+                                    Close
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    onClick={handleFindingsSubmit}
+                                >
+                                    Submit
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -241,7 +284,11 @@ const AuditorTasks = () => {
                         <div className="modal-content">
                             <div className="modal-header">
                                 <h5 className="modal-title">Reject Report</h5>
-                                <button type="button" className="btn-close" onClick={() => setShowRejectModal(false)}></button>
+                                <button
+                                    type="button"
+                                    className="btn-close"
+                                    onClick={() => setShowRejectModal(false)}
+                                ></button>
                             </div>
                             <div className="modal-body">
                                 <div className="form-group">
@@ -262,8 +309,20 @@ const AuditorTasks = () => {
                                 </div>
                             </div>
                             <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary" onClick={() => setShowRejectModal(false)}>Close</button>
-                                <button type="button" className="btn btn-primary" onClick={handleRejectSubmit}>Reject</button>
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    onClick={() => setShowRejectModal(false)}
+                                >
+                                    Close
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    onClick={handleRejectSubmit}
+                                >
+                                    Reject
+                                </button>
                             </div>
                         </div>
                     </div>

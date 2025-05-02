@@ -20,6 +20,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.security.access.prepost.PreAuthorize;
+//import Arrays
+import java.util.Arrays;
+import java.util.List;
 //import SentReportResponseDTO;
 import com.simon.armas_springboot_api.dto.SentReportResponseDTO;
 
@@ -37,14 +40,15 @@ public class MasterTransactionController {
     private MasterTransactionService masterTransactionService;
 
     @PostMapping("/upload")
-    // @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<MasterTransaction> uploadFile(
             @RequestParam("file") MultipartFile file,
             @RequestParam("response_needed") String responseNeeded,
-            @RequestParam("fiscal_year") String fiscal_year,
-            @RequestParam("transactiondocumentid") String transactiondocumentid,
+            @RequestParam("fiscal_year") String fiscalYear,
+            @RequestParam("transactiondocumentid") String transactionDocumentId,
             Principal principal) throws IOException {
-        MasterTransaction transaction = masterTransactionService.uploadFile(file, responseNeeded, fiscal_year, transactiondocumentid, principal);
+        MasterTransaction transaction = masterTransactionService.uploadFile(file, responseNeeded, fiscalYear,
+                transactionDocumentId, principal);
         return ResponseEntity.ok(transaction);
     }
 
@@ -103,52 +107,65 @@ public class MasterTransactionController {
     }
 
     @PostMapping("/assign/{transactionId}")
-    // @PreAuthorize("hasRole('ARCHIVER')")
+    @PreAuthorize("hasRole('ARCHIVER')")
     public ResponseEntity<MasterTransaction> assignAuditor(@PathVariable Integer transactionId,
-                                                          @RequestParam String auditorUsername) {
-        MasterTransaction transaction = masterTransactionService.assignAuditor(transactionId, auditorUsername);
+                                                          @RequestParam String auditorUsername,
+                                                          Principal principal) {
+        MasterTransaction transaction = masterTransactionService.assignAuditor(transactionId, auditorUsername,
+                principal.getName());
         return ResponseEntity.ok(transaction);
     }
 
     @PostMapping("/submit-findings/{transactionId}")
-    // @PreAuthorize("hasRole('SENIOR_AUDITOR')")
-    public ResponseEntity<MasterTransaction> submitFindings(@PathVariable Integer transactionId,
-                                                           @RequestParam String findings,
-                                                           @RequestParam String approverUsername,
-                                                           Principal principal) {
-        MasterTransaction transaction = masterTransactionService.submitFindings(transactionId, findings, approverUsername, principal.getName());
+    @PreAuthorize("hasRole('SENIOR_AUDITOR')")
+    public ResponseEntity<MasterTransaction> submitFindings(
+            @PathVariable Integer transactionId,
+            @RequestParam String findings,
+            @RequestParam String approverUsername,
+            Principal principal) {
+        System.out.println("Received submit-findings request: transactionId=" + transactionId + ", principal=" + principal.getName());
+        MasterTransaction transaction = masterTransactionService.submitFindings(
+            transactionId, findings, approverUsername, principal.getName()
+        );
         return ResponseEntity.ok(transaction);
     }
 
     @PostMapping("/approve/{transactionId}")
-    // @PreAuthorize("hasRole('APPROVER')")
-    public ResponseEntity<MasterTransaction> approveReport(@PathVariable Integer transactionId, Principal principal) {
-        MasterTransaction transaction = masterTransactionService.approveReport(transactionId, principal.getName());
+    @PreAuthorize("hasRole('APPROVER')")
+    public ResponseEntity<MasterTransaction> approveReport(
+            @PathVariable Integer transactionId,
+            Principal principal) {
+        System.out.println("Received approve request: transactionId=" + transactionId + ", principal=" + principal.getName());
+        MasterTransaction transaction = masterTransactionService.approveReport(
+            transactionId, principal.getName()
+        );
         return ResponseEntity.ok(transaction);
     }
 
     @PostMapping("/reject/{transactionId}")
-    // @PreAuthorize("hasRole('APPROVER')")
-    public ResponseEntity<MasterTransaction> rejectReport(@PathVariable Integer transactionId,
-                                                         @RequestParam String auditorUsername,
-                                                         Principal principal) {
-        MasterTransaction transaction = masterTransactionService.rejectReport(transactionId, principal.getName(), auditorUsername);
+    @PreAuthorize("hasRole('APPROVER')")
+    public ResponseEntity<MasterTransaction> rejectReport(
+            @PathVariable Integer transactionId,
+            @RequestParam String auditorUsername,
+            Principal principal) {
+        System.out.println("Received reject request: transactionId=" + transactionId + ", auditorUsername=" + auditorUsername + ", principal=" + principal.getName());
+        MasterTransaction transaction = masterTransactionService.rejectReport(
+            transactionId, auditorUsername, principal.getName()
+        );
         return ResponseEntity.ok(transaction);
     }
 
+
     @GetMapping("/tasks")
-    @PreAuthorize("hasAnyRole('SENIOR_AUDITOR', 'APPROVER')")
+    @PreAuthorize("hasAnyRole('ARCHIVER', 'SENIOR_AUDITOR', 'APPROVER')")
     public ResponseEntity<List<MasterTransaction>> getTasks(Principal principal) {
-        String username = principal.getName();
         String role = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
-                .map(auth -> auth.replace("ROLE_", "")) // Remove "ROLE_" prefix
-                .filter(auth -> auth.equals("SENIOR_AUDITOR") || auth.equals("APPROVER"))
+                .map(auth -> auth.replace("ROLE_", ""))
+                .filter(auth -> Arrays.asList("ARCHIVER", "SENIOR_AUDITOR", "APPROVER").contains(auth))
                 .findFirst()
-                .orElse("USER");
-        System.out.println("Fetching tasks for user: " + username + ", role: " + role);
-        List<MasterTransaction> tasks = masterTransactionService.getTasks(username, role);
-        System.out.println("Returning tasks: " + tasks);
+                .orElseThrow(() -> new IllegalStateException("No valid role found"));
+        List<MasterTransaction> tasks = masterTransactionService.getTasks(principal.getName(), role);
         return ResponseEntity.ok(tasks);
     }
 }
