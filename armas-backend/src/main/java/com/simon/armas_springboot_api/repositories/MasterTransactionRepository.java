@@ -63,7 +63,16 @@ public interface MasterTransactionRepository extends JpaRepository<MasterTransac
         @Param("statuses") List<String> statuses,
         @Param("username") String username
     );
-
+    // query for Approver tasks
+    @Query("SELECT m FROM MasterTransaction m WHERE m.user2.id = :userId AND m.reportstatus IN :statuses")
+List<MasterTransaction> findApproverTasks(
+    @Param("userId") Long userId,
+    @Param("statuses") List<String> statuses
+);
+@Query("SELECT m FROM MasterTransaction m WHERE m.reportstatus IN ('Approved', 'Rejected') AND m.lastModifiedBy = :username")
+List<MasterTransaction> findCompletedApproverTasks(
+    @Param("username") String username
+);
     boolean existsByDocname(String docname);
     boolean existsByDocnameAndUserId(String docname, Long userId);
     boolean existsByDocnameAndUser(String docname, User user);

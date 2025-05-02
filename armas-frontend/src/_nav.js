@@ -219,6 +219,7 @@ const Nav = () => {
                 to: '/transactions/file-download',
                 icon: <CIcon icon={cilCloudDownload} customClassName="nav-icon" />,
               },
+              
             ]
           : []),
         ...((isSeniorAuditor || isApprover)

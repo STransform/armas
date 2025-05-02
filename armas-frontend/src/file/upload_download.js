@@ -118,16 +118,10 @@ export const approveReport = async (transactionId) => {
     }
 };
 
-export const rejectReport = async (transactionId, auditorUsername) => {
+export const rejectReport = async (transactionId) => {
     try {
-        console.log('Rejecting report: transactionId=', transactionId, 'auditorUsername=', auditorUsername);
-        const response = await axiosInstance.post(
-            `/transactions/reject/${transactionId}`,
-            null,
-            {
-                params: { auditorUsername }
-            }
-        );
+        console.log('Rejecting report: transactionId=', transactionId);
+        const response = await axiosInstance.post(`/transactions/reject/${transactionId}`);
         console.log('Reject report response:', response.data);
         return response.data;
     } catch (error) {

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { getMyTasks, downloadFile, submitFindings, approveReport, rejectReport, getUsersByRole } from '../file/upload_download';
-import { format } from 'date-fns';
 import { useAuth } from '../views/pages/AuthProvider';
 
 const AuditorTasks = () => {
@@ -13,24 +12,14 @@ const AuditorTasks = () => {
     const [findings, setFindings] = useState('');
     const [approvers, setApprovers] = useState([]);
     const [selectedApprover, setSelectedApprover] = useState('');
-    const [showRejectModal, setShowRejectModal] = useState(false);
-    const [selectedAuditor, setSelectedAuditor] = useState('');
-    const [auditors, setAuditors] = useState([]);
 
     const fetchMyTasks = async () => {
         try {
+            console.log('Fetching tasks for roles:', roles);
             const data = await getMyTasks();
-            console.log('Raw tasks fetched:', data);
-            const validTasks = data.filter(task => 
-                task && 
-                task.id && 
-                task.reportstatus && 
-                task.createdDate && 
-                task.fiscal_year && 
-                task.transactiondocument?.reportype && 
-                task.organization?.orgname
-            );
-            console.log('Valid tasks after filtering:', validTasks);
+            console.log('Raw tasks fetched:', JSON.stringify(data, null, 2));
+            const validTasks = data.filter(task => task && task.id);
+            console.log('Valid tasks after filtering:', JSON.stringify(validTasks, null, 2));
             setTasks(validTasks);
             setError('');
             if (validTasks.length === 0) {
@@ -54,7 +43,7 @@ const AuditorTasks = () => {
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', docname);
+            link.setAttribute('download', docname || 'file');
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -115,30 +104,20 @@ const AuditorTasks = () => {
     const handleReject = async (task) => {
         setSelectedTask(task);
         setError('');
-        try {
-            console.log('Fetching auditors for reject: taskId=', task.id);
-            const auditorsData = await getUsersByRole('SENIOR_AUDITOR');
-            console.log('Auditors fetched:', auditorsData);
-            setAuditors(auditorsData);
-            setShowRejectModal(true);
-        } catch (err) {
-            const errorMessage = err.response?.data?.message || err.message || 'Unknown error';
-            setError(`Failed to load auditors: ${errorMessage}`);
-            console.error('Error fetching auditors:', err.response?.data || err);
-        }
+        setShowFindingsModal(true);
     };
 
     const handleRejectSubmit = async () => {
-        if (!selectedAuditor) {
-            setError('Please select an auditor');
+        if (!findings) {
+            setError('Please provide a reason for rejection');
             return;
         }
         try {
-            console.log('Calling rejectReport: transactionId=', selectedTask.id, 'auditorUsername=', selectedAuditor);
-            await rejectReport(selectedTask.id, selectedAuditor);
-            setSuccess('Report rejected successfully');
-            setShowRejectModal(false);
-            setSelectedAuditor('');
+            console.log('Calling rejectReport: transactionId=', selectedTask.id);
+            await submitFindings(selectedTask.id, findings, selectedTask.user2.username);
+            setSuccess('Report rejected and reassigned successfully');
+            setShowFindingsModal(false);
+            setFindings('');
             await fetchMyTasks();
         } catch (err) {
             const errorMessage = err.response?.data?.message || err.message || 'Unknown error';
@@ -173,12 +152,10 @@ const AuditorTasks = () => {
                     <tbody>
                         {tasks.map(task => (
                             <tr key={task.id}>
-                                <td>
                                 <td>{task.createdDate ? new Date(task.createdDate).toLocaleDateString() : 'N/A'}</td>
-                                </td>
-                                <td>{task.reportstatus}</td>
+                                <td>{task.reportstatus || 'N/A'}</td>
                                 <td>{task.organization?.orgname || 'N/A'}</td>
-                                <td>{task.fiscal_year}</td>
+                                <td>{task.fiscal_year || 'N/A'}</td>
                                 <td>{task.transactiondocument?.reportype || 'N/A'}</td>
                                 <td>
                                     <button
@@ -187,7 +164,7 @@ const AuditorTasks = () => {
                                     >
                                         Download
                                     </button>
-                                    {isSeniorAuditor && (task.reportstatus === 'Assigned' || task.reportstatus === 'Rejected' || task.reportstatus === 'Under Review') && (
+                                    {isSeniorAuditor && (task.reportstatus === 'Assigned' || task.reportstatus === 'Rejected') && (
                                         <button
                                             className="btn btn-secondary"
                                             onClick={() => handleSubmitFindings(task)}
@@ -211,6 +188,9 @@ const AuditorTasks = () => {
                                             </button>
                                         </>
                                     )}
+                                    {isApprover && (task.reportstatus === 'Approved' || task.reportstatus === 'Rejected') && (
+                                        <span className="text-muted">Action Completed</span>
+                                    )}
                                 </td>
                             </tr>
                         ))}
@@ -223,7 +203,7 @@ const AuditorTasks = () => {
                     <div className="modal-dialog">
                         <div className="modal-content">
                             <div className="modal-header">
-                                <h5 className="modal-title">Submit Findings</h5>
+                                <h5 className="modal-title">{isSeniorAuditor ? 'Submit Findings' : 'Reject Report'}</h5>
                                 <button
                                     type="button"
                                     className="btn-close"
@@ -232,7 +212,7 @@ const AuditorTasks = () => {
                             </div>
                             <div className="modal-body">
                                 <div className="form-group">
-                                    <label htmlFor="findings">Findings:</label>
+                                    <label htmlFor="findings">{isSeniorAuditor ? 'Findings' : 'Reason for Rejection'}:</label>
                                     <textarea
                                         className="form-control"
                                         id="findings"
@@ -240,22 +220,24 @@ const AuditorTasks = () => {
                                         onChange={(e) => setFindings(e.target.value)}
                                     ></textarea>
                                 </div>
-                                <div className="form-group">
-                                    <label htmlFor="approver">Select Approver:</label>
-                                    <select
-                                        className="form-control"
-                                        id="approver"
-                                        value={selectedApprover}
-                                        onChange={(e) => setSelectedApprover(e.target.value)}
-                                    >
-                                        <option value="">Select Approver</option>
-                                        {approvers.map(approver => (
-                                            <option key={approver.id} value={approver.username}>
-                                                {approver.firstName} {approver.lastName} ({approver.username})
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                                {isSeniorAuditor && (
+                                    <div className="form-group">
+                                        <label htmlFor="approver">Select Approver:</label>
+                                        <select
+                                            className="form-control"
+                                            id="approver"
+                                            value={selectedApprover}
+                                            onChange={(e) => setSelectedApprover(e.target.value)}
+                                        >
+                                            <option value="">Select Approver</option>
+                                            {approvers.map(approver => (
+                                                <option key={approver.id} value={approver.username}>
+                                                    {approver.firstName} {approver.lastName} ({approver.username})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
                             </div>
                             <div className="modal-footer">
                                 <button
@@ -268,60 +250,9 @@ const AuditorTasks = () => {
                                 <button
                                     type="button"
                                     className="btn btn-primary"
-                                    onClick={handleFindingsSubmit}
+                                    onClick={isSeniorAuditor ? handleFindingsSubmit : handleRejectSubmit}
                                 >
-                                    Submit
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {showRejectModal && (
-                <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-                    <div className="modal-dialog">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h5 className="modal-title">Reject Report</h5>
-                                <button
-                                    type="button"
-                                    className="btn-close"
-                                    onClick={() => setShowRejectModal(false)}
-                                ></button>
-                            </div>
-                            <div className="modal-body">
-                                <div className="form-group">
-                                    <label htmlFor="auditor">Select Auditor:</label>
-                                    <select
-                                        className="form-control"
-                                        id="auditor"
-                                        value={selectedAuditor}
-                                        onChange={(e) => setSelectedAuditor(e.target.value)}
-                                    >
-                                        <option value="">Select Auditor</option>
-                                        {auditors.map(auditor => (
-                                            <option key={auditor.id} value={auditor.username}>
-                                                {auditor.firstName} {auditor.lastName} ({auditor.username})
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-                            <div className="modal-footer">
-                                <button
-                                    type="button"
-                                    className="btn btn-secondary"
-                                    onClick={() => setShowRejectModal(false)}
-                                >
-                                    Close
-                                </button>
-                                <button
-                                    type="button"
-                                    className="btn btn-primary"
-                                    onClick={handleRejectSubmit}
-                                >
-                                    Reject
+                                    {isSeniorAuditor ? 'Submit' : 'Reject'}
                                 </button>
                             </div>
                         </div>
