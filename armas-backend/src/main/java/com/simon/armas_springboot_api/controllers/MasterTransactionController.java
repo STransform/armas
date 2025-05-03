@@ -7,6 +7,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import com.simon.armas_springboot_api.repositories.DocumentRepository;
+import com.simon.armas_springboot_api.repositories.MasterTransactionRepository;
+import com.simon.armas_springboot_api.repositories.UserRepository;
 import com.simon.armas_springboot_api.services.MasterTransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.simon.armas_springboot_api.dto.UserDTO;
@@ -35,6 +37,9 @@ import java.util.List;
 public class MasterTransactionController {
     @Autowired
     private DocumentRepository documentRepository;
+
+    @Autowired
+    private MasterTransactionRepository masterTransactionRepository;
 
     @Autowired
     private MasterTransactionService masterTransactionService;
@@ -126,6 +131,19 @@ public class MasterTransactionController {
         return ResponseEntity.ok(transaction);
     }
 
+    @GetMapping("/approved-reports")
+    @PreAuthorize("hasRole('ARCHIVER')")
+    public ResponseEntity<List<MasterTransaction>> getApprovedReports() {
+        List<MasterTransaction> transactions = masterTransactionService.getApprovedReports();
+        System.out.println("Approved reports fetched: " + transactions.size());
+        transactions.forEach(t -> System.out.println("Transaction: id=" + t.getId() + 
+                ", reportstatus=" + t.getReportstatus() + 
+                ", org=" + (t.getOrganization() != null ? t.getOrganization().getOrgname() : "null") + 
+                ", fiscal_year=" + t.getFiscal_year() + 
+                ", reportype=" + (t.getTransactiondocument() != null ? t.getTransactiondocument().getReportype() : "null")));
+        return ResponseEntity.ok(transactions);
+    }
+
     @PostMapping("/approve/{transactionId}")
     @PreAuthorize("hasRole('APPROVER')")
     public ResponseEntity<MasterTransaction> approveReport(
@@ -138,15 +156,20 @@ public class MasterTransactionController {
     }
 
     @PostMapping("/reject/{transactionId}")
-    @PreAuthorize("hasRole('APPROVER')")
-    public ResponseEntity<MasterTransaction> rejectReport(
-            @PathVariable Integer transactionId,
-            Principal principal) {
-        System.out.println("Received reject request: transactionId=" + transactionId + ", principal=" + principal.getName());
-        MasterTransaction transaction = masterTransactionService.rejectReport(
-                transactionId, principal.getName());
-        return ResponseEntity.ok(transaction);
-    }
+@PreAuthorize("hasRole('APPROVER')")
+public ResponseEntity<MasterTransaction> rejectReport(
+@PathVariable Integer transactionId,
+@RequestParam String rejectionReason,
+Principal principal) {
+MasterTransaction transaction = masterTransactionService.rejectReport(
+transactionId, rejectionReason, principal.getName());
+return ResponseEntity.ok(transaction);
+}
+@GetMapping("/rejected-reports")
+@PreAuthorize("hasRole('ARCHIVER')")
+public ResponseEntity<List<MasterTransaction>> getRejectedReports() {
+ return ResponseEntity.ok(masterTransactionRepository.findByReportStatus("Rejected"));
+}
 
     @GetMapping("/tasks")
     @PreAuthorize("hasAnyRole('ARCHIVER', 'SENIOR_AUDITOR', 'APPROVER')")
@@ -159,4 +182,11 @@ public class MasterTransactionController {
                 .orElseThrow(() -> new IllegalStateException("No valid role found"));
         List<MasterTransaction> tasks = masterTransactionService.getTasks(principal.getName(), role);
         return ResponseEntity.ok(tasks);
-    }}
+    }
+
+
+
+
+
+
+}

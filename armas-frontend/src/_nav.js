@@ -219,6 +219,12 @@ const Nav = () => {
                 to: '/transactions/file-download',
                 icon: <CIcon icon={cilCloudDownload} customClassName="nav-icon" />,
               },
+              {
+                component: CNavItem,
+                name: 'Approved Reports',
+                to: '/transactions/approved-reports',
+                icon: <CIcon icon={cilCloudDownload} customClassName="nav-icon" />,
+                },
               
             ]
           : []),
@@ -230,6 +236,18 @@ const Nav = () => {
                 to: '/transactions/auditor-tasks',
                 icon: <CIcon icon={cilTask} customClassName="nav-icon" />,
               },
+              {
+                component: CNavItem,
+                name: 'Rejected Reports',
+                to: '/transactions/rejected-reports',
+                icon: <CIcon icon={cilCloudDownload} customClassName="nav-icon" />,
+                },
+                {
+                  component: CNavItem,
+                  name: 'Approved Reports',
+                  to: '/transactions/approved-reports',
+                  icon: <CIcon icon={cilCloudDownload} customClassName="nav-icon" />,
+                  },
             ]
           : []),
       ],

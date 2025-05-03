@@ -118,21 +118,26 @@ export const approveReport = async (transactionId) => {
     }
 };
 
-export const rejectReport = async (transactionId) => {
+export const getApprovedReports = async () => {
+    const response = await axiosInstance.get('/transactions/approved-reports');
+    return response.data;
+   };
+
+export const rejectReport = async (transactionId, rejectionReason) => {
     try {
-        console.log('Rejecting report: transactionId=', transactionId);
-        const response = await axiosInstance.post(`/transactions/reject/${transactionId}`);
-        console.log('Reject report response:', response.data);
-        return response.data;
+    const response = await axiosInstance.post(`/transactions/reject/${transactionId}`, null, {
+    params: { rejectionReason }
+    });
+    return response.data;
     } catch (error) {
-        console.error('Error rejecting report:', {
-            message: error.message,
-            status: error.response?.status,
-            data: error.response?.data
-        });
-        throw error;
+    throw error;
     }
-};
+    };
+
+    export const getRejectedReports = async () => {
+        const response = await axiosInstance.get('/transactions/rejected-reports');
+        return response.data;
+       };
 
 export const getMyTasks = async () => {
     try {

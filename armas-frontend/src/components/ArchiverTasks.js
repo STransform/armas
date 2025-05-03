@@ -13,9 +13,6 @@ const AuditorTasks = () => {
     const [approvers, setApprovers] = useState([]);
     const [selectedApprover, setSelectedApprover] = useState('');
 
-    const isSeniorAuditor = roles.includes('SENIOR_AUDITOR');
-    const isApprover = roles.includes('APPROVER');
-
     const fetchMyTasks = async () => {
         try {
             console.log('Fetching tasks for roles:', roles);
@@ -93,12 +90,14 @@ const AuditorTasks = () => {
 
     const handleApprove = async (id) => {
         try {
-            const response = await approveReport(id);
-            console.log('Approve response:', response);
+            console.log('Calling approveReport for transactionId:', id);
+            await approveReport(id);
             setSuccess('Report approved successfully');
             await fetchMyTasks();
         } catch (err) {
-            setError(`Failed to approve report: ${err.message}`);
+            const errorMessage = err.response?.data?.message || err.message || 'Unknown error';
+            setError(`Failed to approve report: ${errorMessage}`);
+            console.error('Approve error:', errorMessage, err.response?.data || err);
         }
     };
 
@@ -114,16 +113,21 @@ const AuditorTasks = () => {
             return;
         }
         try {
-            const response = await rejectReport(selectedTask.id, findings);
-            console.log('Reject response:', response);
-            setSuccess('Report rejected successfully');
+            console.log('Calling rejectReport: transactionId=', selectedTask.id);
+            await submitFindings(selectedTask.id, findings, selectedTask.user2.username);
+            setSuccess('Report rejected and reassigned successfully');
             setShowFindingsModal(false);
             setFindings('');
             await fetchMyTasks();
         } catch (err) {
-            setError(`Failed to reject report: ${err.message}`);
+            const errorMessage = err.response?.data?.message || err.message || 'Unknown error';
+            setError(`Failed to reject report: ${errorMessage}`);
+            console.error('Reject error:', errorMessage, err.response?.data || err);
         }
     };
+
+    const isSeniorAuditor = roles.includes('SENIOR_AUDITOR');
+    const isApprover = roles.includes('APPROVER');
 
     return (
         <div className="container mt-5">
@@ -149,7 +153,7 @@ const AuditorTasks = () => {
                         {tasks.map(task => (
                             <tr key={task.id}>
                                 <td>{task.createdDate ? new Date(task.createdDate).toLocaleDateString() : 'N/A'}</td>
-                                <td>{task.reportstatus ? task.reportstatus : 'Status Missing'}</td>
+                                <td>{task.reportstatus || 'N/A'}</td>
                                 <td>{task.organization?.orgname || 'N/A'}</td>
                                 <td>{task.fiscal_year || 'N/A'}</td>
                                 <td>{task.transactiondocument?.reportype || 'N/A'}</td>
@@ -162,10 +166,10 @@ const AuditorTasks = () => {
                                     </button>
                                     {isSeniorAuditor && (task.reportstatus === 'Assigned' || task.reportstatus === 'Rejected') && (
                                         <button
-                                            className="btn btn-secondary mr-2"
+                                            className="btn btn-secondary"
                                             onClick={() => handleSubmitFindings(task)}
                                         >
-                                            {task.reportstatus === 'Rejected' ? 'Resubmit' : 'Evaluate'}
+                                            Evaluate
                                         </button>
                                     )}
                                     {isApprover && task.reportstatus === 'Under Review' && (

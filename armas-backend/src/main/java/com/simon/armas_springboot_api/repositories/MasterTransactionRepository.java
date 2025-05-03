@@ -46,8 +46,11 @@ public interface MasterTransactionRepository extends JpaRepository<MasterTransac
     @Query("SELECT m FROM MasterTransaction m WHERE m.transactiondocument.id = :transactionDocumentId")
     List<MasterTransaction> findByTransactionDocumentId(@Param("transactionDocumentId") String transactionDocumentId);
 
-    @Query("SELECT m FROM MasterTransaction m WHERE m.reportstatus = :status")
-    List<MasterTransaction> findByReportStatus(@Param("status") String status);
+    @Query("SELECT m FROM MasterTransaction m " +
+           "LEFT JOIN FETCH m.organization " +
+           "LEFT JOIN FETCH m.transactiondocument " +
+           "WHERE m.reportstatus = :status")
+    List<MasterTransaction> findByReportStatus(@Param("status") String reportStatus);
 
     @Query("SELECT m FROM MasterTransaction m WHERE m.user2.id = :userId AND m.reportstatus IN :statuses")
     List<MasterTransaction> findByUserAndStatuses(
@@ -76,4 +79,6 @@ List<MasterTransaction> findCompletedApproverTasks(
     boolean existsByDocname(String docname);
     boolean existsByDocnameAndUserId(String docname, Long userId);
     boolean existsByDocnameAndUser(String docname, User user);
+
+    
 }
