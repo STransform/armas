@@ -12,8 +12,9 @@ public class SentReportResponseDTO {
     private LocalDateTime createdDate;
     private String docname;
     private String reportstatus;
+    private String remarks;
 
-    public SentReportResponseDTO(Integer id, String orgname, String reportype, String fiscal_year, Date createdDate, String docname, String reportstatus) {
+    public SentReportResponseDTO(Integer id, String orgname, String reportype, String fiscal_year, Date createdDate, String docname, String reportstatus , String remarks) {
         this.id = id;
         this.orgname = orgname;
         this.reportype = reportype;
@@ -21,6 +22,7 @@ public class SentReportResponseDTO {
         this.createdDate = createdDate != null ? createdDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
         this.docname = docname;
         this.reportstatus = reportstatus;
+        this.remarks = remarks;
     }
 
     // Getters
@@ -31,4 +33,5 @@ public class SentReportResponseDTO {
     public LocalDateTime getCreatedDate() { return createdDate; }
     public String getDocname() { return docname; }
     public String getReportstatus() { return reportstatus; }
+    public String getRemarks() { return remarks; }
 }

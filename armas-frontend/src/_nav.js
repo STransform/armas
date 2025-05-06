@@ -143,6 +143,12 @@ const Nav = () => {
       to: '/charts',
       icon: <CIcon icon={cilChartPie} customClassName="nav-icon" />,
     },
+    {
+          component: CNavItem,
+          name: 'File Upload',
+          to: '/buttons/file-upload',
+          icon: <CIcon icon={cilCloudUpload} customClassName="nav-icon" />,
+        },
   ];
 
   const adminItems = [

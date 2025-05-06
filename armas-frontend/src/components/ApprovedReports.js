@@ -10,11 +10,10 @@ const ApprovedReports = () => {
         const fetchReports = async () => {
             try {
                 const data = await getApprovedReports();
-                const validReports = data.filter(report => report && report.id && report.docname);
-                console.log('Fetched approved reports:', JSON.stringify(validReports, null, 2));
-                setReports(validReports);
-                if (validReports.length === 0) {
-                    setError('No valid approved reports available.');
+                console.log('Fetched approved reports:', JSON.stringify(data, null, 2));
+                setReports(data); // Remove filter to include all reports
+                if (data.length === 0) {
+                    setError('No approved reports available.');
                 }
             } catch (err) {
                 setError('Failed to load approved reports: ' + err.message);

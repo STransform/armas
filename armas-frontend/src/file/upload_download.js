@@ -38,9 +38,9 @@ export const getSentReports = async () => {
     }
 };
 
-export const downloadFile = async (id) => {
+export const downloadFile = async (id, type) => {
     try {
-        const response = await axiosInstance.get(`/transactions/download/${id}`, {
+        const response = await axiosInstance.get(`/transactions/download/${id}/${type}`, {
             responseType: 'blob',
         });
         return response;
@@ -76,27 +76,20 @@ export const assignAuditor = async (transactionId, auditorUsername) => {
     }
 };
 
-export const submitFindings = async (transactionId, findings, approverUsername) => {
+export const submitFindings = async (transactionId, findings, approverUsername, supportingDocument) => {
+    const formData = new FormData();
+    formData.append('findings', findings);
+    formData.append('approverUsername', approverUsername);
+    if (supportingDocument) {
+        formData.append('supportingDocument', supportingDocument);
+    }
     try {
-        console.log('Submitting findings:', { transactionId, findings, approverUsername });
-        const response = await axiosInstance.post(
-            `/transactions/submit-findings/${transactionId}`,
-            null,
-            {
-                params: {
-                    findings,
-                    approverUsername
-                }
-            }
-        );
-        console.log('Submit findings response:', response.data);
+        const response = await axiosInstance.post(`/transactions/submit-findings/${transactionId}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
         return response.data;
     } catch (error) {
-        console.error('Error submitting findings:', {
-            message: error.message,
-            status: error.response?.status,
-            data: error.response?.data
-        });
+        console.error('Error submitting findings:', error.message, error.response?.status, error.response?.data);
         throw error;
     }
 };
@@ -123,16 +116,22 @@ export const getApprovedReports = async () => {
     return response.data;
    };
 
-export const rejectReport = async (transactionId, rejectionReason) => {
-    try {
-    const response = await axiosInstance.post(`/transactions/reject/${transactionId}`, null, {
-    params: { rejectionReason }
-    });
-    return response.data;
-    } catch (error) {
-    throw error;
+   export const rejectReport = async (transactionId, rejectionReason, rejectionDocument) => {
+    const formData = new FormData();
+    formData.append('rejectionReason', rejectionReason);
+    if (rejectionDocument) {
+        formData.append('rejectionDocument', rejectionDocument);
     }
-    };
+    try {
+        const response = await axiosInstance.post(`/transactions/reject/${transactionId}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error rejecting report:', error.message, error.response?.status, error.response?.data);
+        throw error;
+    }
+};
 
     export const getRejectedReports = async () => {
         const response = await axiosInstance.get('/transactions/rejected-reports');
