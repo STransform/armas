@@ -18,42 +18,30 @@ const AuditorTasks = () => {
 
     const fetchMyTasks = async () => {
         try {
-            console.log('Fetching tasks for roles:', roles);
             const data = await getMyTasks();
-            console.log('Raw tasks fetched:', JSON.stringify(data, null, 2));
-            const validTasks = data.filter(task => task && task.id);
-            console.log('Valid tasks after filtering:', JSON.stringify(validTasks, null, 2));
-            setTasks(validTasks);
+            setTasks(data.filter(task => task && task.id));
             setError('');
-            if (validTasks.length === 0) {
-                console.warn('No valid tasks returned for user. Check role, database, or backend query.');
-            }
         } catch (err) {
-            const errorMessage = err.response?.data?.message || err.message || 'Unknown error';
-            setError(`Failed to load tasks: ${errorMessage}`);
-            console.error('Fetch error:', err.response?.data || err);
+            setError(`Failed to load tasks: ${err.message}`);
         }
     };
 
     useEffect(() => {
-        console.log('Current roles:', roles);
         fetchMyTasks();
     }, [roles]);
 
-    const handleDownload = async (id, docname) => {
+    const handleDownload = async (id, docname, type) => {
         try {
-            const response = await downloadFile(id);
+            const response = await downloadFile(id, type);
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', docname || 'file');
+            link.setAttribute('download', `${type}_${docname || 'file'}`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            setError('');
         } catch (err) {
-            setError('Failed to download file: ' + (err.response?.data?.message || err.message));
-            console.error('Download error:', err.response?.data || err);
+            setError(`Failed to download ${type} file: ${err.message}`);
         }
     };
 
@@ -62,12 +50,10 @@ const AuditorTasks = () => {
         setError('');
         try {
             const approversData = await getUsersByRole('APPROVER');
-            console.log('Approvers fetched:', approversData);
             setApprovers(approversData);
             setShowFindingsModal(true);
         } catch (err) {
-            setError('Failed to load approvers: ' + (err.response?.data?.message || err.message));
-            console.error('Error fetching approvers:', err.response?.data || err);
+            setError(`Failed to load approvers: ${err.message}`);
         }
     };
 
@@ -77,24 +63,21 @@ const AuditorTasks = () => {
             return;
         }
         try {
-            console.log('Calling submitFindings: transactionId=', selectedTask.id, 'findings=', findings, 'approverUsername=', selectedApprover);
-            await submitFindings(selectedTask.id, findings, selectedApprover);
+            const supportingDocument = document.getElementById('supportingDocument').files[0];
+            await submitFindings(selectedTask.id, findings, selectedApprover, supportingDocument);
             setSuccess('Findings submitted successfully');
             setShowFindingsModal(false);
             setFindings('');
             setSelectedApprover('');
             await fetchMyTasks();
         } catch (err) {
-            const errorMessage = err.response?.data?.message || err.message || 'Unknown error';
-            setError(`Failed to submit findings: ${errorMessage}`);
-            console.error('Submit error:', errorMessage, err.response?.data || err);
+            setError(`Failed to submit findings: ${err.message}`);
         }
     };
 
     const handleApprove = async (id) => {
         try {
-            const response = await approveReport(id);
-            console.log('Approve response:', response);
+            await approveReport(id);
             setSuccess('Report approved successfully');
             await fetchMyTasks();
         } catch (err) {
@@ -114,8 +97,8 @@ const AuditorTasks = () => {
             return;
         }
         try {
-            const response = await rejectReport(selectedTask.id, findings);
-            console.log('Reject response:', response);
+            const rejectionDocument = document.getElementById('rejectionDocument').files[0];
+            await rejectReport(selectedTask.id, findings, rejectionDocument);
             setSuccess('Report rejected successfully');
             setShowFindingsModal(false);
             setFindings('');
@@ -149,17 +132,25 @@ const AuditorTasks = () => {
                         {tasks.map(task => (
                             <tr key={task.id}>
                                 <td>{task.createdDate ? new Date(task.createdDate).toLocaleDateString() : 'N/A'}</td>
-                                <td>{task.reportstatus ? task.reportstatus : 'Status Missing'}</td>
+                                <td>{task.reportstatus || 'N/A'}</td>
                                 <td>{task.organization?.orgname || 'N/A'}</td>
                                 <td>{task.fiscal_year || 'N/A'}</td>
                                 <td>{task.transactiondocument?.reportype || 'N/A'}</td>
                                 <td>
                                     <button
                                         className="btn btn-primary mr-2"
-                                        onClick={() => handleDownload(task.id, task.docname)}
+                                        onClick={() => handleDownload(task.id, task.docname, 'original')}
                                     >
-                                        Download
+                                        Download Original
                                     </button>
+                                    {task.supportingDocumentPath && (
+                                        <button
+                                            className="btn btn-info mr-2"
+                                            onClick={() => handleDownload(task.id, task.docname, 'supporting')}
+                                        >
+                                            Download Supporting
+                                        </button>
+                                    )}
                                     {isSeniorAuditor && (task.reportstatus === 'Assigned' || task.reportstatus === 'Rejected') && (
                                         <button
                                             className="btn btn-secondary mr-2"
@@ -200,11 +191,7 @@ const AuditorTasks = () => {
                         <div className="modal-content">
                             <div className="modal-header">
                                 <h5 className="modal-title">{isSeniorAuditor ? 'Submit Findings' : 'Reject Report'}</h5>
-                                <button
-                                    type="button"
-                                    className="btn-close"
-                                    onClick={() => setShowFindingsModal(false)}
-                                ></button>
+                                <button type="button" className="btn-close" onClick={() => setShowFindingsModal(false)}></button>
                             </div>
                             <div className="modal-body">
                                 <div className="form-group">
@@ -214,7 +201,7 @@ const AuditorTasks = () => {
                                         id="findings"
                                         value={findings}
                                         onChange={(e) => setFindings(e.target.value)}
-                                    ></textarea>
+                                    />
                                 </div>
                                 {isSeniorAuditor && (
                                     <div className="form-group">
@@ -234,13 +221,19 @@ const AuditorTasks = () => {
                                         </select>
                                     </div>
                                 )}
+                                <div className="form-group">
+                                    <label htmlFor={isSeniorAuditor ? 'supportingDocument' : 'rejectionDocument'}>
+                                        {isSeniorAuditor ? 'Attach Supporting Document' : 'Attach Rejection Document'}:
+                                    </label>
+                                    <input
+                                        type="file"
+                                        className="form-control"
+                                        id={isSeniorAuditor ? 'supportingDocument' : 'rejectionDocument'}
+                                    />
+                                </div>
                             </div>
                             <div className="modal-footer">
-                                <button
-                                    type="button"
-                                    className="btn btn-secondary"
-                                    onClick={() => setShowFindingsModal(false)}
-                                >
+                                <button type="button" className="btn btn-secondary" onClick={() => setShowFindingsModal(false)}>
                                     Close
                                 </button>
                                 <button

@@ -36,9 +36,11 @@ public interface MasterTransactionRepository extends JpaRepository<MasterTransac
     @Query("FROM MasterTransaction m WHERE m.reportcategory = :reportcategory AND m.transactiondocument.id = :docid AND m.fiscal_year = :fiscal_year")
     List<MasterTransaction> findNoneSendersByDocumentId(@Param("docid") String id, @Param("fiscal_year") String fiscal_year, @Param("reportcategory") String reportcategory);
 
-    @Query("SELECT new com.simon.armas_springboot_api.dto.SentReportResponseDTO(m.id, o.orgname, d.reportype, m.fiscal_year, m.createdDate, m.docname, m.reportstatus) " +
-           "FROM MasterTransaction m INNER JOIN m.organization o INNER JOIN m.transactiondocument d WHERE m.reportstatus IN :statuses")
-    List<SentReportResponseDTO> fetchDataByStatuses(@Param("statuses") List<String> statuses);
+    @Query("SELECT new com.simon.armas_springboot_api.dto.SentReportResponseDTO(" +
+       "m.id, o.orgname, d.reportype, m.fiscal_year, m.createdDate, m.docname, m.reportstatus, m.remarks) " +
+       "FROM MasterTransaction m INNER JOIN m.organization o INNER JOIN m.transactiondocument d " +
+       "WHERE m.reportstatus IN :statuses")
+List<SentReportResponseDTO> fetchDataByStatuses(@Param("statuses") List<String> statuses);
 
     @Query("SELECT COUNT(DISTINCT mt.organization) FROM MasterTransaction mt WHERE mt.transactiondocument IS NOT NULL")
     int countDistinctOrganizationsWithReports();
@@ -46,17 +48,16 @@ public interface MasterTransactionRepository extends JpaRepository<MasterTransac
     @Query("SELECT m FROM MasterTransaction m WHERE m.transactiondocument.id = :transactionDocumentId")
     List<MasterTransaction> findByTransactionDocumentId(@Param("transactionDocumentId") String transactionDocumentId);
 
-    @Query("SELECT m FROM MasterTransaction m " +
-           "LEFT JOIN FETCH m.organization " +
-           "LEFT JOIN FETCH m.transactiondocument " +
-           "WHERE m.reportstatus = :status")
+    @Query("SELECT m FROM MasterTransaction m WHERE m.reportstatus = :status")
     List<MasterTransaction> findByReportStatus(@Param("status") String reportStatus);
-
     @Query("SELECT m FROM MasterTransaction m WHERE m.user2.id = :userId AND m.reportstatus IN :statuses")
-    List<MasterTransaction> findByUserAndStatuses(
-        @Param("userId") Long userId,
-        @Param("statuses") List<String> statuses
-    );
+    List<MasterTransaction> findByUserAndStatuses(@Param("userId") Long userId, @Param("statuses") List<String> statuses);
+    @Query("SELECT m FROM MasterTransaction m WHERE m.reportstatus = 'Rejected' AND m.submittedByAuditor.id = :userId")
+    List<MasterTransaction> findRejectedReportsByAuditor(@Param("userId") Long userId);
+
+    @Query("SELECT m FROM MasterTransaction m WHERE m.reportstatus = 'Approved'")
+    List<MasterTransaction> findApprovedReports();
+    
     // query for Senior Auditor tasks
     @Query("SELECT m FROM MasterTransaction m WHERE " +
            "(m.user2.id = :userId AND m.reportstatus IN :statuses) OR " +
@@ -79,6 +80,7 @@ List<MasterTransaction> findCompletedApproverTasks(
     boolean existsByDocname(String docname);
     boolean existsByDocnameAndUserId(String docname, Long userId);
     boolean existsByDocnameAndUser(String docname, User user);
-
+    @Query("SELECT t FROM MasterTransaction t WHERE t.reportstatus = :status AND t.user2.username = :username")
+    List<MasterTransaction> findByReportstatusAndUser2Username(String status, String username);
     
 }

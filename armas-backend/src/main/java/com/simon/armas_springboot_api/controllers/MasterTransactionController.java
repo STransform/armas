@@ -25,6 +25,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 //import Arrays
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.nio.file.Files;
 //import SentReportResponseDTO;
 import com.simon.armas_springboot_api.dto.SentReportResponseDTO;
 
@@ -57,15 +59,15 @@ public class MasterTransactionController {
         return ResponseEntity.ok(transaction);
     }
 
-    @GetMapping("/download/{id}")
-    public ResponseEntity<Resource> downloadFile(@PathVariable Integer id) throws IOException {
-        Path filePath = masterTransactionService.getFilePath(id);
-        Resource resource = new UrlResource(filePath.toUri());
-
-        if (!resource.exists()) {
+    @GetMapping("/download/{id}/{type}")
+    @PreAuthorize("hasAnyRole('APPROVER', 'SENIOR_AUDITOR', 'ARCHIVER', 'USER')")
+    public ResponseEntity<Resource> downloadFile(@PathVariable Integer id, @PathVariable String type) throws IOException {
+        Map<String, Path> paths = masterTransactionService.getFilePaths(id);
+        Path filePath = type.equals("original") ? paths.get("original") : paths.get("supporting");
+        if (filePath == null || !Files.exists(filePath)) {
             return ResponseEntity.notFound().build();
         }
-
+        Resource resource = new UrlResource(filePath.toUri());
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
@@ -124,24 +126,18 @@ public class MasterTransactionController {
             @PathVariable Integer transactionId,
             @RequestParam String findings,
             @RequestParam String approverUsername,
-            Principal principal) {
-        System.out.println("Received submit-findings request: transactionId=" + transactionId + ", principal=" + principal.getName());
-        MasterTransaction transaction = masterTransactionService.submitFindings(
-                transactionId, findings, approverUsername, principal.getName());
+            @RequestParam(value = "supportingDocument", required = false) MultipartFile supportingDocument,
+            Principal principal) throws IOException {
+        MasterTransaction transaction = masterTransactionService.submitFindings(transactionId, findings, approverUsername, principal.getName(), supportingDocument);
         return ResponseEntity.ok(transaction);
     }
 
     @GetMapping("/approved-reports")
-    @PreAuthorize("hasRole('ARCHIVER')")
-    public ResponseEntity<List<MasterTransaction>> getApprovedReports() {
-        List<MasterTransaction> transactions = masterTransactionService.getApprovedReports();
-        System.out.println("Approved reports fetched: " + transactions.size());
-        transactions.forEach(t -> System.out.println("Transaction: id=" + t.getId() + 
-                ", reportstatus=" + t.getReportstatus() + 
-                ", org=" + (t.getOrganization() != null ? t.getOrganization().getOrgname() : "null") + 
-                ", fiscal_year=" + t.getFiscal_year() + 
-                ", reportype=" + (t.getTransactiondocument() != null ? t.getTransactiondocument().getReportype() : "null")));
-        return ResponseEntity.ok(transactions);
+    @PreAuthorize("hasAnyRole('APPROVER', 'SENIOR_AUDITOR')")
+    public ResponseEntity<List<MasterTransaction>> getApprovedReports(Principal principal) {
+        System.out.println("Fetching approved reports for user: " + principal.getName());
+        List<MasterTransaction> approvedReports = masterTransactionService.getApprovedReports(principal.getName());
+        return ResponseEntity.ok(approvedReports);
     }
 
     @PostMapping("/approve/{transactionId}")
@@ -154,19 +150,18 @@ public class MasterTransactionController {
                 transactionId, principal.getName());
         return ResponseEntity.ok(transaction);
     }
-
     @PostMapping("/reject/{transactionId}")
-@PreAuthorize("hasRole('APPROVER')")
-public ResponseEntity<MasterTransaction> rejectReport(
-@PathVariable Integer transactionId,
-@RequestParam String rejectionReason,
-Principal principal) {
-MasterTransaction transaction = masterTransactionService.rejectReport(
-transactionId, rejectionReason, principal.getName());
-return ResponseEntity.ok(transaction);
-}
+    @PreAuthorize("hasRole('APPROVER')")
+    public ResponseEntity<MasterTransaction> rejectReport(
+            @PathVariable Integer transactionId,
+            @RequestParam String rejectionReason,
+            @RequestParam(value = "rejectionDocument", required = false) MultipartFile rejectionDocument,
+            Principal principal) throws IOException {
+        MasterTransaction transaction = masterTransactionService.rejectReport(transactionId, rejectionReason, principal.getName(), rejectionDocument);
+        return ResponseEntity.ok(transaction);
+    }
 @GetMapping("/rejected-reports")
-@PreAuthorize("hasRole('ARCHIVER')")
+@PreAuthorize("hasAnyRole('ARCHIVER', 'SENIOR_AUDITOR', 'APPROVER')")
 public ResponseEntity<List<MasterTransaction>> getRejectedReports() {
  return ResponseEntity.ok(masterTransactionRepository.findByReportStatus("Rejected"));
 }
