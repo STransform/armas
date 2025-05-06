@@ -12,6 +12,8 @@ import com.simon.armas_springboot_api.repositories.UserRepository;
 import com.simon.armas_springboot_api.services.MasterTransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.simon.armas_springboot_api.dto.UserDTO;
+import com.simon.armas_springboot_api.dto.MasterTransactionDTO;
+import com.simon.armas_springboot_api.dto.SentReportResponseDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.core.io.Resource;
@@ -75,6 +77,7 @@ public class MasterTransactionController {
     }
 
     @GetMapping("/sent-reports")
+    @PreAuthorize("hasAnyRole('APPROVER', 'SENIOR_AUDITOR', 'ARCHIVER')")
     public ResponseEntity<List<SentReportResponseDTO>> getSentReports(Principal principal) {
         String role = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
@@ -133,10 +136,16 @@ public class MasterTransactionController {
     }
 
     @GetMapping("/approved-reports")
-    @PreAuthorize("hasAnyRole('APPROVER', 'SENIOR_AUDITOR')")
-    public ResponseEntity<List<MasterTransaction>> getApprovedReports(Principal principal) {
-        System.out.println("Fetching approved reports for user: " + principal.getName());
-        List<MasterTransaction> approvedReports = masterTransactionService.getApprovedReports(principal.getName());
+    @PreAuthorize("hasAnyRole('APPROVER', 'SENIOR_AUDITOR', 'ARCHIVER')")
+    public ResponseEntity<List<MasterTransactionDTO>> getApprovedReports(Principal principal) {
+        String role = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .map(auth -> auth.replace("ROLE_", ""))
+                .filter(auth -> auth.equals("ARCHIVER") || auth.equals("SENIOR_AUDITOR") || auth.equals("APPROVER"))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("User does not have required role"));
+        
+        List<MasterTransactionDTO> approvedReports = masterTransactionService.getApprovedReports(principal.getName(), role);
         return ResponseEntity.ok(approvedReports);
     }
 
@@ -178,10 +187,5 @@ public ResponseEntity<List<MasterTransaction>> getRejectedReports() {
         List<MasterTransaction> tasks = masterTransactionService.getTasks(principal.getName(), role);
         return ResponseEntity.ok(tasks);
     }
-
-
-
-
-
 
 }

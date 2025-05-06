@@ -1,6 +1,7 @@
 package com.simon.armas_springboot_api.services;
 
 import com.simon.armas_springboot_api.dto.SentReportResponseDTO;
+import com.simon.armas_springboot_api.dto.MasterTransactionDTO;
 import com.simon.armas_springboot_api.models.Document;
 import com.simon.armas_springboot_api.models.MasterTransaction;
 import com.simon.armas_springboot_api.models.User;
@@ -9,6 +10,7 @@ import com.simon.armas_springboot_api.repositories.MasterTransactionRepository;
 import com.simon.armas_springboot_api.repositories.OrganizationRepository;
 import com.simon.armas_springboot_api.repositories.UserRepository;
 import com.simon.armas_springboot_api.dto.UserDTO;
+
 import com.simon.armas_springboot_api.security.models.Role;
 import org.springframework.beans.factory.annotation.Autowired;
 //import collection
@@ -270,9 +272,30 @@ public class MasterTransactionService {
         System.out.println("No tasks found for role: " + role);
         return Collections.emptyList();
     }
-    public List<MasterTransaction> getApprovedReports(String username) {
-        return masterTransactionRepository.findByReportstatusAndUser2Username("Approved", username);
+    public List<MasterTransactionDTO> getApprovedReports(String username, String role) {
+        List<MasterTransaction> reports;
+        if ("ARCHIVER".equals(role) || "APPROVER".equals(role)) {
+            reports = masterTransactionRepository.findByReportstatus("Approved");
+        } else if ("SENIOR_AUDITOR".equals(role)) {
+            User user = userRepository.findByUsername(username);
+            if (user == null) {
+                throw new IllegalArgumentException("User not found: " + username);
+            }
+            reports = masterTransactionRepository.findByReportstatusAndSubmittedByAuditor("Approved", user);
+        } else {
+            throw new IllegalArgumentException("Invalid role for approved reports: " + role);
+        }
+        System.out.println("Fetched " + reports.size() + " approved reports for " + username + " (" + role + ")");
+        reports.forEach(report -> {
+            System.out.println("Report: ID=" + report.getId() +
+                    ", CreatedDate=" + report.getCreatedDate() +
+                    ", Org=" + (report.getOrganization() != null ? report.getOrganization().getOrgname() : "null") +
+                    ", FiscalYear=" + report.getFiscal_year() +
+                    ", ReportType=" + (report.getTransactiondocument() != null ? report.getTransactiondocument().getReportype() : "null") +
+                    ", Status=" + report.getReportstatus() +
+                    ", Docname=" + report.getDocname());
+        });
+        return reports.stream().map(MasterTransactionDTO::new).collect(Collectors.toList());
     }
-
 
 }

@@ -11,7 +11,7 @@ const ApprovedReports = () => {
             try {
                 const data = await getApprovedReports();
                 console.log('Fetched approved reports:', JSON.stringify(data, null, 2));
-                setReports(data); // Remove filter to include all reports
+                setReports(data);
                 if (data.length === 0) {
                     setError('No approved reports available.');
                 }
@@ -62,14 +62,14 @@ const ApprovedReports = () => {
                         {reports.map(report => (
                             <tr key={report.id || Math.random()}>
                                 <td>{report.createdDate ? new Date(report.createdDate).toLocaleDateString() : 'N/A'}</td>
-                                <td>{report.organization && report.organization.orgname ? report.organization.orgname : 'N/A'}</td>
-                                <td>{report.fiscal_year || 'N/A'}</td>
-                                <td>{report.transactiondocument && report.transactiondocument.reportype ? report.transactiondocument.reportype : 'N/A'}</td>
+                                <td>{report.orgname || 'N/A'}</td>
+                                <td>{report.fiscalYear || 'N/A'}</td>
+                                <td>{report.reportype || 'N/A'}</td>
                                 <td>{report.reportstatus || 'N/A'}</td>
                                 <td>
                                     {report.id && report.docname ? (
-                                        <button 
-                                            className="btn btn-primary" 
+                                        <button
+                                            className="btn btn-primary"
                                             onClick={() => handleDownload(report.id, report.docname)}
                                         >
                                             Download
