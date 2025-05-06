@@ -1,7 +1,5 @@
 package com.simon.armas_springboot_api.dto;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Date;
 
 public class SentReportResponseDTO {
@@ -9,19 +7,20 @@ public class SentReportResponseDTO {
     private String orgname;
     private String reportype;
     private String fiscal_year;
-    private LocalDateTime createdDate;
+    private Date createdDate;
     private String docname;
     private String reportstatus;
     private String remarks;
 
-    public SentReportResponseDTO(Integer id, String orgname, String reportype, String fiscal_year, Date createdDate, String docname, String reportstatus , String remarks) {
+    public SentReportResponseDTO(Integer id, String orgname, String reportype, String fiscal_year, Date createdDate,
+                                 String docname, String reportstatus, String remarks) {
         this.id = id;
-        this.orgname = orgname;
-        this.reportype = reportype;
-        this.fiscal_year = fiscal_year;
-        this.createdDate = createdDate != null ? createdDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
-        this.docname = docname;
-        this.reportstatus = reportstatus;
+        this.orgname = orgname != null ? orgname : "Unknown";
+        this.reportype = reportype != null ? reportype : "Unknown";
+        this.fiscal_year = fiscal_year != null ? fiscal_year : "N/A";
+        this.createdDate = createdDate;
+        this.docname = docname != null ? docname : "N/A";
+        this.reportstatus = reportstatus != null ? reportstatus : "N/A";
         this.remarks = remarks;
     }
 
@@ -30,7 +29,7 @@ public class SentReportResponseDTO {
     public String getOrgname() { return orgname; }
     public String getReportype() { return reportype; }
     public String getFiscal_year() { return fiscal_year; }
-    public LocalDateTime getCreatedDate() { return createdDate; }
+    public Date getCreatedDate() { return createdDate; }
     public String getDocname() { return docname; }
     public String getReportstatus() { return reportstatus; }
     public String getRemarks() { return remarks; }
