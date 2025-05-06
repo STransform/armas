@@ -82,5 +82,6 @@ List<MasterTransaction> findCompletedApproverTasks(
     boolean existsByDocnameAndUser(String docname, User user);
     @Query("SELECT t FROM MasterTransaction t WHERE t.reportstatus = :status AND t.user2.username = :username")
     List<MasterTransaction> findByReportstatusAndUser2Username(String status, String username);
-    
+    List<MasterTransaction> findByReportstatus(String reportstatus);
+    List<MasterTransaction> findByReportstatusAndSubmittedByAuditor(String reportstatus, User submittedByAuditor);
 }
