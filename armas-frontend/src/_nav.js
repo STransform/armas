@@ -15,6 +15,12 @@ import {
   cilCloudUpload,
   cilCloudDownload,
   cilTask,
+  cilUser,
+  cilLockLocked,
+  cilFile,
+  cilGroup,
+  cilBuilding,
+  cilTransfer,
 } from '@coreui/icons';
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react';
 import { useAuth } from './views/pages/AuthProvider';
@@ -33,11 +39,11 @@ const Nav = () => {
   const commonItems = [
     {
       component: CNavTitle,
-      name: 'Components',
+      name: 'Home',
     },
     {
       component: CNavItem,
-      name: 'Charts',
+      name: 'Dashboard',
       to: '/charts',
       icon: <CIcon icon={cilChartPie} customClassName="nav-icon" />,
     },
@@ -56,12 +62,7 @@ const Nav = () => {
         { component: CNavItem, name: 'Error 500', to: '/500' },
       ],
     },
-    // {
-    //   component: CNavItem,
-    //   name: 'Docs',
-    //   href: 'https://coreui.io/react/docs/templates/installation/',
-    //   icon: <CIcon icon={cilDescription} customClassName="nav-icon" />,
-    // },
+   
   ];
 
   const userItems = [
@@ -75,12 +76,18 @@ const Nav = () => {
       to: '/buttons/file-upload',
       icon: <CIcon icon={cilCloudUpload} customClassName="nav-icon" />,
     },
+    {
+      component: CNavItem,
+      name: 'File History',
+      to: '/buttons/file-history',
+      icon: <CIcon icon={cilCloudUpload} customClassName="nav-icon" />,
+    },
   ];
 
   const adminItems = [
     {
       component: CNavGroup,
-      name: 'Register',
+      name: 'Manage',
       to: '/buttons',
       icon: <CIcon icon={cilCursor} customClassName="nav-icon" />,
       items: [
@@ -88,38 +95,38 @@ const Nav = () => {
           component: CNavItem,
           name: 'Organizations',
           to: '/buttons/organizations',
+          icon: <CIcon icon={cilBuilding} customClassName="nav-icon" />,
         },
         {
           component: CNavItem,
           name: 'Directorates',
           to: '/buttons/directorates',
+          icon: <CIcon icon={cilGroup} customClassName="nav-icon" />,
         },
         {
           component: CNavItem,
           name: 'Documents',
           to: '/buttons/documents',
-          icon: <CIcon icon={cilDescription} customClassName="nav-icon" />,
+          icon: <CIcon icon={cilFile} customClassName="nav-icon" />,
         },
-        {
-          component: CNavItem,
-          name: 'Master Transaction',
-          to: '/buttons/master-transaction',
-          icon: <CIcon icon={cilDescription} customClassName="nav-icon" />,
-        },
+        
         {
           component: CNavItem,
           name: 'Users',
           to: '/buttons/users',
+          icon: <CIcon icon={cilUser} customClassName="nav-icon" />,
         },
         {
           component: CNavItem,
           name: 'Role',
           to: '/buttons/roles',
+          icon: <CIcon icon={cilStar} customClassName="nav-icon" />,
         },
         {
           component: CNavItem,
           name: 'AssignRole',
           to: '/buttons/assign',
+          icon: <CIcon icon={cilLockLocked} customClassName="nav-icon" />,
         },
         {
           component: CNavItem,
@@ -137,37 +144,11 @@ const Nav = () => {
     },
   ];
 
-  // Commented out to remove duplicate Transactions menu for ARCHIVER
-  /*
-  const archiverItems = [
-    {
-      component: CNavGroup,
-      name: 'Transactions',
-      to: '/buttons',
-      icon: <CIcon icon={cilTask} customClassName="nav-icon" />,
-      items: [
-        {
-          component: CNavItem,
-          name: 'File Download',
-          to: '/buttons/file-download',
-          icon: <CIcon icon={cilCloudDownload} customClassName="nav-icon" />,
-        },
-        {
-          component: CNavItem,
-          name: 'Approved Reports',
-          to: '/transactions/approved-reports',
-          icon: <CIcon icon={cilCloudDownload} customClassName="nav-icon" />,
-        },
-      ],
-    },
-  ];
-  */
-
   const transactionItems = [
     {
       component: CNavGroup,
       name: 'Transactions',
-      icon: <CIcon icon={cilTask} customClassName="nav-icon" />,
+      icon: <CIcon icon={cilTransfer} customClassName="nav-icon" />,
       items: [
         ...(isArchiver
           ? [

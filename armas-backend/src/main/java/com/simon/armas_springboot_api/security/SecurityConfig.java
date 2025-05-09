@@ -73,10 +73,9 @@ public class SecurityConfig {
                         .requestMatchers("/userPrivilegeAssignments/**").hasRole("ADMIN")
                         .requestMatchers("/buttons/forms/**").hasRole("USER")
                         .requestMatchers("/buttons/charts/**").hasRole("USER")
-
-                        .requestMatchers("/transactions/upload").hasRole("ADMIN")
+                        .requestMatchers("/transactions/upload").hasAnyRole( "USER", "ADMIN")
                         .requestMatchers("/transactions/sent-reports").hasAnyRole("ARCHIVER", "SENIOR_AUDITOR", "APPROVER")
-                        .requestMatchers("/transactions/listdocuments").hasRole("ADMIN")
+                        .requestMatchers("/transactions/listdocuments").hasAnyRole("ADMIN", "USER")
                         .requestMatchers("/transactions/users-by-role/**").hasAnyRole("ARCHIVER", "SENIOR_AUDITOR", "APPROVER")
                         .requestMatchers("/transactions/assign/**").hasRole("ARCHIVER")
                         .requestMatchers("/transactions/submit-findings/**").hasRole("SENIOR_AUDITOR")
