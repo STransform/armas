@@ -57,9 +57,10 @@ public class MasterTransactionService {
     // Upload file by Uploader
     @Transactional
     public MasterTransaction uploadFile(MultipartFile file, String responseNeeded, String fiscalYear,
-                                       String transactionDocumentId, Principal principal) throws IOException {
+            String transactionDocumentId, Principal principal) throws IOException {
         User user = userRepository.findByUsername(principal.getName());
-        if (user == null) throw new IllegalArgumentException("User not found");
+        if (user == null)
+            throw new IllegalArgumentException("User not found");
 
         String docname = file.getOriginalFilename();
         if (masterTransactionRepository.existsByDocnameAndUser(docname, user)) {
@@ -139,7 +140,8 @@ public class MasterTransactionService {
         }
 
         User auditor = userRepository.findByUsername(auditorUsername);
-        if (auditor == null || !auditor.getRoles().stream().anyMatch(r -> "SENIOR_AUDITOR".equals(r.getDescription()))) {
+        if (auditor == null
+                || !auditor.getRoles().stream().anyMatch(r -> "SENIOR_AUDITOR".equals(r.getDescription()))) {
             throw new IllegalArgumentException("Invalid Senior Auditor");
         }
 
@@ -151,7 +153,8 @@ public class MasterTransactionService {
 
     // Submit findings by Senior Auditor
     @Transactional
-    public MasterTransaction submitFindings(Integer transactionId, String findings, String approverUsername, String currentUsername, MultipartFile supportingDocument) throws IOException {
+    public MasterTransaction submitFindings(Integer transactionId, String findings, String approverUsername,
+            String currentUsername, MultipartFile supportingDocument) throws IOException {
         MasterTransaction transaction = masterTransactionRepository.findById(transactionId)
                 .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + transactionId));
         if (!Arrays.asList("Assigned", "Rejected").contains(transaction.getReportstatus())) {
@@ -184,7 +187,8 @@ public class MasterTransactionService {
         MasterTransaction transaction = masterTransactionRepository.findById(transactionId)
                 .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + transactionId));
         User currentUser = userRepository.findByUsername(currentUsername);
-        if (currentUser == null || !currentUser.getRoles().stream().anyMatch(r -> "APPROVER".equals(r.getDescription()))) {
+        if (currentUser == null
+                || !currentUser.getRoles().stream().anyMatch(r -> "APPROVER".equals(r.getDescription()))) {
             throw new IllegalArgumentException("Unauthorized: Must have APPROVER role");
         }
         if (!"Under Review".equals(transaction.getReportstatus())) {
@@ -198,14 +202,15 @@ public class MasterTransactionService {
         return masterTransactionRepository.save(transaction);
     }
 
-
     // Reject by Approver
     @Transactional
-    public MasterTransaction rejectReport(Integer transactionId, String rejectionReason, String currentUsername, MultipartFile rejectionDocument) throws IOException {
+    public MasterTransaction rejectReport(Integer transactionId, String rejectionReason, String currentUsername,
+            MultipartFile rejectionDocument) throws IOException {
         MasterTransaction transaction = masterTransactionRepository.findById(transactionId)
                 .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + transactionId));
         User currentUser = userRepository.findByUsername(currentUsername);
-        if (currentUser == null || !currentUser.getRoles().stream().anyMatch(r -> "APPROVER".equals(r.getDescription()))) {
+        if (currentUser == null
+                || !currentUser.getRoles().stream().anyMatch(r -> "APPROVER".equals(r.getDescription()))) {
             throw new IllegalArgumentException("Unauthorized: Must have APPROVER role");
         }
         if (!"Under Review".equals(transaction.getReportstatus())) {
@@ -229,6 +234,7 @@ public class MasterTransactionService {
         transaction.setLastModifiedBy(currentUsername);
         return masterTransactionRepository.save(transaction);
     }
+
     // Get tasks based on role and user
     public List<MasterTransaction> getTasks(String username, String role) {
         User user = userRepository.findByUsername(username);
@@ -237,7 +243,7 @@ public class MasterTransactionService {
             throw new IllegalArgumentException("User not found: " + username);
         }
         System.out.println("Fetching tasks for user: " + username + ", role: " + role + ", userId: " + user.getId());
-    
+
         if ("ARCHIVER".equals(role)) {
             List<MasterTransaction> submitted = masterTransactionRepository.findByReportStatus("Submitted");
             List<MasterTransaction> approved = masterTransactionRepository.findByReportStatus("Approved");
@@ -254,7 +260,8 @@ public class MasterTransactionService {
             tasks.forEach(task -> System.out.println("Senior Auditor task: id=" + task.getId() +
                     ", status=" + task.getReportstatus() +
                     ", user2_id=" + (task.getUser2() != null ? task.getUser2().getId() : "null") +
-                    ", submittedByAuditor_id=" + (task.getSubmittedByAuditor() != null ? task.getSubmittedByAuditor().getId() : "null")));
+                    ", submittedByAuditor_id="
+                    + (task.getSubmittedByAuditor() != null ? task.getSubmittedByAuditor().getId() : "null")));
             return tasks;
         } else if ("APPROVER".equals(role)) {
             List<MasterTransaction> activeTasks = masterTransactionRepository.findApproverTasks(
@@ -272,6 +279,7 @@ public class MasterTransactionService {
         System.out.println("No tasks found for role: " + role);
         return Collections.emptyList();
     }
+
     public List<MasterTransactionDTO> getApprovedReports(String username, String role) {
         List<MasterTransaction> reports;
         if ("ARCHIVER".equals(role) || "APPROVER".equals(role)) {
@@ -291,7 +299,10 @@ public class MasterTransactionService {
                     ", CreatedDate=" + report.getCreatedDate() +
                     ", Org=" + (report.getOrganization() != null ? report.getOrganization().getOrgname() : "null") +
                     ", FiscalYear=" + report.getFiscal_year() +
-                    ", ReportType=" + (report.getTransactiondocument() != null ? report.getTransactiondocument().getReportype() : "null") +
+                    ", ReportType="
+                    + (report.getTransactiondocument() != null ? report.getTransactiondocument().getReportype()
+                            : "null")
+                    +
                     ", Status=" + report.getReportstatus() +
                     ", Docname=" + report.getDocname());
         });

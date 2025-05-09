@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.security.Principal;
 import java.util.List;
+
 @RestController
 @RequestMapping("/transactions")
 public class MasterTransactionController {
@@ -63,7 +64,8 @@ public class MasterTransactionController {
 
     @GetMapping("/download/{id}/{type}")
     @PreAuthorize("hasAnyRole('APPROVER', 'SENIOR_AUDITOR', 'ARCHIVER', 'USER')")
-    public ResponseEntity<Resource> downloadFile(@PathVariable Integer id, @PathVariable String type) throws IOException {
+    public ResponseEntity<Resource> downloadFile(@PathVariable Integer id, @PathVariable String type)
+            throws IOException {
         Map<String, Path> paths = masterTransactionService.getFilePaths(id);
         Path filePath = type.equals("original") ? paths.get("original") : paths.get("supporting");
         if (filePath == null || !Files.exists(filePath)) {
@@ -116,8 +118,8 @@ public class MasterTransactionController {
     @PostMapping("/assign/{transactionId}")
     @PreAuthorize("hasRole('ARCHIVER')")
     public ResponseEntity<MasterTransaction> assignAuditor(@PathVariable Integer transactionId,
-                                                          @RequestParam String auditorUsername,
-                                                          Principal principal) {
+            @RequestParam String auditorUsername,
+            Principal principal) {
         MasterTransaction transaction = masterTransactionService.assignAuditor(transactionId, auditorUsername,
                 principal.getName());
         return ResponseEntity.ok(transaction);
@@ -131,7 +133,8 @@ public class MasterTransactionController {
             @RequestParam String approverUsername,
             @RequestParam(value = "supportingDocument", required = false) MultipartFile supportingDocument,
             Principal principal) throws IOException {
-        MasterTransaction transaction = masterTransactionService.submitFindings(transactionId, findings, approverUsername, principal.getName(), supportingDocument);
+        MasterTransaction transaction = masterTransactionService.submitFindings(transactionId, findings,
+                approverUsername, principal.getName(), supportingDocument);
         return ResponseEntity.ok(transaction);
     }
 
@@ -144,8 +147,9 @@ public class MasterTransactionController {
                 .filter(auth -> auth.equals("ARCHIVER") || auth.equals("SENIOR_AUDITOR") || auth.equals("APPROVER"))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("User does not have required role"));
-        
-        List<MasterTransactionDTO> approvedReports = masterTransactionService.getApprovedReports(principal.getName(), role);
+
+        List<MasterTransactionDTO> approvedReports = masterTransactionService.getApprovedReports(principal.getName(),
+                role);
         return ResponseEntity.ok(approvedReports);
     }
 
@@ -154,11 +158,13 @@ public class MasterTransactionController {
     public ResponseEntity<MasterTransaction> approveReport(
             @PathVariable Integer transactionId,
             Principal principal) {
-        System.out.println("Received approve request: transactionId=" + transactionId + ", principal=" + principal.getName());
+        System.out.println(
+                "Received approve request: transactionId=" + transactionId + ", principal=" + principal.getName());
         MasterTransaction transaction = masterTransactionService.approveReport(
                 transactionId, principal.getName());
         return ResponseEntity.ok(transaction);
     }
+
     @PostMapping("/reject/{transactionId}")
     @PreAuthorize("hasRole('APPROVER')")
     public ResponseEntity<MasterTransaction> rejectReport(
@@ -166,14 +172,16 @@ public class MasterTransactionController {
             @RequestParam String rejectionReason,
             @RequestParam(value = "rejectionDocument", required = false) MultipartFile rejectionDocument,
             Principal principal) throws IOException {
-        MasterTransaction transaction = masterTransactionService.rejectReport(transactionId, rejectionReason, principal.getName(), rejectionDocument);
+        MasterTransaction transaction = masterTransactionService.rejectReport(transactionId, rejectionReason,
+                principal.getName(), rejectionDocument);
         return ResponseEntity.ok(transaction);
     }
-@GetMapping("/rejected-reports")
-@PreAuthorize("hasAnyRole('ARCHIVER', 'SENIOR_AUDITOR', 'APPROVER')")
-public ResponseEntity<List<MasterTransaction>> getRejectedReports() {
- return ResponseEntity.ok(masterTransactionRepository.findByReportStatus("Rejected"));
-}
+
+    @GetMapping("/rejected-reports")
+    @PreAuthorize("hasAnyRole('ARCHIVER', 'SENIOR_AUDITOR', 'APPROVER')")
+    public ResponseEntity<List<MasterTransaction>> getRejectedReports() {
+        return ResponseEntity.ok(masterTransactionRepository.findByReportStatus("Rejected"));
+    }
 
     @GetMapping("/tasks")
     @PreAuthorize("hasAnyRole('ARCHIVER', 'SENIOR_AUDITOR', 'APPROVER')")

@@ -37,9 +37,17 @@ const Login = () => {
       console.log('User roles after login:', roles);
 
       if (roles.includes('ADMIN')) {
-        navigate('/buttons/users'); // Redirect ADMIN to admin area
+        navigate('/charts'); // Redirect ADMIN to admin area
       } else if (roles.includes('USER')) {
-        navigate('/buttons/charts/'); // Redirect USER to user area
+        navigate('/charts/'); // Redirect USER to user area
+        
+      }
+      else if (roles.includes('SENIOR_AUDITOR')) {
+        navigate('/charts/'); // Redirect USER to user area
+        
+      } else if (roles.includes('ARCHIVER')) {
+        navigate('/charts/'); // Redirect USER to user area
+        
       } else {
         navigate('/dashboard'); // Fallback
       }
@@ -65,7 +73,7 @@ const Login = () => {
                 <CCardBody>
                   <CForm onSubmit={handleLogin}>
                     <h1>Login</h1>
-                    <p className="text-body-secondary">Sign In to your account</p>
+                    <p className="text-body-secondary">Sign In</p>
                     {error && <p className="text-danger">{error}</p>}
                     <CInputGroup className="mb-3">
                       <CInputGroupText>

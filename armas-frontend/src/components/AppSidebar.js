@@ -31,9 +31,17 @@ const AppSidebar = () => {
             }}
         >
             <CSidebarHeader className="border-bottom">
-                <CSidebarBrand to="/">
-                    <CIcon customClassName="sidebar-brand-full" icon={logo} height={32} />
-                    <CIcon customClassName="sidebar-brand-narrow" icon={sygnet} height={32} />
+            <CSidebarBrand to="/" className="text-white fw-bold px-3">
+                <span
+                    style={{
+                    fontSize: '1.2rem',
+                    fontWeight: 'bold',
+                    color: '#ffffff', 
+                    display: 'inline-block',
+                    }}
+                >
+                    QuantumTech
+                </span>
                 </CSidebarBrand>
                 <CCloseButton
                     className="d-lg-none"

@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+
 @Repository
 public interface MasterTransactionRepository extends JpaRepository<MasterTransaction, Integer> {
     @Query("SELECT m FROM MasterTransaction m WHERE CONCAT(m.id, ' ', m.transactiondocument.id) LIKE %:keyword%")
@@ -31,16 +32,18 @@ public interface MasterTransactionRepository extends JpaRepository<MasterTransac
     List<MasterTransaction> getOrganizationByOrganizationName(String orgname);
 
     @Query("FROM MasterTransaction m WHERE m.reportcategory = :reportcategory AND m.transactiondocument.id = :docid AND m.organization.id = :theoid AND m.fiscal_year = :fiscal_year")
-    List<MasterTransaction> findTransactionByDocumentId(@Param("reportcategory") String reportcategory, @Param("docid") String id, @Param("theoid") String oid, @Param("fiscal_year") String fiscal_year);
+    List<MasterTransaction> findTransactionByDocumentId(@Param("reportcategory") String reportcategory,
+            @Param("docid") String id, @Param("theoid") String oid, @Param("fiscal_year") String fiscal_year);
 
     @Query("FROM MasterTransaction m WHERE m.reportcategory = :reportcategory AND m.transactiondocument.id = :docid AND m.fiscal_year = :fiscal_year")
-    List<MasterTransaction> findNoneSendersByDocumentId(@Param("docid") String id, @Param("fiscal_year") String fiscal_year, @Param("reportcategory") String reportcategory);
+    List<MasterTransaction> findNoneSendersByDocumentId(@Param("docid") String id,
+            @Param("fiscal_year") String fiscal_year, @Param("reportcategory") String reportcategory);
 
     @Query("SELECT new com.simon.armas_springboot_api.dto.SentReportResponseDTO(" +
-       "m.id, o.orgname, d.reportype, m.fiscal_year, m.createdDate, m.docname, m.reportstatus, m.remarks) " +
-       "FROM MasterTransaction m INNER JOIN m.organization o INNER JOIN m.transactiondocument d " +
-       "WHERE m.reportstatus IN :statuses")
-List<SentReportResponseDTO> fetchDataByStatuses(@Param("statuses") List<String> statuses);
+            "m.id, o.orgname, d.reportype, m.fiscal_year, m.createdDate, m.docname, m.reportstatus, m.remarks) " +
+            "FROM MasterTransaction m INNER JOIN m.organization o INNER JOIN m.transactiondocument d " +
+            "WHERE m.reportstatus IN :statuses")
+    List<SentReportResponseDTO> fetchDataByStatuses(@Param("statuses") List<String> statuses);
 
     @Query("SELECT COUNT(DISTINCT mt.organization) FROM MasterTransaction mt WHERE mt.transactiondocument IS NOT NULL")
     int countDistinctOrganizationsWithReports();
@@ -50,38 +53,46 @@ List<SentReportResponseDTO> fetchDataByStatuses(@Param("statuses") List<String> 
 
     @Query("SELECT m FROM MasterTransaction m WHERE m.reportstatus = :status")
     List<MasterTransaction> findByReportStatus(@Param("status") String reportStatus);
+
     @Query("SELECT m FROM MasterTransaction m WHERE m.user2.id = :userId AND m.reportstatus IN :statuses")
-    List<MasterTransaction> findByUserAndStatuses(@Param("userId") Long userId, @Param("statuses") List<String> statuses);
+    List<MasterTransaction> findByUserAndStatuses(@Param("userId") Long userId,
+            @Param("statuses") List<String> statuses);
+
     @Query("SELECT m FROM MasterTransaction m WHERE m.reportstatus = 'Rejected' AND m.submittedByAuditor.id = :userId")
     List<MasterTransaction> findRejectedReportsByAuditor(@Param("userId") Long userId);
 
     @Query("SELECT m FROM MasterTransaction m WHERE m.reportstatus = 'Approved'")
     List<MasterTransaction> findApprovedReports();
-    
+
     // query for Senior Auditor tasks
     @Query("SELECT m FROM MasterTransaction m WHERE " +
-           "(m.user2.id = :userId AND m.reportstatus IN :statuses) OR " +
-           "(m.reportstatus = 'Under Review' AND m.lastModifiedBy = :username)")
+            "(m.user2.id = :userId AND m.reportstatus IN :statuses) OR " +
+            "(m.reportstatus = 'Under Review' AND m.lastModifiedBy = :username)")
     List<MasterTransaction> findSeniorAuditorTasks(
-        @Param("userId") Long userId,
-        @Param("statuses") List<String> statuses,
-        @Param("username") String username
-    );
+            @Param("userId") Long userId,
+            @Param("statuses") List<String> statuses,
+            @Param("username") String username);
+
     // query for Approver tasks
     @Query("SELECT m FROM MasterTransaction m WHERE m.user2.id = :userId AND m.reportstatus IN :statuses")
-List<MasterTransaction> findApproverTasks(
-    @Param("userId") Long userId,
-    @Param("statuses") List<String> statuses
-);
-@Query("SELECT m FROM MasterTransaction m WHERE m.reportstatus IN ('Approved', 'Rejected') AND m.lastModifiedBy = :username")
-List<MasterTransaction> findCompletedApproverTasks(
-    @Param("username") String username
-);
+    List<MasterTransaction> findApproverTasks(
+            @Param("userId") Long userId,
+            @Param("statuses") List<String> statuses);
+
+    @Query("SELECT m FROM MasterTransaction m WHERE m.reportstatus IN ('Approved', 'Rejected') AND m.lastModifiedBy = :username")
+    List<MasterTransaction> findCompletedApproverTasks(
+            @Param("username") String username);
+
     boolean existsByDocname(String docname);
+
     boolean existsByDocnameAndUserId(String docname, Long userId);
+
     boolean existsByDocnameAndUser(String docname, User user);
+
     @Query("SELECT t FROM MasterTransaction t WHERE t.reportstatus = :status AND t.user2.username = :username")
     List<MasterTransaction> findByReportstatusAndUser2Username(String status, String username);
+
     List<MasterTransaction> findByReportstatus(String reportstatus);
+
     List<MasterTransaction> findByReportstatusAndSubmittedByAuditor(String reportstatus, User submittedByAuditor);
 }
