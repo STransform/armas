@@ -27,9 +27,9 @@ const FileDownload = () => {
         fetchReports();
     }, []);
 
-    const handleDownload = async (id, docname) => {
+    const handleDownload = async (id, docname, type = 'original') => {
         try {
-            const response = await downloadFile(id);
+            const response = await downloadFile(id, type);
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
@@ -71,7 +71,7 @@ const FileDownload = () => {
 
     return (
         <div className="container mt-5">
-            <h2>Archiver View</h2>
+            {/* <h2>Archiver View</h2> */}
             {error && <div className="alert alert-danger">{error}</div>}
             {success && <div className="alert alert-success">{success}</div>}
 
@@ -111,7 +111,7 @@ const FileDownload = () => {
                 </table>
             )}
 
-            <h3>Approved Reports</h3>
+            {/* <h3>Approved Reports</h3>
             {approvedReports.length === 0 && <div className="alert alert-info">No approved reports available.</div>}
             {approvedReports.length > 0 && (
                 <table className="table table-striped">
@@ -143,7 +143,7 @@ const FileDownload = () => {
                         ))}
                     </tbody>
                 </table>
-            )}
+            )} */}
 
             {showAssignModal && (
                 <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
