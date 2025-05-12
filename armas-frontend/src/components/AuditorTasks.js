@@ -19,9 +19,20 @@ const AuditorTasks = () => {
     const fetchMyTasks = async () => {
         try {
             const data = await getMyTasks();
-            setTasks(data.filter(task => task && task.id));
+            console.log('Raw tasks response:', JSON.stringify(data, null, 2));
+            // Enhanced filter to log invalid tasks
+            const filteredTasks = data.filter(task => {
+                if (!task || typeof task !== 'object' || !task.id) {
+                    console.warn('Invalid task filtered out:', task);
+                    return false;
+                }
+                return true;
+            });
+            console.log('Filtered tasks:', JSON.stringify(filteredTasks, null, 2));
+            setTasks(filteredTasks);
             setError('');
         } catch (err) {
+            console.error('Error fetching tasks:', err);
             setError(`Failed to load tasks: ${err.message}`);
         }
     };
@@ -120,6 +131,7 @@ const AuditorTasks = () => {
                 <table className="table table-striped">
                     <thead>
                         <tr>
+                            <th>ID</th>
                             <th>Date</th>
                             <th>Status</th>
                             <th>Organization</th>
@@ -131,6 +143,7 @@ const AuditorTasks = () => {
                     <tbody>
                         {tasks.map(task => (
                             <tr key={task.id}>
+                                <td>{task.id}</td>
                                 <td>{task.createdDate ? new Date(task.createdDate).toLocaleDateString() : 'N/A'}</td>
                                 <td>{task.reportstatus || 'N/A'}</td>
                                 <td>{task.organization?.orgname || 'N/A'}</td>

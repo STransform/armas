@@ -45,6 +45,8 @@ public class MasterTransactionController {
 
     @Autowired
     private MasterTransactionRepository masterTransactionRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private MasterTransactionService masterTransactionService;
@@ -186,14 +188,21 @@ public class MasterTransactionController {
     @GetMapping("/tasks")
     @PreAuthorize("hasAnyRole('ARCHIVER', 'SENIOR_AUDITOR', 'APPROVER')")
     public ResponseEntity<List<MasterTransaction>> getTasks(Principal principal) {
+        User user = userRepository.findByUsername(principal.getName());
+        if (user == null) {
+            throw new IllegalStateException("User not found: " + principal.getName());
+        }
+
         String role = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .map(auth -> auth.replace("ROLE_", ""))
                 .filter(auth -> Arrays.asList("ARCHIVER", "SENIOR_AUDITOR", "APPROVER").contains(auth))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("No valid role found"));
-        List<MasterTransaction> tasks = masterTransactionService.getTasks(principal.getName(), role);
+
+        List<MasterTransaction> tasks = masterTransactionService.getTasks(user.getId(), role);
         return ResponseEntity.ok(tasks);
     }
+
 
 }

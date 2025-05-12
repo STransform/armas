@@ -126,7 +126,7 @@ public class MasterTransactionService {
     }
 
     // Assign to Senior Auditor by Archiver
-    @Transactional
+   @Transactional
     public MasterTransaction assignAuditor(Integer transactionId, String auditorUsername, String currentUsername) {
         User archiver = userRepository.findByUsername(currentUsername);
         if (archiver == null || !archiver.getRoles().stream().anyMatch(r -> "ARCHIVER".equals(r.getDescription()))) {
@@ -134,23 +134,25 @@ public class MasterTransactionService {
         }
 
         MasterTransaction transaction = masterTransactionRepository.findById(transactionId)
-                .orElseThrow(() -> new IllegalArgumentException("Transaction not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + transactionId));
         if (!"Submitted".equals(transaction.getReportstatus())) {
             throw new IllegalStateException("Can only assign Submitted tasks");
         }
 
         User auditor = userRepository.findByUsername(auditorUsername);
-        if (auditor == null
-                || !auditor.getRoles().stream().anyMatch(r -> "SENIOR_AUDITOR".equals(r.getDescription()))) {
-            throw new IllegalArgumentException("Invalid Senior Auditor");
+        if (auditor == null || !auditor.getRoles().stream().anyMatch(r -> "SENIOR_AUDITOR".equals(r.getDescription()))) {
+            throw new IllegalArgumentException("Invalid Senior Auditor: " + auditorUsername);
         }
 
         transaction.setUser2(auditor);
+        transaction.setAssignedBy(archiver);
         transaction.setReportstatus("Assigned");
         transaction.setLastModifiedBy(currentUsername);
-        return masterTransactionRepository.save(transaction);
-    }
+        MasterTransaction savedTransaction = masterTransactionRepository.save(transaction);
 
+        System.out.println("Assigned task: ID=" + savedTransaction.getId() + ", user2=" + auditor.getUsername());
+        return savedTransaction;
+    }
     // Submit findings by Senior Auditor
     @Transactional
     public MasterTransaction submitFindings(Integer transactionId, String findings, String approverUsername,
@@ -236,48 +238,46 @@ public class MasterTransactionService {
     }
 
     // Get tasks based on role and user
-    public List<MasterTransaction> getTasks(String username, String role) {
-        User user = userRepository.findByUsername(username);
-        if (user == null) {
-            System.out.println("User not found: " + username);
-            throw new IllegalArgumentException("User not found: " + username);
+    public List<MasterTransaction> getTasks(Long userId, String role) {
+        List<MasterTransaction> tasks = new ArrayList<>();
+        System.out.println("Fetching tasks for userId=" + userId + ", role=" + role);
+        switch (role) {
+            case "ARCHIVER":
+                tasks = masterTransactionRepository.findTasksAssignedByArchiver(userId);
+                System.out.println("ARCHIVER tasks fetched: " + tasks.size());
+                break;
+            case "SENIOR_AUDITOR":
+                List<MasterTransaction> activeTasks = masterTransactionRepository.findActiveSeniorAuditorTasks(userId);
+                List<MasterTransaction> approvedTasks = masterTransactionRepository.findApprovedSeniorAuditorTasks(userId);
+                System.out.println("SENIOR_AUDITOR active tasks: " + activeTasks.size());
+                activeTasks.forEach(task -> System.out.println("Active task: ID=" + task.getId() + 
+                    ", Status=" + task.getReportstatus() + 
+                    ", User2=" + (task.getUser2() != null ? task.getUser2().getId() : "null") + 
+                    ", Docname=" + task.getDocname()));
+                System.out.println("SENIOR_AUDITOR approved tasks: " + approvedTasks.size());
+                approvedTasks.forEach(task -> System.out.println("Approved task: ID=" + task.getId() + 
+                    ", Status=" + task.getReportstatus() + 
+                    ", User2=" + (task.getUser2() != null ? task.getUser2().getId() : "null") + 
+                    ", Docname=" + task.getDocname()));
+                tasks.addAll(activeTasks);
+                tasks.addAll(approvedTasks);
+                break;
+            case "APPROVER":
+                List<String> underReview = Collections.singletonList("Under Review");
+                List<String> completed = Arrays.asList("Approved", "Rejected");
+                tasks.addAll(masterTransactionRepository.findApproverTasks(userId, underReview));
+                tasks.addAll(masterTransactionRepository.findCompletedApproverTasks(userId, completed));
+                System.out.println("APPROVER tasks fetched: " + tasks.size());
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid role: " + role);
         }
-        System.out.println("Fetching tasks for user: " + username + ", role: " + role + ", userId: " + user.getId());
-
-        if ("ARCHIVER".equals(role)) {
-            List<MasterTransaction> submitted = masterTransactionRepository.findByReportStatus("Submitted");
-            List<MasterTransaction> approved = masterTransactionRepository.findByReportStatus("Approved");
-            List<MasterTransaction> tasks = new ArrayList<>(submitted);
-            tasks.addAll(approved);
-            System.out.println("Archiver tasks: " + tasks.size());
-            tasks.forEach(task -> System.out.println("Archiver task: id=" + task.getId() +
-                    ", status=" + task.getReportstatus()));
-            return tasks;
-        } else if ("SENIOR_AUDITOR".equals(role)) {
-            List<MasterTransaction> tasks = masterTransactionRepository.findSeniorAuditorTasks(
-                    user.getId(), Arrays.asList("Assigned", "Rejected"), username);
-            System.out.println("Senior Auditor tasks: " + tasks.size());
-            tasks.forEach(task -> System.out.println("Senior Auditor task: id=" + task.getId() +
-                    ", status=" + task.getReportstatus() +
-                    ", user2_id=" + (task.getUser2() != null ? task.getUser2().getId() : "null") +
-                    ", submittedByAuditor_id="
-                    + (task.getSubmittedByAuditor() != null ? task.getSubmittedByAuditor().getId() : "null")));
-            return tasks;
-        } else if ("APPROVER".equals(role)) {
-            List<MasterTransaction> activeTasks = masterTransactionRepository.findApproverTasks(
-                    user.getId(), Arrays.asList("Under Review"));
-            List<MasterTransaction> completedTasks = masterTransactionRepository.findCompletedApproverTasks(username);
-            List<MasterTransaction> tasks = new ArrayList<>(activeTasks);
-            tasks.addAll(completedTasks);
-            System.out.println("Approver tasks: active=" + activeTasks.size() + ", completed=" + completedTasks.size());
-            tasks.forEach(task -> System.out.println("Approver task: id=" + task.getId() +
-                    ", status=" + task.getReportstatus() +
-                    ", user2_id=" + (task.getUser2() != null ? task.getUser2().getId() : "null") +
-                    ", lastModifiedBy=" + task.getLastModifiedBy()));
-            return tasks;
-        }
-        System.out.println("No tasks found for role: " + role);
-        return Collections.emptyList();
+        System.out.println("Total tasks returned: " + tasks.size());
+        tasks.forEach(task -> System.out.println("Task: ID=" + task.getId() + 
+            ", Status=" + task.getReportstatus() + 
+            ", User2=" + (task.getUser2() != null ? task.getUser2().getId() : "null") + 
+            ", Docname=" + task.getDocname()));
+        return tasks;
     }
 
     public List<MasterTransactionDTO> getApprovedReports(String username, String role) {
