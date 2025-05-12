@@ -7,6 +7,7 @@ public class AccountVerificationEmailContext extends AbstractEmailContext {
 
     private String token;
 
+
     @Override
     public <T> void init(T context) {
         User user = (User) context;

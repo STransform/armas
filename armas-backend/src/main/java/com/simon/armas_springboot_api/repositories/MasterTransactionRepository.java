@@ -1,10 +1,10 @@
 package com.simon.armas_springboot_api.repositories;
 
 import com.simon.armas_springboot_api.dto.SentReportResponseDTO;
+import com.simon.armas_springboot_api.models.Document;
 import com.simon.armas_springboot_api.models.MasterTransaction;
 import com.simon.armas_springboot_api.models.User;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -64,24 +64,41 @@ public interface MasterTransactionRepository extends JpaRepository<MasterTransac
     @Query("SELECT m FROM MasterTransaction m WHERE m.reportstatus = 'Approved'")
     List<MasterTransaction> findApprovedReports();
 
-    // query for Senior Auditor tasks
-    @Query("SELECT m FROM MasterTransaction m WHERE " +
-            "(m.user2.id = :userId AND m.reportstatus IN :statuses) OR " +
-            "(m.reportstatus = 'Under Review' AND m.lastModifiedBy = :username)")
+    @Query("SELECT m FROM MasterTransaction m WHERE m.reportstatus IN :reportstatuses AND m.user2.id = :userid")
     List<MasterTransaction> findSeniorAuditorTasks(
-            @Param("userId") Long userId,
-            @Param("statuses") List<String> statuses,
-            @Param("username") String username);
+            @Param("reportstatuses") List<String> reportstatuses,
+            @Param("userid") Long userid);
 
-    // query for Approver tasks
     @Query("SELECT m FROM MasterTransaction m WHERE m.user2.id = :userId AND m.reportstatus IN :statuses")
     List<MasterTransaction> findApproverTasks(
             @Param("userId") Long userId,
             @Param("statuses") List<String> statuses);
 
-    @Query("SELECT m FROM MasterTransaction m WHERE m.reportstatus IN ('Approved', 'Rejected') AND m.lastModifiedBy = :username")
+    @Query("SELECT m FROM MasterTransaction m WHERE m.reportstatus IN :reportstatuses AND m.user2.id = :userid")
     List<MasterTransaction> findCompletedApproverTasks(
-            @Param("username") String username);
+            @Param("userid") Long userid,
+            @Param("reportstatuses") List<String> reportstatuses);
+
+    @Query("SELECT m FROM MasterTransaction m WHERE m.assignedBy.id = :userId")
+    List<MasterTransaction> findTasksAssignedByArchiver(@Param("userId") Long userId);
+
+    @Query("SELECT m FROM MasterTransaction m " +
+           "LEFT JOIN FETCH m.user " +
+           "LEFT JOIN FETCH m.organization " +
+           "LEFT JOIN FETCH m.user2 " +
+           "LEFT JOIN FETCH m.transactiondocument " +
+           "LEFT JOIN FETCH m.assignedBy " +
+           "WHERE m.user2.id = :userId AND m.reportstatus IN ('Assigned', 'Rejected')")
+    List<MasterTransaction> findActiveSeniorAuditorTasks(@Param("userId") Long userId);
+
+    @Query("SELECT m FROM MasterTransaction m " +
+           "LEFT JOIN FETCH m.user " +
+           "LEFT JOIN FETCH m.organization " +
+           "LEFT JOIN FETCH m.user2 " +
+           "LEFT JOIN FETCH m.transactiondocument " +
+           "LEFT JOIN FETCH m.assignedBy " +
+           "WHERE m.submittedByAuditor.id = :userId AND m.reportstatus = 'Approved'")
+    List<MasterTransaction> findApprovedSeniorAuditorTasks(@Param("userId") Long userId);
 
     boolean existsByDocname(String docname);
 

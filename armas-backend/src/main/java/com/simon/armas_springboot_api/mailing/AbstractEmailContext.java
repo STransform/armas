@@ -30,4 +30,58 @@ public abstract class AbstractEmailContext {
         return key == null? null: this.context.put(key.intern(), value);
     }
 
+     // Getter and Setter for from
+    public String getFrom() {
+        return from;
+    }
+
+    public void setFrom(String from) {
+        this.from = from;
+    }
+
+    // Getter and Setter for to
+    public String getTo() {
+        return to;
+    }
+
+    public void setTo(String to) {
+        this.to = to;
+    }
+
+    // Getter and Setter for subject
+    public String getSubject() {
+        return subject;
+    }
+
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
+
+    // Getter and Setter for email
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    // Getter and Setter for templateLocation
+    public String getTemplateLocation() {
+        return templateLocation;
+    }
+
+    public void setTemplateLocation(String templateLocation) {
+        this.templateLocation = templateLocation;
+    }
+
+    // Getter and Setter for context
+    public Map<String, Object> getContext() {
+        return context;
+    }
+
+    public void setContext(Map<String, Object> context) {
+        this.context = context;
+    }
+
 }

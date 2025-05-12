@@ -10,6 +10,7 @@ import org.hibernate.annotations.GenericGenerator;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.simon.armas_springboot_api.security.models.Role;
 
 import jakarta.persistence.CascadeType;
@@ -27,6 +28,8 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.PostLoad;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
+
+
 
 
 @Entity
@@ -70,14 +73,27 @@ public class User implements Serializable {
         joinColumns = @JoinColumn(name = "user_id"),
         inverseJoinColumns = @JoinColumn(name = "role_id")
     )
-    private Set<Role> roles = new HashSet<>(); 
+    private Set<Role> roles = new HashSet<>();
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "user", orphanRemoval = true)
+    @JsonManagedReference("user-transactions")
     private List<MasterTransaction> transactions = new ArrayList<>();
+
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "user2", orphanRemoval = true)
+    @JsonManagedReference("user2-transactions")
+    private List<MasterTransaction> assignedTransactions = new ArrayList<>();
+
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "submittedByAuditor", orphanRemoval = true)
+    @JsonManagedReference("submittedByAuditor-transactions")
+    private List<MasterTransaction> submittedTransactions = new ArrayList<>();
+
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "assignedBy", orphanRemoval = true)
+    @JsonManagedReference("assignedBy-transactions")
+    private List<MasterTransaction> assignedByTransactions = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "organization_id")
-     @JsonBackReference(value = "user-organization")
+    @JsonBackReference(value = "user-organization")
     private Organization organization;
 
     @Transient
@@ -131,6 +147,12 @@ public class User implements Serializable {
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
     public List<MasterTransaction> getTransactions() { return transactions; }
     public void setTransactions(List<MasterTransaction> transactions) { this.transactions = transactions; }
+    public List<MasterTransaction> getAssignedTransactions() { return assignedTransactions; }
+    public void setAssignedTransactions(List<MasterTransaction> assignedTransactions) { this.assignedTransactions = assignedTransactions; }
+    public List<MasterTransaction> getSubmittedTransactions() { return submittedTransactions; }
+    public void setSubmittedTransactions(List<MasterTransaction> submittedTransactions) { this.submittedTransactions = submittedTransactions; }
+    public List<MasterTransaction> getAssignedByTransactions() { return assignedByTransactions; }
+    public void setAssignedByTransactions(List<MasterTransaction> assignedByTransactions) { this.assignedByTransactions = assignedByTransactions; }
     public Organization getOrganization() { return organization; }
     public void setOrganization(Organization organization) { this.organization = organization; }
     public Directorate getDirectorate() { return directorate; }
@@ -147,7 +169,4 @@ public class User implements Serializable {
         return "User [id=" + id + ", firstName=" + firstName + ", lastName=" + lastName
                 + ", username=" + username + ", password=" + password + ", roles=" + roles + "]";
     }
-
-
-    
 }
