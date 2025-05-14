@@ -99,7 +99,10 @@ public interface MasterTransactionRepository extends JpaRepository<MasterTransac
            "LEFT JOIN FETCH m.assignedBy " +
            "WHERE m.submittedByAuditor.id = :userId AND m.reportstatus = 'Approved'")
     List<MasterTransaction> findApprovedSeniorAuditorTasks(@Param("userId") Long userId);
-
+    @Query("SELECT m FROM MasterTransaction m WHERE m.reportstatus = 'Under Review'")
+    List<MasterTransaction> findUnderReviewReports();
+    @Query("SELECT m FROM MasterTransaction m WHERE m.reportstatus = 'Corrected'")
+    List<MasterTransaction> findCorrectedReports();
     boolean existsByDocname(String docname);
 
     boolean existsByDocnameAndUserId(String docname, Long userId);

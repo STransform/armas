@@ -1,27 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { getRejectedReports, downloadFile, submitFindings, getUsersByRole } from '../file/upload_download';
+import { getUnderReviewReports, downloadFile, approveReport, rejectReport } from '../file/upload_download';
 import { useAuth } from '../views/pages/AuthProvider';
 
-const RejectedReports = () => {
+const UnderReviewReports = () => {
     const { roles } = useAuth();
-    const isSeniorAuditor = roles.includes('SENIOR_AUDITOR');
+    const isApprover = roles.includes('APPROVER');
     const [reports, setReports] = useState([]);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    const [showModal, setShowModal] = useState(false);
+    const [showRejectModal, setShowRejectModal] = useState(false);
     const [selectedReport, setSelectedReport] = useState(null);
-    const [findings, setFindings] = useState('');
-    const [supportingDocument, setSupportingDocument] = useState(null);
-    const [approvers, setApprovers] = useState([]);
-    const [selectedApprover, setSelectedApprover] = useState('');
+    const [rejectionReason, setRejectionReason] = useState('');
+    const [rejectionDocument, setRejectionDocument] = useState(null);
 
     useEffect(() => {
         const fetchReports = async () => {
             try {
-                const data = await getRejectedReports();
+                const data = await getUnderReviewReports();
                 setReports(data);
             } catch (err) {
-                setError(`Failed to load rejected reports: ${err.message}`);
+                setError('Failed to load under review reports');
             }
         };
         fetchReports();
@@ -33,70 +31,74 @@ const RejectedReports = () => {
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', docname);
+            link.setAttribute('download', type === 'original' ? docname : docname);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
         } catch (err) {
-            setError(`Failed to download file: ${err.message}`);
+            setError('Failed to download file');
         }
     };
 
-    const handleResubmit = async (report) => {
-        setSelectedReport(report);
-        setFindings('');
-        setSupportingDocument(null);
-        setSelectedApprover('');
+    const handleApprove = async (id) => {
         try {
-            const approversData = await getUsersByRole('APPROVER');
-            setApprovers(approversData);
-            setShowModal(true);
+            await approveReport(id);
+            setSuccess('Report approved successfully');
+            // Refresh reports
+            const data = await getUnderReviewReports();
+            setReports(data);
         } catch (err) {
-            setError(`Failed to load approvers: ${err.message}`);
+            setError(`Failed to approve report: ${err.message}`);
         }
     };
 
-    const handleSubmit = async () => {
-        if (!findings || !selectedApprover) {
-            setError('Please enter findings and select an approver');
+    const handleReject = (report) => {
+        setSelectedReport(report);
+        setRejectionReason('');
+        setRejectionDocument(null);
+        setShowRejectModal(true);
+    };
+
+    const handleRejectSubmit = async () => {
+        if (!rejectionReason) {
+            setError('Please provide a reason for rejection');
             return;
         }
         try {
-            await submitFindings(selectedReport.id, findings, selectedApprover, supportingDocument);
-            setSuccess('Report resubmitted successfully');
-            setShowModal(false);
-            setFindings('');
-            setSupportingDocument(null);
-            setSelectedApprover('');
+            await rejectReport(selectedReport.id, rejectionReason, rejectionDocument);
+            setSuccess('Report rejected successfully');
+            setShowRejectModal(false);
             // Refresh reports
-            const data = await getRejectedReports();
+            const data = await getUnderReviewReports();
             setReports(data);
         } catch (err) {
-            setError(`Failed to resubmit report: ${err.message}`);
+            setError(`Failed to reject report: ${err.message}`);
         }
     };
 
     return (
         <div className="container mt-5">
-            <h2>Rejected Reports</h2>
+            <h2>Under Review Reports</h2>
             {error && <div className="alert alert-danger">{error}</div>}
             {success && <div className="alert alert-success">{success}</div>}
-            {reports.length === 0 && <div className="alert alert-info">No rejected reports available.</div>}
+            {reports.length === 0 && <div className="alert alert-info">No reports under review.</div>}
             {reports.length > 0 && (
                 <table className="table table-striped">
                     <thead>
                         <tr>
+                            <th>ID</th>
                             <th>Date</th>
                             <th>Organization</th>
                             <th>Budget Year</th>
                             <th>Report Type</th>
-                            <th>Rejection Reason</th>
+                            <th>Audit Findings</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         {reports.map(report => (
                             <tr key={report.id}>
+                                <td>{report.id}</td>
                                 <td>{report.createdDate ? new Date(report.createdDate).toLocaleDateString() : 'N/A'}</td>
                                 <td>{report.organization?.orgname || 'N/A'}</td>
                                 <td>{report.fiscal_year || 'N/A'}</td>
@@ -117,13 +119,21 @@ const RejectedReports = () => {
                                             Findings
                                         </button>
                                     )}
-                                    {isSeniorAuditor && (
-                                        <button
-                                            className="btn btn-secondary"
-                                            onClick={() => handleResubmit(report)}
-                                        >
-                                            Resubmit
-                                        </button>
+                                    {isApprover && (
+                                        <>
+                                            <button
+                                                className="btn btn-success mr-2"
+                                                onClick={() => handleApprove(report.id)}
+                                            >
+                                                Approve
+                                            </button>
+                                            <button
+                                                className="btn btn-danger"
+                                                onClick={() => handleReject(report)}
+                                            >
+                                                Reject
+                                            </button>
+                                        </>
                                     )}
                                 </td>
                             </tr>
@@ -132,56 +142,52 @@ const RejectedReports = () => {
                 </table>
             )}
 
-            {showModal && (
+            {showRejectModal && (
                 <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
                     <div className="modal-dialog">
                         <div className="modal-content">
                             <div className="modal-header">
-                                <h5 className="modal-title">Resubmit</h5>
-                                <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
+                                <h5 className="modal-title">Reject Report</h5>
+                                <button
+                                    type="button"
+                                    className="btn-close"
+                                    onClick={() => setShowRejectModal(false)}
+                                ></button>
                             </div>
                             <div className="modal-body">
                                 <div className="form-group">
-                                    <label htmlFor="findings">Audit Findings:</label>
+                                    <label htmlFor="rejectionReason">Reason for Rejection:</label>
                                     <textarea
                                         className="form-control"
-                                        id="findings"
-                                        value={findings}
-                                        onChange={(e) => setFindings(e.target.value)}
+                                        id="rejectionReason"
+                                        value={rejectionReason}
+                                        onChange={(e) => setRejectionReason(e.target.value)}
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label htmlFor="approver">Select Approver:</label>
-                                    <select
-                                        className="form-control"
-                                        id="approver"
-                                        value={selectedApprover}
-                                        onChange={(e) => setSelectedApprover(e.target.value)}
-                                    >
-                                        <option value="">Select Approver</option>
-                                        {approvers.map(approver => (
-                                            <option key={approver.id} value={approver.username}>
-                                                {approver.firstName} {approver.lastName} ({approver.username})
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="supportingDocument">Supporting Document (Optional):</label>
+                                    <label htmlFor="rejectionDocument">Attach Rejection Document (Optional):</label>
                                     <input
                                         type="file"
                                         className="form-control"
-                                        id="supportingDocument"
-                                        onChange={(e) => setSupportingDocument(e.target.files[0])}
+                                        id="rejectionDocument"
+                                        onChange={(e) => setRejectionDocument(e.target.files[0])}
                                     />
                                 </div>
                             </div>
                             <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    onClick={() => setShowRejectModal(false)}
+                                >
                                     Close
                                 </button>
-                                <button type="button" className="btn btn-primary" onClick={handleSubmit}>
-                                    Submit
+                                <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    onClick={handleRejectSubmit}
+                                >
+                                    Reject
                                 </button>
                             </div>
                         </div>
@@ -192,4 +198,4 @@ const RejectedReports = () => {
     );
 };
 
-export default RejectedReports;
+export default UnderReviewReports;
