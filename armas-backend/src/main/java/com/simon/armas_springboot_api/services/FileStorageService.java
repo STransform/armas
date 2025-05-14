@@ -16,61 +16,35 @@ import java.security.Principal;
 @Service
 public class FileStorageService {
 
-    public String storeFile(MultipartFile file, MasterTransaction trans, Principal principal) throws IOException {
+    public String storeFile(MultipartFile file, MasterTransaction trans, Principal principal, boolean isSupporting) throws IOException {
         if (file == null || file.isEmpty()) {
             throw new IOException("No file provided for upload.");
         }
 
         String docname = StringUtils.cleanPath(file.getOriginalFilename() != null ? file.getOriginalFilename() : "unnamed_file");
-        trans.setDocname(docname);
+        if (!isSupporting) {
+            trans.setDocname(docname); // Set docname only for original report
+        } else {
+            trans.setSupportingDocname(docname); // Set supportingDocname for audit findings
+        }
 
-        // Use principal for directory (avoid relying on createdBy from saved transaction)
         String createdBy = principal.getName();
         String uploadDir = "C:/AMSReports/" + createdBy;
         Path uploadPath = Paths.get(uploadDir);
 
-        // Create the directory if it doesn’t exist
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
         }
 
-        // Save the file to the specified path
         try (InputStream inputStream = file.getInputStream()) {
             Path filePath = uploadPath.resolve(docname);
             System.out.println("Saving file to: " + filePath.toFile().getAbsolutePath());
             Files.copy(inputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
-            return filePath.toString(); // Return the full file path
+            return filePath.toString();
         } catch (IOException ioe) {
             throw new IOException("Could not save file: " + docname, ioe);
         }
     }
 
-    public String storeLetter(MultipartFile file, MasterTransaction trans, Principal principal) throws IOException {
-        if (file == null || file.isEmpty()) {
-            throw new IOException("No file provided for upload.");
-        }
-
-        String docname = StringUtils.cleanPath(file.getOriginalFilename() != null ? file.getOriginalFilename() : "unnamed_letter");
-        trans.setDocname(docname);
-
-        // Use principal for directory
-        String createdBy = principal.getName();
-        String uploadDir = "C:/AMSReports/" + createdBy;
-        Path uploadPath = Paths.get(uploadDir);
-
-        // Create the directory if it doesn’t exist
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
-
-        // Save the file
-        try (InputStream inputStream = file.getInputStream()) {
-            Path filePath = uploadPath.resolve(docname);
-            System.out.println("Saving letter to: " + filePath.toFile().getAbsolutePath());
-            Files.copy(inputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
-            return filePath.toString(); // Return the full file path
-        } catch (IOException ioe) {
-            throw new IOException("Could not save letter: " + docname, ioe);
-        }
-    }
+    // storeLetter method remains unchanged or can be removed if unused
 }

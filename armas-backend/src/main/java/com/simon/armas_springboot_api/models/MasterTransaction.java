@@ -33,6 +33,7 @@ public class MasterTransaction extends Auditable<String> {
     private String reportcategory;
     private String filepath;
     private String supportingDocumentPath;
+    private String supportingDocname;
     @Transient
     private String current_orgname;
     @Transient
@@ -89,6 +90,13 @@ public class MasterTransaction extends Auditable<String> {
     public void setFilepath(String filepath) { this.filepath = filepath; }
     public String getSupportingDocumentPath() { return supportingDocumentPath; }
     public void setSupportingDocumentPath(String supportingDocumentPath) { this.supportingDocumentPath = supportingDocumentPath; }
+     public String getSupportingDocname() {
+        return supportingDocname;
+    }
+
+    public void setSupportingDocname(String supportingDocname) {
+        this.supportingDocname = supportingDocname;
+    }
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
     public Organization getOrganization() { return organization; }

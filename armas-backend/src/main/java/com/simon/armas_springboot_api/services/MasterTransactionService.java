@@ -55,7 +55,7 @@ public class MasterTransactionService {
     private DocumentRepository documentRepository;
 
     // Upload file by Uploader
-    @Transactional
+   @Transactional
     public MasterTransaction uploadFile(MultipartFile file, String responseNeeded, String fiscalYear,
             String transactionDocumentId, Principal principal) throws IOException {
         User user = userRepository.findByUsername(principal.getName());
@@ -80,7 +80,7 @@ public class MasterTransactionService {
         transaction.setReportcategory(document.getReportype());
         transaction.setTransactiondocument(document);
         transaction.setResponse_needed(responseNeeded);
-        transaction.setFilepath(fileStorageService.storeFile(file, transaction, principal));
+        transaction.setFilepath(fileStorageService.storeFile(file, transaction, principal, false));
         transaction.setCreatedDate(new Date());
         transaction.setCreatedBy(principal.getName());
 
@@ -101,7 +101,7 @@ public class MasterTransactionService {
     public List<SentReportResponseDTO> getSentReportData(String role) {
         List<String> statuses;
         if ("ARCHIVER".equals(role)) {
-            statuses = Arrays.asList("Submitted", "Approved"); // Include Approved for ARCHIVER
+            statuses = Arrays.asList("Submitted", "Approved");
         } else if ("SENIOR_AUDITOR".equals(role)) {
             statuses = Arrays.asList("Assigned", "Rejected");
         } else if ("APPROVER".equals(role)) {
@@ -125,8 +125,7 @@ public class MasterTransactionService {
         return userDTOs;
     }
 
-    // Assign to Senior Auditor by Archiver
-   @Transactional
+    @Transactional
     public MasterTransaction assignAuditor(Integer transactionId, String auditorUsername, String currentUsername) {
         User archiver = userRepository.findByUsername(currentUsername);
         if (archiver == null || !archiver.getRoles().stream().anyMatch(r -> "ARCHIVER".equals(r.getDescription()))) {
@@ -153,37 +152,45 @@ public class MasterTransactionService {
         System.out.println("Assigned task: ID=" + savedTransaction.getId() + ", user2=" + auditor.getUsername());
         return savedTransaction;
     }
-    // Submit findings by Senior Auditor
+
     @Transactional
     public MasterTransaction submitFindings(Integer transactionId, String findings, String approverUsername,
             String currentUsername, MultipartFile supportingDocument) throws IOException {
         MasterTransaction transaction = masterTransactionRepository.findById(transactionId)
                 .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + transactionId));
+        
+        // Validate transaction status
         if (!Arrays.asList("Assigned", "Rejected").contains(transaction.getReportstatus())) {
             throw new IllegalStateException("Can only submit findings for Assigned or Rejected reports");
         }
+        
+        // Fetch and validate the approver
         User approver = userRepository.findByUsername(approverUsername);
         if (approver == null || !approver.getRoles().stream().anyMatch(r -> "APPROVER".equals(r.getDescription()))) {
             throw new IllegalArgumentException("Invalid Approver: " + approverUsername);
         }
+        
+        // Set transaction details
         transaction.setRemarks(findings);
         transaction.setUser2(approver);
         transaction.setReportstatus("Under Review");
         transaction.setSubmittedByAuditor(userRepository.findByUsername(currentUsername));
+        
+        // Handle supporting document
         if (supportingDocument != null && !supportingDocument.isEmpty()) {
             String supportingPath = fileStorageService.storeFile(supportingDocument, transaction, new Principal() {
                 @Override
                 public String getName() {
                     return currentUsername;
                 }
-            });
+            }, true);
             transaction.setSupportingDocumentPath(supportingPath);
         }
+        
         transaction.setLastModifiedBy(currentUsername);
         return masterTransactionRepository.save(transaction);
     }
 
-    // Approve by Approver
     @Transactional
     public MasterTransaction approveReport(Integer transactionId, String currentUsername) {
         MasterTransaction transaction = masterTransactionRepository.findById(transactionId)
@@ -204,7 +211,6 @@ public class MasterTransactionService {
         return masterTransactionRepository.save(transaction);
     }
 
-    // Reject by Approver
     @Transactional
     public MasterTransaction rejectReport(Integer transactionId, String rejectionReason, String currentUsername,
             MultipartFile rejectionDocument) throws IOException {
@@ -229,15 +235,14 @@ public class MasterTransactionService {
                 public String getName() {
                     return currentUsername;
                 }
-            });
-            transaction.setSupportingDocumentPath(rejectionPath); // Overwrite with rejection document
+            }, true);
+            transaction.setSupportingDocumentPath(rejectionPath);
         }
-        transaction.setUser2(transaction.getSubmittedByAuditor()); // Reassign to Senior Auditor
+        transaction.setUser2(transaction.getSubmittedByAuditor());
         transaction.setLastModifiedBy(currentUsername);
         return masterTransactionRepository.save(transaction);
     }
 
-    // Get tasks based on role and user
     public List<MasterTransaction> getTasks(Long userId, String role) {
         List<MasterTransaction> tasks = new ArrayList<>();
         System.out.println("Fetching tasks for userId=" + userId + ", role=" + role);
@@ -308,5 +313,4 @@ public class MasterTransactionService {
         });
         return reports.stream().map(MasterTransactionDTO::new).collect(Collectors.toList());
     }
-
 }

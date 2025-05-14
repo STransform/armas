@@ -29,6 +29,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 //import SentReportResponseDTO;
 import com.simon.armas_springboot_api.dto.SentReportResponseDTO;
 
@@ -68,15 +70,35 @@ public class MasterTransactionController {
     @PreAuthorize("hasAnyRole('APPROVER', 'SENIOR_AUDITOR', 'ARCHIVER', 'USER')")
     public ResponseEntity<Resource> downloadFile(@PathVariable Integer id, @PathVariable String type)
             throws IOException {
-        Map<String, Path> paths = masterTransactionService.getFilePaths(id);
-        Path filePath = type.equals("original") ? paths.get("original") : paths.get("supporting");
-        if (filePath == null || !Files.exists(filePath)) {
+        MasterTransaction transaction = masterTransactionRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + id));
+        
+        String filePath;
+        String fileName;
+        if ("original".equals(type)) {
+            filePath = transaction.getFilepath();
+            fileName = transaction.getDocname();
+        } else if ("supporting".equals(type)) {
+            filePath = transaction.getSupportingDocumentPath();
+            fileName = transaction.getSupportingDocname();
+        } else {
+            return ResponseEntity.badRequest().build();
+        }
+
+        if (filePath == null || fileName == null || !Files.exists(Paths.get(filePath))) {
             return ResponseEntity.notFound().build();
         }
-        Resource resource = new UrlResource(filePath.toUri());
+
+        Resource resource = new UrlResource(Paths.get(filePath).toUri());
+        // Determine Content-Type based on file extension
+        String contentType = Files.probeContentType(Paths.get(filePath));
+        if (contentType == null) {
+            contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE; // Fallback
+        }
+
         return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
                 .body(resource);
     }
 
