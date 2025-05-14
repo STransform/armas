@@ -41,20 +41,21 @@ const AuditorTasks = () => {
         fetchMyTasks();
     }, [roles]);
 
-    const handleDownload = async (id, docname, type) => {
-        try {
-            const response = await downloadFile(id, type);
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `${type}_${docname || 'file'}`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        } catch (err) {
-            setError(`Failed to download ${type} file: ${err.message}`);
-        }
-    };
+    const handleDownload = async (id, docname, supportingDocname, type) => {
+    try {
+        const response = await downloadFile(id, type);
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        const filename = type === 'original' ? (docname || 'file') : (supportingDocname || 'file');
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } catch (err) {
+        setError(`Failed to download ${type} file: ${err.message}`);
+    }
+};
 
     const handleSubmitFindings = async (task) => {
         setSelectedTask(task);
@@ -152,16 +153,16 @@ const AuditorTasks = () => {
                                 <td>
                                     <button
                                         className="btn btn-primary mr-2"
-                                        onClick={() => handleDownload(task.id, task.docname, 'original')}
+                                        onClick={() => handleDownload(task.id, task.docname, task.supportingDocname, 'original')}
                                     >
-                                        Download Original
+                                        Reports
                                     </button>
                                     {task.supportingDocumentPath && (
                                         <button
                                             className="btn btn-info mr-2"
-                                            onClick={() => handleDownload(task.id, task.docname, 'supporting')}
+                                            onClick={() => handleDownload(task.id, task.docname, task.supportingDocname, 'supporting')}
                                         >
-                                            Download Supporting
+                                            Findings
                                         </button>
                                     )}
                                     {isSeniorAuditor && (task.reportstatus === 'Assigned' || task.reportstatus === 'Rejected') && (
