@@ -20,6 +20,9 @@ const FileDownload = React.lazy(() => import('./components/FileDownload'));
 const AuditorTasks = React.lazy(() => import('./components/AuditorTasks'));
 const ApprovedReports = React.lazy(() => import('./components/ApprovedReports'));
 const RejectedReports = React.lazy(() => import('./components/RejectedReports'));
+const UnderReviewReports = React.lazy(() => import('./components/UnderReviewReports'));
+const CorrectedReports = React.lazy(() => import('./components/CorrectedReports'));
+
 // Base
 const Accordion = React.lazy(() => import('./views/base/accordion/Accordion'))
 const Breadcrumbs = React.lazy(() => import('./views/base/breadcrumbs/Breadcrumbs'))
@@ -57,6 +60,8 @@ const routes = [
   { path: '/transactions/auditor-tasks', name: 'Auditor tasks', element: AuditorTasks },
   { path: '/transactions/approved-reports', name: 'Approved Reports', element: ApprovedReports },
   { path: '/transactions/rejected-reports', name: 'Rejected Reports', element: RejectedReports },
+  { path: '/transactions/under-review-reports', name: 'Under Review Reports', element: UnderReviewReports },
+  { path: '/transactions/corrected-reports', name: 'Corrected Reports', element: CorrectedReports },
   { path: '/dashboard', name: 'Dashboard', element: Dashboard },
   { path: '/theme', name: 'Theme', element: Colors, exact: true },
   { path: '/theme/colors', name: 'Colors', element: Colors },

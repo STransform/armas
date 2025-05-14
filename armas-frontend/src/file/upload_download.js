@@ -49,6 +49,24 @@ export const downloadFile = async (id, type) => {
         throw error;
     }
 };
+export const getUnderReviewReports = async () => {
+    try {
+        const response = await axiosInstance.get('/transactions/under-review-reports');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching under review reports:', error);
+        throw error;
+    }
+};
+export const getCorrectedReports = async () => {
+    try {
+        const response = await axiosInstance.get('/transactions/corrected-reports');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching corrected reports:', error);
+        throw error;
+    }
+};
 
 export const getUsersByRole = async (roleName) => {
     try {

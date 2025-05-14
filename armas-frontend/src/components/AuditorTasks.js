@@ -17,25 +17,23 @@ const AuditorTasks = () => {
     const isApprover = roles.includes('APPROVER');
 
     const fetchMyTasks = async () => {
-        try {
-            const data = await getMyTasks();
-            console.log('Raw tasks response:', JSON.stringify(data, null, 2));
-            // Enhanced filter to log invalid tasks
-            const filteredTasks = data.filter(task => {
-                if (!task || typeof task !== 'object' || !task.id) {
-                    console.warn('Invalid task filtered out:', task);
-                    return false;
-                }
-                return true;
-            });
-            console.log('Filtered tasks:', JSON.stringify(filteredTasks, null, 2));
-            setTasks(filteredTasks);
-            setError('');
-        } catch (err) {
-            console.error('Error fetching tasks:', err);
-            setError(`Failed to load tasks: ${err.message}`);
+    try {
+        const data = await getMyTasks();
+        let filteredTasks;
+        if (isSeniorAuditor) {
+            filteredTasks = data.filter(task => 
+                task.reportstatus === 'Assigned' || task.reportstatus === 'Rejected'
+            );
+        } else if (isApprover) {
+            filteredTasks = data.filter(task => task.reportstatus === 'Under Review');
+        } else {
+            filteredTasks = [];
         }
-    };
+        setTasks(filteredTasks);
+    } catch (err) {
+        setError(`Failed to load tasks: ${err.message}`);
+    }
+};
 
     useEffect(() => {
         fetchMyTasks();

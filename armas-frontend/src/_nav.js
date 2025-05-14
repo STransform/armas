@@ -186,6 +186,18 @@ const Nav = () => {
                 to: '/transactions/approved-reports',
                 icon: <CIcon icon={cilCloudDownload} customClassName="nav-icon" />,
               },
+              {
+              component: CNavItem,
+              name: 'Under Review',
+              to: '/transactions/under-review-reports',
+              icon: <CIcon icon={cilTask} customClassName="nav-icon" />,
+          },
+          {
+            component: CNavItem,
+            name: 'Corrected Reports',
+            to: '/transactions/corrected-reports',
+            icon: <CIcon icon={cilTask} customClassName="nav-icon" />,
+        },
             ]
           : []),
       ],

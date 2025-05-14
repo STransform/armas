@@ -226,5 +226,16 @@ public class MasterTransactionController {
         return ResponseEntity.ok(tasks);
     }
 
-
+@GetMapping("/under-review-reports")
+@PreAuthorize("hasAnyRole('APPROVER', 'SENIOR_AUDITOR')")
+public ResponseEntity<List<MasterTransaction>> getUnderReviewReports() {
+    List<MasterTransaction> reports = masterTransactionService.getUnderReviewReports();
+    return ResponseEntity.ok(reports);
+}
+@GetMapping("/corrected-reports")
+@PreAuthorize("hasAnyRole('APPROVER', 'SENIOR_AUDITOR')")
+public ResponseEntity<List<MasterTransaction>> getCorrectedReports() {
+    List<MasterTransaction> reports = masterTransactionService.getCorrectedReports();
+    return ResponseEntity.ok(reports);
+}
 }
