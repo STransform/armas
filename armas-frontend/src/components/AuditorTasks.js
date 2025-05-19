@@ -24,9 +24,9 @@ const AuditorTasks = () => {
         let filteredTasks;
         if (isSeniorAuditor) {
             filteredTasks = data.filter(task => 
-                task.reportstatus === 'Assigned' || 
-                task.reportstatus === 'Rejected' || 
-                task.reportstatus === 'Approved' // Include Approved tasks
+                task.reportstatus === 'Assigned'
+                // task.reportstatus === 'Rejected' || 
+                // task.reportstatus === 'Approved' // Include Approved tasks
             );
         } else if (isApprover) {
             filteredTasks = data.filter(task => 

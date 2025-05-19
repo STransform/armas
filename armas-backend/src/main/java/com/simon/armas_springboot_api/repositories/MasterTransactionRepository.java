@@ -58,7 +58,11 @@ List<SentReportResponseDTO> fetchDataByStatuses(@Param("statuses") List<String> 
     @Query("SELECT m FROM MasterTransaction m WHERE m.transactiondocument.id = :transactionDocumentId")
     List<MasterTransaction> findByTransactionDocumentId(@Param("transactionDocumentId") String transactionDocumentId);
 
-    @Query("SELECT m FROM MasterTransaction m WHERE m.reportstatus = :status")
+    @Query("SELECT m FROM MasterTransaction m " +
+           "LEFT JOIN FETCH m.organization " +
+           "LEFT JOIN FETCH m.transactiondocument " +
+           "LEFT JOIN FETCH m.submittedByAuditor " +
+           "WHERE m.reportstatus = :status")
     List<MasterTransaction> findByReportStatus(@Param("status") String reportStatus);
 
     @Query("SELECT m FROM MasterTransaction m WHERE m.user2.id = :userId AND m.reportstatus IN :statuses")
