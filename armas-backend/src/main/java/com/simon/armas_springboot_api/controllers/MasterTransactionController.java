@@ -177,15 +177,14 @@ public class MasterTransactionController {
         return ResponseEntity.ok(approvedReports);
     }
 
-    @PostMapping("/approve/{transactionId}")
+   @PostMapping("/approve/{transactionId}")
     @PreAuthorize("hasRole('APPROVER')")
     public ResponseEntity<MasterTransaction> approveReport(
             @PathVariable Integer transactionId,
-            Principal principal) {
-        System.out.println(
-                "Received approve request: transactionId=" + transactionId + ", principal=" + principal.getName());
-        MasterTransaction transaction = masterTransactionService.approveReport(
-                transactionId, principal.getName());
+            @RequestParam(value = "approvalDocument", required = false) MultipartFile approvalDocument,
+            Principal principal) throws IOException {
+        System.out.println("Received approve request: transactionId=" + transactionId + ", principal=" + principal.getName());
+        MasterTransaction transaction = masterTransactionService.approveReport(transactionId, principal.getName(), approvalDocument);
         return ResponseEntity.ok(transaction);
     }
 

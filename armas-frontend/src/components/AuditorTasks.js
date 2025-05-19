@@ -8,8 +8,10 @@ const AuditorTasks = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [showFindingsModal, setShowFindingsModal] = useState(false);
+    const [showApprovalModal, setShowApprovalModal] = useState(false);
     const [selectedTask, setSelectedTask] = useState(null);
     const [findings, setFindings] = useState('');
+    const [approvalDocument, setApprovalDocument] = useState(null);
     const [approvers, setApprovers] = useState([]);
     const [selectedApprover, setSelectedApprover] = useState('');
 
@@ -17,43 +19,45 @@ const AuditorTasks = () => {
     const isApprover = roles.includes('APPROVER');
 
     const fetchMyTasks = async () => {
-    try {
-        const data = await getMyTasks();
-        let filteredTasks;
-        if (isSeniorAuditor) {
-            filteredTasks = data.filter(task => 
-                task.reportstatus === 'Assigned' || task.reportstatus === 'Rejected'
-            );
-        } else if (isApprover) {
-            filteredTasks = data.filter(task => task.reportstatus === 'Under Review');
-        } else {
-            filteredTasks = [];
+        try {
+            const data = await getMyTasks();
+            let filteredTasks;
+            if (isSeniorAuditor) {
+                filteredTasks = data.filter(task => 
+                    task.reportstatus === 'Assigned' || task.reportstatus === 'Rejected'
+                );
+            } else if (isApprover) {
+                filteredTasks = data.filter(task => 
+                    task.reportstatus === 'Under Review' || task.reportstatus === 'Approved'
+                );
+            } else {
+                filteredTasks = [];
+            }
+            setTasks(filteredTasks);
+        } catch (err) {
+            setError(`Failed to load tasks: ${err.message}`);
         }
-        setTasks(filteredTasks);
-    } catch (err) {
-        setError(`Failed to load tasks: ${err.message}`);
-    }
-};
+    };
 
     useEffect(() => {
         fetchMyTasks();
     }, [roles]);
 
     const handleDownload = async (id, docname, supportingDocname, type) => {
-    try {
-        const response = await downloadFile(id, type);
-        const url = window.URL.createObjectURL(new Blob([response.data]));
-        const link = document.createElement('a');
-        link.href = url;
-        const filename = type === 'original' ? (docname || 'file') : (supportingDocname || 'file');
-        link.setAttribute('download', filename);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    } catch (err) {
-        setError(`Failed to download ${type} file: ${err.message}`);
-    }
-};
+        try {
+            const response = await downloadFile(id, type);
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            const filename = type === 'original' ? (docname || 'file') : (supportingDocname || 'file');
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (err) {
+            setError(`Failed to download ${type} file: ${err.message}`);
+        }
+    };
 
     const handleSubmitFindings = async (task) => {
         setSelectedTask(task);
@@ -85,10 +89,19 @@ const AuditorTasks = () => {
         }
     };
 
-    const handleApprove = async (id) => {
+    const handleApprove = (task) => {
+        setSelectedTask(task);
+        setApprovalDocument(null);
+        setShowApprovalModal(true);
+    };
+
+    const handleApproveSubmit = async () => {
         try {
-            await approveReport(id);
+            const approvalFile = document.getElementById('approvalDocument')?.files[0];
+            await approveReport(selectedTask.id, approvalFile);
             setSuccess('Report approved successfully');
+            setShowApprovalModal(false);
+            setApprovalDocument(null);
             await fetchMyTasks();
         } catch (err) {
             setError(`Failed to approve report: ${err.message}`);
@@ -175,7 +188,7 @@ const AuditorTasks = () => {
                                         <>
                                             <button
                                                 className="btn btn-success mr-2"
-                                                onClick={() => handleApprove(task.id)}
+                                                onClick={() => handleApprove(task)}
                                             >
                                                 Approve
                                             </button>
@@ -187,8 +200,8 @@ const AuditorTasks = () => {
                                             </button>
                                         </>
                                     )}
-                                    {isApprover && (task.reportstatus === 'Approved' || task.reportstatus === 'Rejected') && (
-                                        <span className="text-muted">Action Completed</span>
+                                    {isApprover && task.reportstatus === 'Approved' && (
+                                        <span className="text-muted">Approved</span>
                                     )}
                                 </td>
                             </tr>
@@ -197,6 +210,7 @@ const AuditorTasks = () => {
                 </table>
             )}
 
+            {/* Findings Modal for Senior Auditor */}
             {showFindingsModal && (
                 <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
                     <div className="modal-dialog">
@@ -254,6 +268,39 @@ const AuditorTasks = () => {
                                     onClick={isSeniorAuditor ? handleFindingsSubmit : handleRejectSubmit}
                                 >
                                     {isSeniorAuditor ? 'Submit' : 'Reject'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Approval Modal for Approver */}
+            {showApprovalModal && (
+                <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Approve Report</h5>
+                                <button type="button" className="btn-close" onClick={() => setShowApprovalModal(false)}></button>
+                            </div>
+                            <div className="modal-body">
+                                <div className="form-group">
+                                    <label htmlFor="approvalDocument">Attach Approval Document (Optional):</label>
+                                    <input
+                                        type="file"
+                                        className="form-control"
+                                        id="approvalDocument"
+                                        onChange={(e) => setApprovalDocument(e.target.files[0])}
+                                    />
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-secondary" onClick={() => setShowApprovalModal(false)}>
+                                    Close
+                                </button>
+                                <button type="button" className="btn btn-primary" onClick={handleApproveSubmit}>
+                                    Submit
                                 </button>
                             </div>
                         </div>
