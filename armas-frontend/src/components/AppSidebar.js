@@ -40,7 +40,7 @@ const AppSidebar = () => {
                     display: 'inline-block',
                     }}
                 >
-                    QuantumTech
+                    Armas
                 </span>
                 </CSidebarBrand>
                 <CCloseButton
