@@ -8,7 +8,7 @@ const AppFooter = () => {
       <div className="w-100 d-flex justify-content-center">
         <span className="me-1 ">Developed by</span>
         <a href="https://quantumtech.et" target="_blank" rel="noopener noreferrer" style={{ color: '#ffffff' }}>
-          QuantumTech
+          Quantumtech
         </a>
       </div>
     </CFooter>

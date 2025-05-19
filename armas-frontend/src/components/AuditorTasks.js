@@ -28,12 +28,15 @@ const AuditorTasks = () => {
                 );
             } else if (isApprover) {
                 filteredTasks = data.filter(task => 
-                    task.reportstatus === 'Under Review' || task.reportstatus === 'Approved'
+                    task.reportstatus === 'Under Review'
                 );
             } else {
                 filteredTasks = [];
             }
             setTasks(filteredTasks);
+            if (filteredTasks.length === 0) {
+                setError('No tasks available for your role.');
+            }
         } catch (err) {
             setError(`Failed to load tasks: ${err.message}`);
         }
@@ -54,6 +57,7 @@ const AuditorTasks = () => {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            setSuccess(`Successfully downloaded ${type} document`);
         } catch (err) {
             setError(`Failed to download ${type} file: ${err.message}`);
         }
