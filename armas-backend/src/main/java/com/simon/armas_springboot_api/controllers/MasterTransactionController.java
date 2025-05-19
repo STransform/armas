@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.security.Principal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/transactions")
@@ -206,24 +207,27 @@ public class MasterTransactionController {
         return ResponseEntity.ok(masterTransactionRepository.findByReportStatus("Rejected"));
     }
 
-    @GetMapping("/tasks")
-    @PreAuthorize("hasAnyRole('ARCHIVER', 'SENIOR_AUDITOR', 'APPROVER')")
-    public ResponseEntity<List<MasterTransaction>> getTasks(Principal principal) {
-        User user = userRepository.findByUsername(principal.getName());
-        if (user == null) {
-            throw new IllegalStateException("User not found: " + principal.getName());
-        }
-
-        String role = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .map(auth -> auth.replace("ROLE_", ""))
-                .filter(auth -> Arrays.asList("ARCHIVER", "SENIOR_AUDITOR", "APPROVER").contains(auth))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No valid role found"));
-
-        List<MasterTransaction> tasks = masterTransactionService.getTasks(user.getId(), role);
-        return ResponseEntity.ok(tasks);
+@GetMapping("/tasks")
+@PreAuthorize("hasAnyRole('ARCHIVER', 'SENIOR_AUDITOR', 'APPROVER')")
+public ResponseEntity<List<MasterTransactionDTO>> getTasks(Principal principal) {
+    User user = userRepository.findByUsername(principal.getName());
+    if (user == null) {
+        throw new IllegalStateException("User not found: " + principal.getName());
     }
+
+    String role = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .map(auth -> auth.replace("ROLE_", ""))
+            .filter(auth -> Arrays.asList("ARCHIVER", "SENIOR_AUDITOR", "APPROVER").contains(auth))
+            .findFirst()
+            .orElseThrow(() -> new IllegalStateException("No valid role found"));
+
+    List<MasterTransaction> tasks = masterTransactionService.getTasks(user.getId(), role);
+    List<MasterTransactionDTO> taskDTOs = tasks.stream()
+            .map(MasterTransactionDTO::new)
+            .collect(Collectors.toList());
+    return ResponseEntity.ok(taskDTOs);
+}
 
 @GetMapping("/under-review-reports")
 @PreAuthorize("hasAnyRole('APPROVER', 'SENIOR_AUDITOR')")

@@ -90,6 +90,7 @@ const RejectedReports = () => {
                             <th>Organization</th>
                             <th>Budget Year</th>
                             <th>Report Type</th>
+                            <th>Auditor</th>
                             <th>Rejection Reason</th>
                             <th>Action</th>
                         </tr>
@@ -101,6 +102,7 @@ const RejectedReports = () => {
                                 <td>{report.organization?.orgname || 'N/A'}</td>
                                 <td>{report.fiscal_year || 'N/A'}</td>
                                 <td>{report.transactiondocument?.reportype || 'N/A'}</td>
+                                <td>{report.submittedByAuditorUsername || 'N/A'}</td>
                                 <td>{report.remarks || 'N/A'}</td>
                                 <td>
                                     <button

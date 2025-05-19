@@ -62,6 +62,7 @@ const ApprovedReports = () => {
                             <th>Organization</th>
                             <th>Budget Year</th>
                             <th>Report Type</th>
+                            <th>Auditor</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>
@@ -73,6 +74,7 @@ const ApprovedReports = () => {
                                 <td>{report.orgname || 'N/A'}</td>
                                 <td>{report.fiscalYear || 'N/A'}</td>
                                 <td>{report.reportype || 'N/A'}</td>
+                                <td>{report.submittedByAuditorUsername || 'N/A'}</td>
                                 <td>{report.reportstatus || 'N/A'}</td>
                                 <td>
                                     {report.id && report.supportingDocumentPath ? (

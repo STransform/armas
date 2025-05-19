@@ -13,6 +13,9 @@ public class MasterTransactionDTO {
     private String docname;
     private String supportingDocumentPath;
     private String supportingDocname;
+    private String submittedByAuditorUsername;
+    private String user;
+    private String assignedAuditorUsername;
 
     // Constructor to map from MasterTransaction
     public MasterTransactionDTO(MasterTransaction mt) {
@@ -23,8 +26,11 @@ public class MasterTransactionDTO {
         this.reportype = mt.getTransactiondocument() != null ? mt.getTransactiondocument().getReportype() : mt.getReportcategory();
         this.reportstatus = mt.getReportstatus();
         this.docname = mt.getDocname();
+        this.user = mt.getUser() != null ? mt.getUser().getUsername() : null;
         this.supportingDocumentPath = mt.getSupportingDocumentPath();
         this.supportingDocname = mt.getSupportingDocname();
+        this.submittedByAuditorUsername = mt.getSubmittedByAuditor() != null ? mt.getSubmittedByAuditor().getUsername() : null;
+        this.assignedAuditorUsername = mt.getUser2() != null ? mt.getUser2().getUsername() : null;
     }
 
     // Getters and setters
@@ -85,4 +91,11 @@ public class MasterTransactionDTO {
     }
      public String getSupportingDocumentPath() { return supportingDocumentPath; }
     public String getSupportingDocname() { return supportingDocname; }
+    public String getSubmittedByAuditorUsername() { return submittedByAuditorUsername; }
+    public void setSubmittedByAuditorUsername(String submittedByAuditorUsername) { this.submittedByAuditorUsername = submittedByAuditorUsername; }
+    public String getUser() { return user; }
+    public void setUser(String user) { this.user = user; }
+    public String getAssignedAuditorUsername() { return assignedAuditorUsername; }
+    public void setAssignedAuditorUsername(String assignedAuditorUsername) { this.assignedAuditorUsername = assignedAuditorUsername; }
+
 }
