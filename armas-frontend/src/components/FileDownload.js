@@ -85,6 +85,7 @@ const FileDownload = () => {
                             <th>Organization Name</th>
                             <th>Budget Year</th>
                             <th>Report Type</th>
+                            <th>Submitted By</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>
@@ -96,6 +97,7 @@ const FileDownload = () => {
                                 <td>{report.orgname || 'N/A'}</td>
                                 <td>{report.fiscal_year || 'N/A'}</td>
                                 <td>{report.reportype || 'N/A'}</td>
+                                <td>{report.user || 'N/A'}</td>
                                 <td>{report.reportstatus}</td>
                                 <td>
                                     <button className="btn btn-primary mr-2" onClick={() => handleDownload(report.id, report.docname)}>

@@ -99,21 +99,21 @@ public class MasterTransactionService {
     }
 
     public List<SentReportResponseDTO> getSentReportData(String role) {
-        List<String> statuses;
-        if ("ARCHIVER".equals(role)) {
-            statuses = Arrays.asList("Submitted", "Approved");
-        } else if ("SENIOR_AUDITOR".equals(role)) {
-            statuses = Arrays.asList("Assigned", "Rejected");
-        } else if ("APPROVER".equals(role)) {
-            statuses = Arrays.asList("Under Review");
-        } else {
-            statuses = Arrays.asList("Submitted", "Assigned", "Under Review", "Rejected", "Approved");
-        }
-        System.out.println("Fetching reports for role: " + role + ", statuses: " + statuses);
-        List<SentReportResponseDTO> reports = masterTransactionRepository.fetchDataByStatuses(statuses);
-        System.out.println("Fetched reports: " + reports);
-        return reports;
+    List<String> statuses;
+    if ("ARCHIVER".equals(role)) {
+        statuses = Arrays.asList("Submitted", "Approved");
+    } else if ("SENIOR_AUDITOR".equals(role)) {
+        statuses = Arrays.asList("Assigned", "Rejected");
+    } else if ("APPROVER".equals(role)) {
+        statuses = Arrays.asList("Under Review");
+    } else {
+        statuses = Arrays.asList("Submitted", "Assigned", "Under Review", "Rejected", "Approved");
     }
+    System.out.println("Fetching reports for role: " + role + ", statuses: " + statuses);
+    List<SentReportResponseDTO> reports = masterTransactionRepository.fetchDataByStatuses(statuses);
+    System.out.println("Fetched reports: " + reports);
+    return reports;
+}
 
     public List<UserDTO> getUsersByRole(String roleName) {
         System.out.println("Fetching users for role: " + roleName);

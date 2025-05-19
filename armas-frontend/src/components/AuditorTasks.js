@@ -19,29 +19,31 @@ const AuditorTasks = () => {
     const isApprover = roles.includes('APPROVER');
 
     const fetchMyTasks = async () => {
-        try {
-            const data = await getMyTasks();
-            let filteredTasks;
-            if (isSeniorAuditor) {
-                filteredTasks = data.filter(task => 
-                    task.reportstatus === 'Assigned' || task.reportstatus === 'Rejected'
-                );
-            } else if (isApprover) {
-                filteredTasks = data.filter(task => 
-                    task.reportstatus === 'Under Review'
-                );
-            } else {
-                filteredTasks = [];
-            }
-            setTasks(filteredTasks);
-            if (filteredTasks.length === 0) {
-                setError('No tasks available for your role.');
-            }
-        } catch (err) {
-            setError(`Failed to load tasks: ${err.message}`);
+    try {
+        const data = await getMyTasks();
+        let filteredTasks;
+        if (isSeniorAuditor) {
+            filteredTasks = data.filter(task => 
+                task.reportstatus === 'Assigned' || 
+                task.reportstatus === 'Rejected' || 
+                task.reportstatus === 'Approved' // Include Approved tasks
+            );
+        } else if (isApprover) {
+            filteredTasks = data.filter(task => 
+                task.reportstatus === 'Under Review'
+            );
+        } else {
+            filteredTasks = [];
         }
-    };
-
+        setTasks(filteredTasks);
+        if (filteredTasks.length === 0) {
+            setError('No tasks available for your role.');
+        }
+        console.log('Filtered tasks:', filteredTasks); // Debug log
+    } catch (err) {
+        setError(`Failed to load tasks: ${err.message}`);
+    }
+};
     useEffect(() => {
         fetchMyTasks();
     }, [roles]);
@@ -153,6 +155,7 @@ const AuditorTasks = () => {
                             <th>Organization</th>
                             <th>Budget Year</th>
                             <th>Report Type</th>
+                            <th>Auditor</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -162,9 +165,14 @@ const AuditorTasks = () => {
                                 <td>{task.id}</td>
                                 <td>{task.createdDate ? new Date(task.createdDate).toLocaleDateString() : 'N/A'}</td>
                                 <td>{task.reportstatus || 'N/A'}</td>
-                                <td>{task.organization?.orgname || 'N/A'}</td>
-                                <td>{task.fiscal_year || 'N/A'}</td>
-                                <td>{task.transactiondocument?.reportype || 'N/A'}</td>
+                                <td>{task.orgname || 'N/A'}</td>
+                                <td>{task.fiscalYear || 'N/A'}</td>
+                                <td>{task.reportype || 'N/A'}</td>
+                                <td>
+                                    {task.reportstatus === 'Assigned' ? 
+                                        (task.assignedAuditorUsername || 'N/A') : 
+                                        (task.submittedByAuditorUsername || 'N/A')}
+                                </td>
                                 <td>
                                     <button
                                         className="btn btn-primary mr-2"
@@ -203,9 +211,6 @@ const AuditorTasks = () => {
                                                 Reject
                                             </button>
                                         </>
-                                    )}
-                                    {isApprover && task.reportstatus === 'Approved' && (
-                                        <span className="text-muted">Approved</span>
                                     )}
                                 </td>
                             </tr>

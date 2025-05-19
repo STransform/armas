@@ -17,9 +17,13 @@ const UnderReviewReports = () => {
         const fetchReports = async () => {
             try {
                 const data = await getUnderReviewReports();
+                console.log('Mapped reports:', data); // Debug log
                 setReports(data);
+                if (data.length === 0) {
+                    setError('No reports under review.');
+                }
             } catch (err) {
-                setError('Failed to load under review reports');
+                setError('Failed to load under review reports: ' + err.message);
             }
         };
         fetchReports();
@@ -35,8 +39,9 @@ const UnderReviewReports = () => {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            setSuccess(`Successfully downloaded ${type} document`);
         } catch (err) {
-            setError('Failed to download file');
+            setError('Failed to download file: ' + err.message);
         }
     };
 
@@ -44,7 +49,6 @@ const UnderReviewReports = () => {
         try {
             await approveReport(id);
             setSuccess('Report approved successfully');
-            // Refresh reports
             const data = await getUnderReviewReports();
             setReports(data);
         } catch (err) {
@@ -68,7 +72,6 @@ const UnderReviewReports = () => {
             await rejectReport(selectedReport.id, rejectionReason, rejectionDocument);
             setSuccess('Report rejected successfully');
             setShowRejectModal(false);
-            // Refresh reports
             const data = await getUnderReviewReports();
             setReports(data);
         } catch (err) {
@@ -81,7 +84,9 @@ const UnderReviewReports = () => {
             <h2>Under Review Reports</h2>
             {error && <div className="alert alert-danger">{error}</div>}
             {success && <div className="alert alert-success">{success}</div>}
-            {reports.length === 0 && <div className="alert alert-info">No reports under review.</div>}
+            {reports.length === 0 && !error && (
+                <div className="alert alert-info">No reports under review.</div>
+            )}
             {reports.length > 0 && (
                 <table className="table table-striped">
                     <thead>

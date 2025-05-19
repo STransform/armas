@@ -52,7 +52,20 @@ export const downloadFile = async (id, type) => {
 export const getUnderReviewReports = async () => {
     try {
         const response = await axiosInstance.get('/transactions/under-review-reports');
-        return response.data;
+        console.log('Under review reports response:', response.data);
+        return response.data.map(report => ({
+            id: report.id,
+            createdDate: report.createdDate,
+            reportstatus: report.reportstatus,
+            organization: { orgname: report.organization ? report.organization.orgname : null },
+            fiscal_year: report.fiscal_year,
+            transactiondocument: { reportype: report.transactiondocument ? report.transactiondocument.reportype : null },
+            docname: report.docname,
+            supportingDocumentPath: report.supportingDocumentPath,
+            supportingDocname: report.supportingDocname,
+            remarks: report.remarks,
+            submittedByAuditorUsername: report.submittedByAuditor ? report.submittedByAuditor.username : null
+        }));
     } catch (error) {
         console.error('Error fetching under review reports:', error);
         throw error;
@@ -61,7 +74,20 @@ export const getUnderReviewReports = async () => {
 export const getCorrectedReports = async () => {
     try {
         const response = await axiosInstance.get('/transactions/corrected-reports');
-        return response.data;
+        console.log('Corrected reports response:', response.data);
+        return response.data.map(report => ({
+            id: report.id,
+            createdDate: report.createdDate,
+            reportstatus: report.reportstatus,
+            organization: report.organization, // Pass the full organization object
+            fiscal_year: report.fiscal_year,   // Match the JSON field name (likely fiscal_year)
+            transactiondocument: report.transactiondocument, // Pass the full transactiondocument object
+            docname: report.docname,
+            supportingDocumentPath: report.supportingDocumentPath,
+            supportingDocname: report.supportingDocname,
+            remarks: report.remarks,
+            submittedByAuditorUsername: report.submittedByAuditor ? report.submittedByAuditor.username : null
+        }));
     } catch (error) {
         console.error('Error fetching corrected reports:', error);
         throw error;
@@ -136,9 +162,26 @@ export const approveReport = async (transactionId, approvalDocument) => {
 };
 
 export const getApprovedReports = async () => {
-    const response = await axiosInstance.get('/transactions/approved-reports');
-    return response.data;
-   };
+    try {
+        const response = await axiosInstance.get('/transactions/approved-reports');
+        console.log('Approved reports response:', response.data);
+        return response.data.map(report => ({
+            id: report.id,
+            createdDate: report.createdDate,
+            reportstatus: report.reportstatus,
+            orgname: report.orgname,
+            fiscalYear: report.fiscalYear,
+            reportype: report.reportype,
+            docname: report.docname,
+            supportingDocumentPath: report.supportingDocumentPath,
+            supportingDocname: report.supportingDocname,
+            submittedByAuditorUsername: report.submittedByAuditorUsername || null
+        }));
+    } catch (error) {
+        console.error('Error fetching approved reports:', error);
+        throw error;
+    }
+};
 
    export const rejectReport = async (transactionId, rejectionReason, rejectionDocument) => {
     const formData = new FormData();
@@ -157,17 +200,59 @@ export const getApprovedReports = async () => {
     }
 };
 
-    export const getRejectedReports = async () => {
+export const getRejectedReports = async () => {
+    try {
         const response = await axiosInstance.get('/transactions/rejected-reports');
-        return response.data;
-       };
+        console.log('Rejected reports raw response:', JSON.stringify(response.data, null, 2));
+        const mappedReports = response.data.map(report => {
+            const mappedReport = {
+                id: report.id,
+                createdDate: report.createdDate,
+                reportstatus: report.reportstatus,
+                organization: { orgname: report.organization ? report.organization.orgname : null },
+                fiscal_year: report.fiscal_year,
+                transactiondocument: { reportype: report.transactiondocument ? report.transactiondocument.reportype : null },
+                docname: report.docname,
+                supportingDocumentPath: report.supportingDocumentPath,
+                supportingDocname: report.supportingDocname,
+                remarks: report.remarks,
+                submittedByAuditorUsername: report.submittedByAuditor ? report.submittedByAuditor.username : null
+            };
+            console.log('Mapped report ID=' + report.id + ':', mappedReport);
+            return mappedReport;
+        });
+        console.log('All mapped rejected reports:', mappedReports);
+        return mappedReports;
+    } catch (error) {
+        console.error('Error fetching rejected reports:', error);
+        throw error;
+    }
+};
 
 export const getMyTasks = async () => {
     try {
         console.log('Fetching tasks');
         const response = await axiosInstance.get('/transactions/tasks');
-        console.log('Tasks response:', response.data);
-        return response.data;
+        console.log('Tasks raw response:', JSON.stringify(response.data, null, 2));
+        const mappedTasks = response.data.map(task => {
+            const mappedTask = {
+                id: task.id,
+                createdDate: task.createdDate,
+                reportstatus: task.reportstatus,
+                orgname: task.orgname,
+                fiscalYear: task.fiscalYear,
+                reportype: task.reportype,
+                docname: task.docname,
+                supportingDocumentPath: task.supportingDocumentPath,
+                supportingDocname: task.supportingDocname,
+                submittedByAuditorUsername: task.submittedByAuditorUsername || null,
+                assignedAuditorUsername: task.assignedAuditorUsername || null
+            };
+            console.log('Mapped task ID=' + task.id + ':', mappedTask);
+            return mappedTask;
+        });
+        console.log('All mapped tasks:', mappedTasks);
+        return mappedTasks;
     } catch (error) {
         console.error('Error fetching tasks:', {
             message: error.message,

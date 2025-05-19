@@ -39,12 +39,19 @@ public interface MasterTransactionRepository extends JpaRepository<MasterTransac
     List<MasterTransaction> findNoneSendersByDocumentId(@Param("docid") String id,
             @Param("fiscal_year") String fiscal_year, @Param("reportcategory") String reportcategory);
 
-    @Query("SELECT new com.simon.armas_springboot_api.dto.SentReportResponseDTO(" +
-            "m.id, o.orgname, d.reportype, m.fiscal_year, m.createdDate, m.docname, m.reportstatus, m.remarks) " +
-            "FROM MasterTransaction m INNER JOIN m.organization o INNER JOIN m.transactiondocument d " +
-            "WHERE m.reportstatus IN :statuses")
-    List<SentReportResponseDTO> fetchDataByStatuses(@Param("statuses") List<String> statuses);
-
+@Query("SELECT new com.simon.armas_springboot_api.dto.SentReportResponseDTO(" +
+       "m.id, o.orgname, d.reportype, m.fiscal_year, m.createdDate, m.docname, m.reportstatus, m.remarks, " +
+       "m.user.username, m.submittedByAuditor.username) " +
+       "FROM MasterTransaction m INNER JOIN m.organization o INNER JOIN m.transactiondocument d " +
+       "LEFT JOIN m.user LEFT JOIN m.submittedByAuditor " +
+       "WHERE m.reportstatus IN :statuses")
+List<SentReportResponseDTO> fetchDataByStatuses(@Param("statuses") List<String> statuses);
+@Query("SELECT m FROM MasterTransaction m " +
+           "LEFT JOIN FETCH m.organization " +
+           "LEFT JOIN FETCH m.transactiondocument " +
+           "LEFT JOIN FETCH m.submittedByAuditor " +
+           "WHERE m.reportstatus = 'Rejected'")
+    List<MasterTransaction> findRejectedReports();
     @Query("SELECT COUNT(DISTINCT mt.organization) FROM MasterTransaction mt WHERE mt.transactiondocument IS NOT NULL")
     int countDistinctOrganizationsWithReports();
 
@@ -69,15 +76,29 @@ public interface MasterTransactionRepository extends JpaRepository<MasterTransac
             @Param("reportstatuses") List<String> reportstatuses,
             @Param("userid") Long userid);
 
-    @Query("SELECT m FROM MasterTransaction m WHERE m.user2.id = :userId AND m.reportstatus IN :statuses")
+    @Query("SELECT m FROM MasterTransaction m " +
+           "LEFT JOIN FETCH m.user " +
+           "LEFT JOIN FETCH m.organization " +
+           "LEFT JOIN FETCH m.user2 " +
+           "LEFT JOIN FETCH m.transactiondocument " +
+           "LEFT JOIN FETCH m.assignedBy " +
+           "LEFT JOIN FETCH m.submittedByAuditor " +
+           "WHERE m.user2.id = :userId AND m.reportstatus IN :statuses")
     List<MasterTransaction> findApproverTasks(
             @Param("userId") Long userId,
             @Param("statuses") List<String> statuses);
 
-    @Query("SELECT m FROM MasterTransaction m WHERE m.reportstatus IN :reportstatuses AND m.user2.id = :userid")
-    List<MasterTransaction> findCompletedApproverTasks(
-            @Param("userid") Long userid,
-            @Param("reportstatuses") List<String> reportstatuses);
+@Query("SELECT m FROM MasterTransaction m " +
+       "LEFT JOIN FETCH m.user " +
+       "LEFT JOIN FETCH m.organization " +
+       "LEFT JOIN FETCH m.user2 " +
+       "LEFT JOIN FETCH m.transactiondocument " +
+       "LEFT JOIN FETCH m.assignedBy " +
+       "LEFT JOIN FETCH m.submittedByAuditor " +
+       "WHERE m.reportstatus IN :reportstatuses AND m.user2.id = :userid")
+List<MasterTransaction> findCompletedApproverTasks(
+        @Param("userid") Long userid,
+        @Param("reportstatuses") List<String> reportstatuses);
 
     @Query("SELECT m FROM MasterTransaction m WHERE m.assignedBy.id = :userId")
     List<MasterTransaction> findTasksAssignedByArchiver(@Param("userId") Long userId);
@@ -101,7 +122,11 @@ public interface MasterTransactionRepository extends JpaRepository<MasterTransac
     List<MasterTransaction> findApprovedSeniorAuditorTasks(@Param("userId") Long userId);
     @Query("SELECT m FROM MasterTransaction m WHERE m.reportstatus = 'Under Review'")
     List<MasterTransaction> findUnderReviewReports();
-    @Query("SELECT m FROM MasterTransaction m WHERE m.reportstatus = 'Corrected'")
+    @Query("SELECT m FROM MasterTransaction m " +
+           "LEFT JOIN FETCH m.organization " +
+           "LEFT JOIN FETCH m.transactiondocument " +
+           "LEFT JOIN FETCH m.submittedByAuditor " +
+           "WHERE m.reportstatus = 'Corrected'")
     List<MasterTransaction> findCorrectedReports();
     boolean existsByDocname(String docname);
 
