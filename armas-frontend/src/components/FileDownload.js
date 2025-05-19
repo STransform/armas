@@ -110,40 +110,7 @@ const FileDownload = () => {
                     </tbody>
                 </table>
             )}
-
-            {/* <h3>Approved Reports</h3>
-            {approvedReports.length === 0 && <div className="alert alert-info">No approved reports available.</div>}
-            {approvedReports.length > 0 && (
-                <table className="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Submitted Date</th>
-                            <th>Organization Name</th>
-                            <th>Budget Year</th>
-                            <th>Report Type</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {approvedReports.map(report => (
-                            <tr key={report.id}>
-                                <td>{report.createdDate ? new Date(report.createdDate).toLocaleDateString() : 'N/A'}</td>
-                                <td>{report.orgname || 'N/A'}</td>
-                                <td>{report.fiscal_year || 'N/A'}</td>
-                                <td>{report.reportype || 'N/A'}</td>
-                                <td>{report.reportstatus}</td>
-                                <td>
-                                    <button className="btn btn-primary mr-2" onClick={() => handleDownload(report.id, report.docname)}>
-                                        Download
-                                    </button>
-                                    <span className="text-muted">Approved</span>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            )} */}
+            
 
             {showAssignModal && (
                 <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>

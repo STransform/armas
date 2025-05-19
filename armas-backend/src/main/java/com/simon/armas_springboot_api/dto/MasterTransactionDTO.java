@@ -11,6 +11,8 @@ public class MasterTransactionDTO {
     private String reportype;
     private String reportstatus;
     private String docname;
+    private String supportingDocumentPath;
+    private String supportingDocname;
 
     // Constructor to map from MasterTransaction
     public MasterTransactionDTO(MasterTransaction mt) {
@@ -21,6 +23,8 @@ public class MasterTransactionDTO {
         this.reportype = mt.getTransactiondocument() != null ? mt.getTransactiondocument().getReportype() : mt.getReportcategory();
         this.reportstatus = mt.getReportstatus();
         this.docname = mt.getDocname();
+        this.supportingDocumentPath = mt.getSupportingDocumentPath();
+        this.supportingDocname = mt.getSupportingDocname();
     }
 
     // Getters and setters
@@ -79,4 +83,6 @@ public class MasterTransactionDTO {
     public void setDocname(String docname) {
         this.docname = docname;
     }
+     public String getSupportingDocumentPath() { return supportingDocumentPath; }
+    public String getSupportingDocname() { return supportingDocname; }
 }

@@ -11,6 +11,9 @@ const ApprovedReports = () => {
             try {
                 const data = await getApprovedReports();
                 console.log('Fetched approved reports:', JSON.stringify(data, null, 2));
+                data.forEach(report => {
+                    console.log(`Report ID=${report.id}: supportingDocumentPath=${report.supportingDocumentPath}, supportingDocname=${report.supportingDocname}`);
+                });
                 setReports(data);
                 if (data.length === 0) {
                     setError('No approved reports available.');
@@ -22,19 +25,24 @@ const ApprovedReports = () => {
         fetchReports();
     }, []);
 
-    const handleDownload = async (id, docname) => {
+    const handleDownload = async (id, supportingDocname, type = 'supporting') => {
         try {
-            const response = await downloadFile(id);
+            console.log(`Downloading file: id=${id}, type=${type}, supportingDocname=${supportingDocname}`);
+            const response = await downloadFile(id, type);
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', docname || 'file');
+            link.setAttribute('download', supportingDocname || 'file');
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            setSuccess('File downloaded successfully');
+            setSuccess('Approver attachment downloaded successfully');
         } catch (err) {
-            setError('Failed to download file: ' + err.message);
+            const errorMessage = err.response?.status === 404 
+                ? 'Approver attachment not found'
+                : `Failed to download Approver attachment: ${err.message}`;
+            setError(errorMessage);
+            console.error('Download error:', err);
         }
     };
 
@@ -67,15 +75,15 @@ const ApprovedReports = () => {
                                 <td>{report.reportype || 'N/A'}</td>
                                 <td>{report.reportstatus || 'N/A'}</td>
                                 <td>
-                                    {report.id && report.docname ? (
+                                    {report.id && report.supportingDocumentPath ? (
                                         <button
                                             className="btn btn-primary"
-                                            onClick={() => handleDownload(report.id, report.docname)}
+                                            onClick={() => handleDownload(report.id, report.supportingDocname, 'supporting')}
                                         >
                                             Download
                                         </button>
                                     ) : (
-                                        <span className="text-muted">No file available</span>
+                                        <span className="text-muted">No attachment available</span>
                                     )}
                                 </td>
                             </tr>

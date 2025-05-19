@@ -10,9 +10,11 @@ const CorrectedReports = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [showRejectModal, setShowRejectModal] = useState(false);
+    const [showApprovalModal, setShowApprovalModal] = useState(false);
     const [selectedReport, setSelectedReport] = useState(null);
     const [rejectionReason, setRejectionReason] = useState('');
     const [rejectionDocument, setRejectionDocument] = useState(null);
+    const [approvalDocument, setApprovalDocument] = useState(null);
 
     useEffect(() => {
         const fetchReports = async () => {
@@ -41,10 +43,18 @@ const CorrectedReports = () => {
         }
     };
 
-    const handleApprove = async (id) => {
+    const handleApprove = (report) => {
+        setSelectedReport(report);
+        setApprovalDocument(null);
+        setShowApprovalModal(true);
+    };
+
+    const handleApproveSubmit = async () => {
         try {
-            await approveReport(id);
+            const approvalFile = document.getElementById('approvalDocument')?.files[0];
+            await approveReport(selectedReport.id, approvalFile);
             setSuccess('Report approved successfully');
+            setShowApprovalModal(false);
             const data = await getCorrectedReports();
             setReports(data);
         } catch (err) {
@@ -122,7 +132,7 @@ const CorrectedReports = () => {
                                         <>
                                             <button
                                                 className="btn btn-success mr-2"
-                                                onClick={() => handleApprove(report.id)}
+                                                onClick={() => handleApprove(report)}
                                             >
                                                 Approve
                                             </button>
@@ -144,17 +154,47 @@ const CorrectedReports = () => {
                 </table>
             )}
 
+            {/* Approval Modal */}
+            {showApprovalModal && (
+                <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Approve Report</h5>
+                                <button type="button" className="btn-close" onClick={() => setShowApprovalModal(false)}></button>
+                            </div>
+                            <div className="modal-body">
+                                <div className="form-group">
+                                    <label htmlFor="approvalDocument">Attach Approval Document (Optional):</label>
+                                    <input
+                                        type="file"
+                                        className="form-control"
+                                        id="approvalDocument"
+                                        onChange={(e) => setApprovalDocument(e.target.files[0])}
+                                    />
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-secondary" onClick={() => setShowApprovalModal(false)}>
+                                    Close
+                                </button>
+                                <button type="button" className="btn btn-primary" onClick={handleApproveSubmit}>
+                                    Submit
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Reject Modal */}
             {showRejectModal && (
                 <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
                     <div className="modal-dialog">
                         <div className="modal-content">
                             <div className="modal-header">
                                 <h5 className="modal-title">Reject Report</h5>
-                                <button
-                                    type="button"
-                                    className="btn-close"
-                                    onClick={() => setShowRejectModal(false)}
-                                ></button>
+                                <button type="button" className="btn-close" onClick={() => setShowRejectModal(false)}></button>
                             </div>
                             <div className="modal-body">
                                 <div className="form-group">
@@ -177,18 +217,10 @@ const CorrectedReports = () => {
                                 </div>
                             </div>
                             <div className="modal-footer">
-                                <button
-                                    type="button"
-                                    className="btn btn-secondary"
-                                    onClick={() => setShowRejectModal(false)}
-                                >
+                                <button type="button" className="btn btn-secondary" onClick={() => setShowRejectModal(false)}>
                                     Close
                                 </button>
-                                <button
-                                    type="button"
-                                    className="btn btn-primary"
-                                    onClick={handleRejectSubmit}
-                                >
+                                <button type="button" className="btn btn-primary" onClick={handleRejectSubmit}>
                                     Reject
                                 </button>
                             </div>

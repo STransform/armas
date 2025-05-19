@@ -113,10 +113,16 @@ export const submitFindings = async (transactionId, findings, approverUsername, 
 };
 
 
-export const approveReport = async (transactionId) => {
+export const approveReport = async (transactionId, approvalDocument) => {
     try {
         console.log('Approving report: transactionId=', transactionId);
-        const response = await axiosInstance.post(`/transactions/approve/${transactionId}`);
+        const formData = new FormData();
+        if (approvalDocument) {
+            formData.append('approvalDocument', approvalDocument);
+        }
+        const response = await axiosInstance.post(`/transactions/approve/${transactionId}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
         console.log('Approve report response:', response.data);
         return response.data;
     } catch (error) {
