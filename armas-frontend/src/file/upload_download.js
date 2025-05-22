@@ -10,10 +10,10 @@ export const getDocuments = async () => {
     }
 };
 
-export const uploadFile = async (file, responseNeeded, fiscal_year, transactiondocumentid) => {
+export const uploadFile = async (file, fiscal_year, transactiondocumentid) => {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('response_needed', responseNeeded);
+    // formData.append('response_needed', responseNeeded);
     formData.append('fiscal_year', fiscal_year);
     formData.append('transactiondocumentid', transactiondocumentid);
 
@@ -175,8 +175,12 @@ export const getApprovedReports = async () => {
             docname: report.docname,
             supportingDocumentPath: report.supportingDocumentPath,
             supportingDocname: report.supportingDocname,
-            submittedByAuditorUsername: report.submittedByAuditorUsername || null
-        }));
+            submittedByAuditorUsername: report.submittedByAuditorUsername || null,
+            assignedAuditorUsername: report.assignedAuditorUsername || null,
+            createdBy: report.createdBy || null,
+            assignedByUsername: report.assignedByUsername || null,
+            lastModifiedBy: report.lastModifiedBy || null // lastModifiedBy
+        }))
     } catch (error) {
         console.error('Error fetching approved reports:', error);
         throw error;
@@ -246,12 +250,16 @@ export const getMyTasks = async () => {
                 supportingDocumentPath: task.supportingDocumentPath,
                 supportingDocname: task.supportingDocname,
                 submittedByAuditorUsername: task.submittedByAuditorUsername || null,
-                assignedAuditorUsername: task.assignedAuditorUsername || null
+                assignedAuditorUsername: task.assignedAuditorUsername || null,
+                createdBy: task.createdBy || null, // Map createdBy
+                assignedByUsername: task.assignedByUsername || null ,// Map assignedByUsername
+                approverUsername: task.approverUsername || null,
+                remarks: task.remarks || null  
             };
-            console.log('Mapped task ID=' + task.id + ':', mappedTask);
+            console.log('Mapped task ID=' + task.id + ':', JSON.stringify(mappedTask, null, 2));
             return mappedTask;
         });
-        console.log('All mapped tasks:', mappedTasks);
+        console.log('All mapped tasks:', JSON.stringify(mappedTasks, null, 2));
         return mappedTasks;
     } catch (error) {
         console.error('Error fetching tasks:', {

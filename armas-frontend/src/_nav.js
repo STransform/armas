@@ -170,7 +170,7 @@ const Nav = () => {
           ? [
               {
                 component: CNavItem,
-                name: 'Auditor Tasks',
+                name: 'Assigned tasks',
                 to: '/transactions/auditor-tasks',
                 icon: <CIcon icon={cilTask} customClassName="nav-icon" />,
               },

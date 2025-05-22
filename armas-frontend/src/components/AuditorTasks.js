@@ -9,6 +9,7 @@ const AuditorTasks = () => {
     const [success, setSuccess] = useState('');
     const [showFindingsModal, setShowFindingsModal] = useState(false);
     const [showApprovalModal, setShowApprovalModal] = useState(false);
+    const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [selectedTask, setSelectedTask] = useState(null);
     const [findings, setFindings] = useState('');
     const [approvalDocument, setApprovalDocument] = useState(null);
@@ -19,31 +20,30 @@ const AuditorTasks = () => {
     const isApprover = roles.includes('APPROVER');
 
     const fetchMyTasks = async () => {
-    try {
-        const data = await getMyTasks();
-        let filteredTasks;
-        if (isSeniorAuditor) {
-            filteredTasks = data.filter(task => 
-                task.reportstatus === 'Assigned'
-                // task.reportstatus === 'Rejected' || 
-                // task.reportstatus === 'Approved' // Include Approved tasks
-            );
-        } else if (isApprover) {
-            filteredTasks = data.filter(task => 
-                task.reportstatus === 'Under Review'
-            );
-        } else {
-            filteredTasks = [];
+        try {
+            const data = await getMyTasks();
+            let filteredTasks;
+            if (isSeniorAuditor) {
+                filteredTasks = data.filter(task => 
+                    ['Assigned', 'Rejected', 'Under Review', 'Corrected', 'Approved'].includes(task.reportstatus)
+                );
+            } else if (isApprover) {
+                filteredTasks = data.filter(task => 
+                    ['Under Review', 'Corrected', 'Approved', 'Rejected'].includes(task.reportstatus)
+                );
+            } else {
+                filteredTasks = [];
+            }
+            setTasks(filteredTasks);
+            if (filteredTasks.length === 0) {
+                setError('No tasks available for your role.');
+            }
+            console.log('Filtered tasks:', JSON.stringify(filteredTasks, null, 2));
+        } catch (err) {
+            setError(`Failed to load tasks: ${err.message}`);
         }
-        setTasks(filteredTasks);
-        if (filteredTasks.length === 0) {
-            setError('No tasks available for your role.');
-        }
-        console.log('Filtered tasks:', filteredTasks); // Debug log
-    } catch (err) {
-        setError(`Failed to load tasks: ${err.message}`);
-    }
-};
+    };
+
     useEffect(() => {
         fetchMyTasks();
     }, [roles]);
@@ -137,6 +137,12 @@ const AuditorTasks = () => {
         }
     };
 
+    const handleDetails = (task) => {
+        setSelectedTask(task);
+        console.log('Opening details modal for task:', JSON.stringify(task, null, 2));
+        setShowDetailsModal(true);
+    };
+
     return (
         <div className="container mt-5">
             <h2>{isSeniorAuditor ? 'Senior Auditor Tasks' : 'Approver Tasks'}</h2>
@@ -149,7 +155,6 @@ const AuditorTasks = () => {
                 <table className="table table-striped">
                     <thead>
                         <tr>
-                            <th>ID</th>
                             <th>Date</th>
                             <th>Status</th>
                             <th>Organization</th>
@@ -162,7 +167,6 @@ const AuditorTasks = () => {
                     <tbody>
                         {tasks.map(task => (
                             <tr key={task.id}>
-                                <td>{task.id}</td>
                                 <td>{task.createdDate ? new Date(task.createdDate).toLocaleDateString() : 'N/A'}</td>
                                 <td>{task.reportstatus || 'N/A'}</td>
                                 <td>{task.orgname || 'N/A'}</td>
@@ -188,6 +192,12 @@ const AuditorTasks = () => {
                                             Findings
                                         </button>
                                     )}
+                                    <button
+                                        className="btn btn-info mr-2"
+                                        onClick={() => handleDetails(task)}
+                                    >
+                                        Details
+                                    </button>
                                     {isSeniorAuditor && (task.reportstatus === 'Assigned' || task.reportstatus === 'Rejected') && (
                                         <button
                                             className="btn btn-secondary mr-2"
@@ -196,7 +206,7 @@ const AuditorTasks = () => {
                                             {task.reportstatus === 'Rejected' ? 'Resubmit' : 'Evaluate'}
                                         </button>
                                     )}
-                                    {isApprover && task.reportstatus === 'Under Review' && (
+                                    {isApprover && (task.reportstatus === 'Under Review' || task.reportstatus === 'Corrected') && (
                                         <>
                                             <button
                                                 className="btn btn-success mr-2"
@@ -310,6 +320,48 @@ const AuditorTasks = () => {
                                 </button>
                                 <button type="button" className="btn btn-primary" onClick={handleApproveSubmit}>
                                     Submit
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Details Modal */}
+            {showDetailsModal && selectedTask && (
+                <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog modal-lg">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Task Details</h5>
+                                <button type="button" className="btn-close" onClick={() => setShowDetailsModal(false)}></button>
+                            </div>
+                            <div className="modal-body">
+                                <div className="row">
+                                    <div className="col-md-6">
+                                        <p><strong>Date:</strong> {selectedTask.createdDate ? new Date(selectedTask.createdDate).toLocaleDateString() : 'N/A'}</p>
+                                        <p><strong>Status:</strong> {selectedTask.reportstatus || 'N/A'}</p>
+                                        <p><strong>Organization:</strong> {selectedTask.orgname || 'N/A'}</p>
+                                        <p><strong>Budget Year:</strong> {selectedTask.fiscalYear || 'N/A'}</p>
+                                        <p><strong>Created By:</strong> {selectedTask.createdBy || 'N/A'}</p>
+                                    </div>
+                                    <div className="col-md-6">
+                                        <p><strong>Report Type:</strong> {selectedTask.reportype || 'N/A'}</p>
+                                        <p><strong>Auditor:</strong> {selectedTask.submittedByAuditorUsername || selectedTask.assignedAuditorUsername || 'N/A'}</p>
+                                        <p><strong>Approver:</strong> {selectedTask.approverUsername || 'N/A'}</p>
+                                        <p><strong>Document Name:</strong> {selectedTask.docname || 'N/A'}</p>
+                                        <p><strong>Archiver:</strong> {selectedTask.assignedByUsername || 'N/A'}</p>
+                                    </div>
+                                </div>
+                                <div className="row mt-3">
+                                    <div className="col-12">
+                                        <p><strong>Remarks:</strong> {selectedTask.remarks || 'No remarks available'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-secondary" onClick={() => setShowDetailsModal(false)}>
+                                    Close
                                 </button>
                             </div>
                         </div>

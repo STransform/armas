@@ -5,6 +5,8 @@ const ApprovedReports = () => {
     const [reports, setReports] = useState([]);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [showDetailsModal, setShowDetailsModal] = useState(false);
+    const [selectedReport, setSelectedReport] = useState(null);
 
     useEffect(() => {
         const fetchReports = async () => {
@@ -12,7 +14,11 @@ const ApprovedReports = () => {
                 const data = await getApprovedReports();
                 console.log('Fetched approved reports:', JSON.stringify(data, null, 2));
                 data.forEach(report => {
-                    console.log(`Report ID=${report.id}: supportingDocumentPath=${report.supportingDocumentPath}, supportingDocname=${report.supportingDocname}`);
+                    console.log(`Report ID=${report.id}: ` +
+                                `CreatedBy=${report.createdBy}, ` +
+                                `AssignedByUsername=${report.assignedByUsername}, ` +
+                                `ApprovedBy=${report.lastModifiedBy}, ` +
+                                `Docname=${report.docname}`);
                 });
                 setReports(data);
                 if (data.length === 0) {
@@ -44,6 +50,12 @@ const ApprovedReports = () => {
             setError(errorMessage);
             console.error('Download error:', err);
         }
+    };
+
+    const handleDetails = (report) => {
+        console.log('Selected report:', JSON.stringify(report, null, 2));
+        setSelectedReport(report);
+        setShowDetailsModal(true);
     };
 
     return (
@@ -79,19 +91,62 @@ const ApprovedReports = () => {
                                 <td>
                                     {report.id && report.supportingDocumentPath ? (
                                         <button
-                                            className="btn btn-primary"
+                                            className="btn btn-primary mr-2"
                                             onClick={() => handleDownload(report.id, report.supportingDocname, 'supporting')}
                                         >
                                             Download
                                         </button>
                                     ) : (
-                                        <span className="text-muted">No attachment available</span>
+                                        <span className="text-muted mr-2">No attachment available</span>
                                     )}
+                                    <button
+                                        className="btn btn-info"
+                                        onClick={() => handleDetails(report)}
+                                    >
+                                        Details
+                                    </button>
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
+            )}
+
+            {/* Details Modal */}
+            {showDetailsModal && selectedReport && (
+                <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog modal-lg">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Report Details</h5>
+                                <button type="button" className="btn-close" onClick={() => setShowDetailsModal(false)}></button>
+                            </div>
+                            <div className="modal-body">
+                                <div className="row">
+                                    <div className="col-md-6">
+                                        <p><strong>Date:</strong> {selectedReport.createdDate ? new Date(selectedReport.createdDate).toLocaleDateString() : 'N/A'}</p>
+                                        <p><strong>Status:</strong> {selectedReport.reportstatus || 'N/A'}</p>
+                                        <p><strong>Organization:</strong> {selectedReport.orgname || 'N/A'}</p>
+                                        <p><strong>Budget Year:</strong> {selectedReport.fiscalYear || 'N/A'}</p>
+                                        <p><strong>Report Type:</strong> {selectedReport.reportype || 'N/A'}</p>
+                                    </div>
+                                    <div className="col-md-6">
+                                        <p><strong>Auditor:</strong> {selectedReport.submittedByAuditorUsername || 'N/A'}</p>
+                                        <p><strong>Approver:</strong> {selectedReport.lastModifiedBy || 'N/A'}</p>
+                                        <p><strong>Created By:</strong> {selectedReport.createdBy || 'N/A'}</p>
+                                        <p><strong>Document Name:</strong> {selectedReport.docname || 'N/A'}</p>
+                                        <p><strong>Archiver:</strong> {selectedReport.assignedByUsername || 'N/A'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-secondary" onClick={() => setShowDetailsModal(false)}>
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
