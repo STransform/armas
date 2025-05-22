@@ -16,22 +16,31 @@ public class MasterTransactionDTO {
     private String submittedByAuditorUsername;
     private String user;
     private String assignedAuditorUsername;
-
+    private String createdBy; 
+    private String assignedByUsername; 
+    private String lastModifiedBy;
+    private String approverUsername; // Maps to user2.username for APPROVER (if Approved)
+    private String remarks;
     // Constructor to map from MasterTransaction
     public MasterTransactionDTO(MasterTransaction mt) {
-        this.id = mt.getId();
-        this.createdDate = mt.getCreatedDate();
-        this.orgname = mt.getOrganization() != null ? mt.getOrganization().getOrgname() : null;
-        this.fiscalYear = mt.getFiscal_year();
-        this.reportype = mt.getTransactiondocument() != null ? mt.getTransactiondocument().getReportype() : mt.getReportcategory();
-        this.reportstatus = mt.getReportstatus();
-        this.docname = mt.getDocname();
-        this.user = mt.getUser() != null ? mt.getUser().getUsername() : null;
-        this.supportingDocumentPath = mt.getSupportingDocumentPath();
-        this.supportingDocname = mt.getSupportingDocname();
-        this.submittedByAuditorUsername = mt.getSubmittedByAuditor() != null ? mt.getSubmittedByAuditor().getUsername() : null;
-        this.assignedAuditorUsername = mt.getUser2() != null ? mt.getUser2().getUsername() : null;
-    }
+    this.id = mt.getId();
+    this.createdDate = mt.getCreatedDate();
+    this.orgname = mt.getOrganization() != null ? mt.getOrganization().getOrgname() : null;
+    this.fiscalYear = mt.getFiscal_year();
+    this.reportype = mt.getTransactiondocument() != null ? mt.getTransactiondocument().getReportype() : mt.getReportcategory();
+    this.reportstatus = mt.getReportstatus();
+    this.docname = mt.getDocname();
+    this.user = mt.getUser() != null ? mt.getUser().getUsername() : null;
+    this.supportingDocumentPath = mt.getSupportingDocumentPath();
+    this.supportingDocname = mt.getSupportingDocname();
+    this.submittedByAuditorUsername = mt.getSubmittedByAuditor() != null ? mt.getSubmittedByAuditor().getUsername() : null;
+    this.assignedAuditorUsername = mt.getUser2() != null ? mt.getUser2().getUsername() : null;
+    this.createdBy = mt.getCreatedBy();
+    this.assignedByUsername = mt.getAssignedBy() != null ? mt.getAssignedBy().getUsername() : null;
+    this.lastModifiedBy = mt.getLastModifiedBy();
+    this.approverUsername = ("Approved".equals(mt.getReportstatus()) && mt.getUser2() != null) ? mt.getUser2().getUsername() : null;
+    this.remarks = mt.getRemarks() != null ? mt.getRemarks() : null; // Map findings
+}
 
     // Getters and setters
     public Integer getId() {
@@ -97,5 +106,31 @@ public class MasterTransactionDTO {
     public void setUser(String user) { this.user = user; }
     public String getAssignedAuditorUsername() { return assignedAuditorUsername; }
     public void setAssignedAuditorUsername(String assignedAuditorUsername) { this.assignedAuditorUsername = assignedAuditorUsername; }
+    public String getCreatedBy() {
+        return createdBy;
+    }
 
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public String getAssignedByUsername() {
+        return assignedByUsername;
+    }
+
+    public void setAssignedByUsername(String assignedByUsername) {
+        this.assignedByUsername = assignedByUsername;
+    }
+public String getLastModifiedBy() {
+        return lastModifiedBy;
+    }
+
+    public void setLastModifiedBy(String lastModifiedBy) {
+        this.lastModifiedBy = lastModifiedBy;
+    }
+
+    public String getApproverUsername() { return approverUsername; }
+    public void setApproverUsername(String approverUsername) { this.approverUsername = approverUsername; }
+    public String getRemarks() { return remarks; }
+    public void setRemarks(String remarks) { this.remarks = remarks; }
 }
