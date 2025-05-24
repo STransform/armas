@@ -12,7 +12,7 @@ const CorrectedReports = () => {
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [showApprovalModal, setShowApprovalModal] = useState(false);
     const [selectedReport, setSelectedReport] = useState(null);
-    const [rejectionReason, setRejectionReason] = useState('');
+    const [reasonOfRejection, setReasonOfRejection] = useState('');
     const [rejectionDocument, setRejectionDocument] = useState(null);
     const [approvalDocument, setApprovalDocument] = useState(null);
 
@@ -20,26 +20,32 @@ const CorrectedReports = () => {
         const fetchReports = async () => {
             try {
                 const data = await getCorrectedReports();
+                console.log('Fetched corrected reports:', JSON.stringify(data, null, 2));
                 setReports(data);
+                if (data.length === 0) {
+                    setError('No corrected reports available.');
+                }
             } catch (err) {
-                setError('Failed to load corrected reports');
+                setError(`Failed to load corrected reports: ${err.message}`);
             }
         };
         fetchReports();
     }, []);
 
-    const handleDownload = async (id, docname, type) => {
+    const handleDownload = async (id, docname, supportingDocname, type) => {
         try {
             const response = await downloadFile(id, type);
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', type === 'original' ? docname : docname);
+            const filename = type === 'original' ? docname : supportingDocname;
+            link.setAttribute('download', filename || 'file');
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            setSuccess(`Successfully downloaded ${type} document`);
         } catch (err) {
-            setError('Failed to download file');
+            setError(`Failed to download file: ${err.message}`);
         }
     };
 
@@ -55,6 +61,7 @@ const CorrectedReports = () => {
             await approveReport(selectedReport.id, approvalFile);
             setSuccess('Report approved successfully');
             setShowApprovalModal(false);
+            setApprovalDocument(null);
             const data = await getCorrectedReports();
             setReports(data);
         } catch (err) {
@@ -64,20 +71,23 @@ const CorrectedReports = () => {
 
     const handleReject = (report) => {
         setSelectedReport(report);
-        setRejectionReason('');
+        setReasonOfRejection('');
         setRejectionDocument(null);
         setShowRejectModal(true);
     };
 
     const handleRejectSubmit = async () => {
-        if (!rejectionReason) {
+        if (!reasonOfRejection) {
             setError('Please provide a reason for rejection');
             return;
         }
         try {
-            await rejectReport(selectedReport.id, rejectionReason, rejectionDocument);
+            const rejectionFile = document.getElementById('rejectionDocument')?.files[0];
+            await rejectReport(selectedReport.id, reasonOfRejection, rejectionFile);
             setSuccess('Report rejected successfully');
             setShowRejectModal(false);
+            setReasonOfRejection('');
+            setRejectionDocument(null);
             const data = await getCorrectedReports();
             setReports(data);
         } catch (err) {
@@ -90,7 +100,7 @@ const CorrectedReports = () => {
             <h2>Corrected Reports</h2>
             {error && <div className="alert alert-danger">{error}</div>}
             {success && <div className="alert alert-success">{success}</div>}
-            {reports.length === 0 && <div className="alert alert-info">No corrected reports available.</div>}
+            {reports.length === 0 && !error && <div className="alert alert-info">No corrected reports available.</div>}
             {reports.length > 0 && (
                 <table className="table table-striped">
                     <thead>
@@ -101,7 +111,7 @@ const CorrectedReports = () => {
                             <th>Budget Year</th>
                             <th>Report Type</th>
                             <th>Auditor</th>
-                            <th>Audit Findings</th>
+                            <th>Audit findings</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -110,22 +120,23 @@ const CorrectedReports = () => {
                             <tr key={report.id}>
                                 <td>{report.id}</td>
                                 <td>{report.createdDate ? new Date(report.createdDate).toLocaleDateString() : 'N/A'}</td>
-                                <td>{report.organization?.orgname || 'N/A'}</td>
-                                <td>{report.fiscal_year || 'N/A'}</td>
-                                <td>{report.transactiondocument?.reportype || 'N/A'}</td>
+                                <td>{report.orgname || (report.organization?.orgname) || 'N/A'}</td>
+                                <td>{report.fiscalYear || report.fiscal_year || 'N/A'}</td>
+                                <td>{report.reportype || (report.transactiondocument?.reportype) || 'N/A'}</td>
+                                
                                 <td>{report.submittedByAuditorUsername || 'N/A'}</td>
                                 <td>{report.remarks || 'N/A'}</td>
                                 <td>
                                     <button
                                         className="btn btn-primary mr-2"
-                                        onClick={() => handleDownload(report.id, report.docname, 'original')}
+                                        onClick={() => handleDownload(report.id, report.docname, report.supportingDocname, 'original')}
                                     >
                                         Report
                                     </button>
                                     {report.supportingDocumentPath && (
                                         <button
                                             className="btn btn-info mr-2"
-                                            onClick={() => handleDownload(report.id, report.supportingDocname, 'supporting')}
+                                            onClick={() => handleDownload(report.id, report.docname, report.supportingDocname, 'supporting')}
                                         >
                                             Findings
                                         </button>
@@ -200,12 +211,12 @@ const CorrectedReports = () => {
                             </div>
                             <div className="modal-body">
                                 <div className="form-group">
-                                    <label htmlFor="rejectionReason">Reason for Rejection:</label>
+                                    <label htmlFor="reasonOfRejection">Reason for Rejection:</label>
                                     <textarea
                                         className="form-control"
-                                        id="rejectionReason"
-                                        value={rejectionReason}
-                                        onChange={(e) => setRejectionReason(e.target.value)}
+                                        id="reasonOfRejection"
+                                        value={reasonOfRejection}
+                                        onChange={(e) => setReasonOfRejection(e.target.value)}
                                     />
                                 </div>
                                 <div className="form-group">

@@ -68,7 +68,6 @@ const RejectedReports = () => {
             setFindings('');
             setSupportingDocument(null);
             setSelectedApprover('');
-            // Refresh reports
             const data = await getRejectedReports();
             setReports(data);
         } catch (err) {
@@ -91,7 +90,7 @@ const RejectedReports = () => {
                             <th>Budget Year</th>
                             <th>Report Type</th>
                             <th>Auditor</th>
-                            <th>Rejection Reason</th>
+                            <th>Reason for Rejection</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -103,7 +102,7 @@ const RejectedReports = () => {
                                 <td>{report.fiscal_year || 'N/A'}</td>
                                 <td>{report.transactiondocument?.reportype || 'N/A'}</td>
                                 <td>{report.submittedByAuditorUsername || 'N/A'}</td>
-                                <td>{report.remarks || 'N/A'}</td>
+                                <td>{report.reasonOfRejection || 'N/A'}</td>
                                 <td>
                                     <button
                                         className="btn btn-primary mr-2"

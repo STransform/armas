@@ -28,6 +28,8 @@ public class MasterTransaction extends Auditable<String> {
     private String reportstatus;
     @Column(length = 5000)
     private String remarks;
+    @Column(length = 5000)
+    private String reason_of_rejection;
     private String response_needed;
     private String fiscal_year;
     private String reportcategory;
@@ -80,6 +82,8 @@ public class MasterTransaction extends Auditable<String> {
     public void setReportstatus(String reportstatus) { this.reportstatus = reportstatus; }
     public String getRemarks() { return remarks; }
     public void setRemarks(String remarks) { this.remarks = remarks; }
+    public String getReason_of_rejection() { return reason_of_rejection; }
+    public void setReason_of_rejection(String reason_of_rejection) { this.reason_of_rejection = reason_of_rejection; }
     public String getResponse_needed() { return response_needed; }
     public void setResponse_needed(String response_needed) { this.response_needed = response_needed; }
     public String getFiscal_year() { return fiscal_year; }

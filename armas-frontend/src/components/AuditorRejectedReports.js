@@ -24,9 +24,9 @@ const AuditorRejectedReports = () => {
         fetchReports();
     }, []);
 
-    const handleDownload = async (id, docname) => {
+    const handleDownload = async (id, docname, type = 'original') => {
         try {
-            const response = await downloadFile(id);
+            const response = await downloadFile(id, type);
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
@@ -41,6 +41,9 @@ const AuditorRejectedReports = () => {
 
     const handleEvaluate = async (report) => {
         setSelectedReport(report);
+        setFindings('');
+        setSupportingDocument(null);
+        setSelectedApprover('');
         try {
             const approversData = await getUsersByRole('APPROVER');
             setApprovers(approversData);
@@ -83,7 +86,7 @@ const AuditorRejectedReports = () => {
                             <th>Organization</th>
                             <th>Budget Year</th>
                             <th>Report Type</th>
-                            <th>Rejection Reason</th>
+                            <th>Reason for Rejection</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -94,14 +97,22 @@ const AuditorRejectedReports = () => {
                                 <td>{report.organization?.orgname || 'N/A'}</td>
                                 <td>{report.fiscal_year || 'N/A'}</td>
                                 <td>{report.transactiondocument?.reportype || 'N/A'}</td>
-                                <td>{report.remarks || 'N/A'}</td>
+                                <td>{report.reasonOfRejection || 'N/A'}</td>
                                 <td>
                                     <button
                                         className="btn btn-primary mr-2"
-                                        onClick={() => handleDownload(report.id, report.docname)}
+                                        onClick={() => handleDownload(report.id, report.docname, 'original')}
                                     >
-                                        Download
+                                        Report
                                     </button>
+                                    {report.supportingDocumentPath && (
+                                        <button
+                                            className="btn btn-info mr-2"
+                                            onClick={() => handleDownload(report.id, report.supportingDocname, 'supporting')}
+                                        >
+                                            Findings
+                                        </button>
+                                    )}
                                     <button
                                         className="btn btn-secondary"
                                         onClick={() => handleEvaluate(report)}
@@ -134,7 +145,7 @@ const AuditorRejectedReports = () => {
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label htmlFor="supportingDocument">Supporting Document:</label>
+                                    <label htmlFor="supportingDocument">Supporting Document (Optional):</label>
                                     <input
                                         type="file"
                                         className="form-control"

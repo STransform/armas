@@ -86,6 +86,7 @@ export const getCorrectedReports = async () => {
             supportingDocumentPath: report.supportingDocumentPath,
             supportingDocname: report.supportingDocname,
             remarks: report.remarks,
+            reasonOfRejection: report.reason_of_rejection || null, 
             submittedByAuditorUsername: report.submittedByAuditor ? report.submittedByAuditor.username : null
         }));
     } catch (error) {
@@ -222,7 +223,8 @@ export const getRejectedReports = async () => {
                 docname: report.docname,
                 supportingDocumentPath: report.supportingDocumentPath,
                 supportingDocname: report.supportingDocname,
-                remarks: report.remarks,
+                remarks: report.remarks || null,
+                reasonOfRejection: report.reason_of_rejection || null, // Add reason_of_rejection
                 submittedByAuditorUsername: report.submittedByAuditor ? report.submittedByAuditor.username : null
             };
             console.log('Mapped report ID=' + report.id + ':', mappedReport);
@@ -254,8 +256,9 @@ export const getMyTasks = async () => {
                 supportingDocname: task.supportingDocname,
                 submittedByAuditorUsername: task.submittedByAuditorUsername || null,
                 assignedAuditorUsername: task.assignedAuditorUsername || null,
-                createdBy: task.createdBy || null, // Add createdBy
-                assignedByUsername: task.assignedByUsername || null // Add assignedByUsername
+                createdBy: task.createdBy || null, // createdBy
+                assignedByUsername: task.assignedByUsername || null, // assignedByUsername
+                reasonOfRejection: task.reason_of_rejection || null
             };
             console.log('Mapped task ID=' + task.id + ':', mappedTask);
             return mappedTask;
