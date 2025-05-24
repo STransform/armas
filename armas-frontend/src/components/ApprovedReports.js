@@ -134,7 +134,7 @@ const ApprovedReports = () => {
                                         <p><strong>Auditor:</strong> {selectedReport.submittedByAuditorUsername || 'N/A'}</p>
                                         <p><strong>Approver:</strong> {selectedReport.lastModifiedBy || 'N/A'}</p>
                                         <p><strong>Created By:</strong> {selectedReport.createdBy || 'N/A'}</p>
-                                        <p><strong>Document Name:</strong> {selectedReport.docname || 'N/A'}</p>
+                                        {/* <p><strong>Document Name:</strong> {selectedReport.docname || 'N/A'}</p> */}
                                         <p><strong>Archiver:</strong> {selectedReport.assignedByUsername || 'N/A'}</p>
                                     </div>
                                 </div>

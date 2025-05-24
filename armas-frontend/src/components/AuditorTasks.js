@@ -348,7 +348,7 @@ const AuditorTasks = () => {
                                     <div className="col-md-6">
                                         <p><strong>Report Type:</strong> {selectedTask.reportype || 'N/A'}</p>
                                         <p><strong>Auditor:</strong> {selectedTask.submittedByAuditorUsername || selectedTask.assignedAuditorUsername || 'N/A'}</p>
-                                        <p><strong>Approver:</strong> {selectedTask.approverUsername || 'N/A'}</p>
+                                        {/* <p><strong>Approver:</strong> {selectedTask.approverUsername || 'N/A'}</p> */}
                                         <p><strong>Document Name:</strong> {selectedTask.docname || 'N/A'}</p>
                                         <p><strong>Archiver:</strong> {selectedTask.assignedByUsername || 'N/A'}</p>
                                     </div>

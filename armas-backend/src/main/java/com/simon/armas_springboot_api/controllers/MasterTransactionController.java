@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+
 import java.nio.file.StandardCopyOption;
 //import SentReportResponseDTO;
 import com.simon.armas_springboot_api.dto.SentReportResponseDTO;
@@ -58,11 +59,11 @@ public class MasterTransactionController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<MasterTransaction> uploadFile(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("response_needed") String responseNeeded,
+            @RequestParam("reportcategory") String reportcategory,
             @RequestParam("fiscal_year") String fiscalYear,
             @RequestParam("transactiondocumentid") String transactionDocumentId,
             Principal principal) throws IOException {
-        MasterTransaction transaction = masterTransactionService.uploadFile(file, responseNeeded, fiscalYear,
+        MasterTransaction transaction = masterTransactionService.uploadFile(file, reportcategory, fiscalYear,
                 transactionDocumentId, principal);
         return ResponseEntity.ok(transaction);
     }
