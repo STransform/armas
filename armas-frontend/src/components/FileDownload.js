@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CForm, CFormLabel, CFormInput, CCol } from '@coreui/react';
-import { Table, TableBody, TableCell, TableHead, TableRow, Button, Dialog, DialogTitle, DialogContent, DialogActions, Fade, Alert } from '@mui/material';
+import { Table, TableBody, TableCell, TableHead, TableRow, Button, Dialog, DialogTitle, DialogContent, DialogActions, Fade, Alert, TextField, TablePagination, TableContainer, Box } from '@mui/material';
 import { getSentReports, downloadFile, getUsersByRole, assignAuditor } from '../file/upload_download';
 
 const FileDownload = () => {
@@ -12,12 +12,18 @@ const FileDownload = () => {
   const [selectedReport, setSelectedReport] = useState(null);
   const [auditors, setAuditors] = useState([]);
   const [selectedAuditor, setSelectedAuditor] = useState('');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [filterText, setFilterText] = useState('');
 
   const fetchReports = async () => {
     try {
       const data = await getSentReports();
       const submitted = data.filter(report => report.reportstatus === 'Submitted');
       setSubmittedReports(submitted);
+      if (submitted.length === 0) {
+        setError('No submitted reports available.');
+      }
     } catch (err) {
       setError('Failed to load reports: ' + (err.response?.data?.message || err.message));
     }
@@ -33,10 +39,11 @@ const FileDownload = () => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', docname);
+      link.setAttribute('download', docname || 'file');
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      setSuccess(`Successfully downloaded ${type} document`);
     } catch (err) {
       setError('Failed to download file: ' + (err.response?.data?.message || err.message));
     }
@@ -74,6 +81,28 @@ const FileDownload = () => {
     setShowDetailsModal(true);
   };
 
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const handleFilterChange = (event) => {
+    setFilterText(event.target.value);
+    setPage(0);
+  };
+
+  const filteredReports = submittedReports.filter(report =>
+    (report.orgname || '').toLowerCase().includes(filterText.toLowerCase()) ||
+    (report.reportype || '').toLowerCase().includes(filterText.toLowerCase()) ||
+    (report.fiscal_year || '').toString().toLowerCase().includes(filterText.toLowerCase()) ||
+    (report.user || '').toLowerCase().includes(filterText.toLowerCase()) ||
+    (report.reportstatus || '').toLowerCase().includes(filterText.toLowerCase())
+  );
+
   return (
     <div className="container mt-5">
       <h2>Archiver View</h2>
@@ -89,65 +118,82 @@ const FileDownload = () => {
       )}
 
       <h3>Submitted Reports</h3>
-      {submittedReports.length === 0 && (
+      {submittedReports.length === 0 && !error && (
         <Alert severity="info" sx={{ mb: 2, boxShadow: '4px 4px 6px rgba(0, 0, 0, 0.1)', borderRadius: '8px' }}>
           No submitted reports available.
         </Alert>
       )}
       {submittedReports.length > 0 && (
-        <Table sx={{ '& td': { fontSize: '1rem' }, '& th': { fontWeight: 'bold', fontSize: '1rem', backgroundColor: '#f5f5f5' }, '& tr:nth-of-type(odd)': { backgroundColor: '#f9f9f9' } }}>
-          <TableHead>
-            <TableRow>
-              <TableCell>Submitted Date</TableCell>
-              <TableCell>Organization Name</TableCell>
-              <TableCell>Budget Year</TableCell>
-              <TableCell>Report Type</TableCell>
-              <TableCell>Submitted By</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Action</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {submittedReports.map(report => (
-              <TableRow key={report.id}>
-                <TableCell>{report.createdDate ? new Date(report.createdDate).toLocaleDateString() : 'N/A'}</TableCell>
-                <TableCell>{report.orgname || 'N/A'}</TableCell>
-                <TableCell>{report.fiscal_year || 'N/A'}</TableCell>
-                <TableCell>{report.reportype || 'N/A'}</TableCell>
-                <TableCell>{report.user || 'N/A'}</TableCell>
-                <TableCell>{report.reportstatus}</TableCell>
-                <TableCell>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    size="small"
-                    sx={{ mr: 1 }}
-                    onClick={() => handleDownload(report.id, report.docname)}
-                  >
-                    Download
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="success"
-                    size="small"
-                    sx={{ mr: 1 }}
-                    onClick={() => handleDetails(report)}
-                  >
-                    Details
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    size="small"
-                    onClick={() => handleAssignAuditor(report)}
-                  >
-                    Assign
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <TableContainer>
+          <Box display="flex" justifyContent="flex-end" sx={{ padding: '6px', mb: 2 }}>
+            <TextField
+              label="Search Reports"
+              variant="outlined"
+              value={filterText}
+              onChange={handleFilterChange}
+              sx={{ width: '40%' }}
+            />
+          </Box>
+          {filteredReports.length > 0 ? (
+            <Table sx={{ '& td': { fontSize: '1rem' }, '& th': { fontWeight: 'bold', fontSize: '1rem', backgroundColor: '#f5f5f5' }, '& tr:nth-of-type(odd)': { backgroundColor: '#f9f9f9' } }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>#</TableCell>
+                  <TableCell>Submitted Date</TableCell>
+                  <TableCell>Organization Name</TableCell>
+                  <TableCell>Budget Year</TableCell>
+                  <TableCell>Report Type</TableCell>
+                  <TableCell>Submitted By</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Action</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredReports.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((report, index) => (
+                  <TableRow key={report.id}>
+                    <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                    <TableCell>{report.createdDate ? new Date(report.createdDate).toLocaleDateString() : 'N/A'}</TableCell>
+                    <TableCell>{report.orgname || 'N/A'}</TableCell>
+                    <TableCell>{report.fiscal_year || 'N/A'}</TableCell>
+                    <TableCell>{report.reportype || 'N/A'}</TableCell>
+                    <TableCell>{report.user || 'N/A'}</TableCell>
+                    <TableCell>{report.reportstatus}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="contained"
+                        color="success"
+                        size="small"
+                        sx={{ mr: 1 }}
+                        onClick={() => handleDetails(report)}
+                      >
+                        Details
+                      </Button>
+                      <Button
+                        variant="contained"
+                        color="secondary"
+                        size="small"
+                        onClick={() => handleAssignAuditor(report)}
+                      >
+                        Assign
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div>No reports found.</div>
+          )}
+          <TablePagination
+            component="div"
+            count={filteredReports.length}
+            page={page}
+            onPageChange={handleChangePage}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            rowsPerPageOptions={[5, 10, 25]}
+          />
+        </TableContainer>
       )}
 
       {/* Assign Auditor Modal */}
@@ -213,6 +259,19 @@ const FileDownload = () => {
               <CCol md={6}>
                 <CFormLabel>Status</CFormLabel>
                 <CFormInput value={selectedReport.reportstatus || 'N/A'} readOnly />
+              </CCol>
+              <CCol xs={12}>
+                <CFormLabel>Document</CFormLabel>
+                <div>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    size="small"
+                    onClick={() => handleDownload(selectedReport.id, selectedReport.docname)}
+                  >
+                    Download
+                  </Button>
+                </div>
               </CCol>
             </CForm>
           </DialogContent>
