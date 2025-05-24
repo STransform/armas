@@ -106,19 +106,6 @@ const ApprovedReports = () => {
                 <TableCell>{report.responseNeeded || 'N/A'}</TableCell>
                 <TableCell>{report.reportstatus || 'N/A'}</TableCell>
                 <TableCell>
-                  {report.id && report.supportingDocumentPath ? (
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      size="small"
-                      sx={{ mr: 1 }}
-                      onClick={() => handleDownload(report.id, report.supportingDocname, 'supporting')}
-                    >
-                      Download
-                    </Button>
-                  ) : (
-                    <span className="text-muted mr-2">No attachment available</span>
-                  )}
                   <Button
                     variant="contained"
                     color="success"
@@ -180,6 +167,24 @@ const ApprovedReports = () => {
               <CCol md={6}>
                 <CFormLabel>Archiver</CFormLabel>
                 <CFormInput value={selectedReport.assignedByUsername || 'N/A'} readOnly />
+              </CCol>
+              <CCol xs={12}>
+                <CFormLabel>Documents</CFormLabel>
+                <div>
+                  {selectedReport.id && selectedReport.supportingDocumentPath ? (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      size="small"
+                      sx={{ mr: 1 }}
+                      onClick={() => handleDownload(selectedReport.id, selectedReport.supportingDocname, 'supporting')}
+                    >
+                      Download
+                    </Button>
+                  ) : (
+                    <span className="text-muted">No attachment available</span>
+                  )}
+                </div>
               </CCol>
             </CForm>
           </DialogContent>

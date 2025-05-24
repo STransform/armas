@@ -115,7 +115,7 @@ const RejectedReports = () => {
               <TableCell>Budget Year</TableCell>
               <TableCell>Report Type</TableCell>
               <TableCell>Auditor</TableCell>
-              <TableCell>Audit Findings</TableCell>
+              {/* <TableCell>Audit Findings</TableCell> */}
               <TableCell>Response Needed</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Action</TableCell>
@@ -129,30 +129,10 @@ const RejectedReports = () => {
                 <TableCell>{report.fiscal_year || 'N/A'}</TableCell>
                 <TableCell>{report.transactiondocument?.reportype || 'N/A'}</TableCell>
                 <TableCell>{report.submittedByAuditorUsername || 'N/A'}</TableCell>
-                <TableCell>{report.remarks || 'N/A'}</TableCell>
+                {/* <TableCell>{report.remarks || 'N/A'}</TableCell> */}
                 <TableCell>{report.responseNeeded || 'N/A'}</TableCell>
                 <TableCell>{report.reportstatus || 'N/A'}</TableCell>
                 <TableCell>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    size="small"
-                    sx={{ mr: 1 }}
-                    onClick={() => handleDownload(report.id, report.docname, report.supportingDocname, 'original')}
-                  >
-                    Report
-                  </Button>
-                  {report.supportingDocumentPath && (
-                    <Button
-                      variant="contained"
-                      color="info"
-                      size="small"
-                      sx={{ mr: 1 }}
-                      onClick={() => handleDownload(report.id, report.supportingDocname, report.supportingDocname, 'supporting')}
-                    >
-                      Findings
-                    </Button>
-                  )}
                   <Button
                     variant="contained"
                     color="success"
@@ -275,12 +255,41 @@ const RejectedReports = () => {
                 <CFormInput value={selectedReport.remarks || 'N/A'} readOnly />
               </CCol>
               <CCol md={6}>
+                <CFormLabel>Rejection reason</CFormLabel>
+                <CFormInput value={selectedReport.reasonOfRejection || 'N/A'} readOnly />
+              </CCol>
+              <CCol md={6}>
                 <CFormLabel>Response Needed</CFormLabel>
                 <CFormInput value={selectedReport.responseNeeded || 'N/A'} readOnly />
               </CCol>
               <CCol md={6}>
                 <CFormLabel>Status</CFormLabel>
                 <CFormInput value={selectedReport.reportstatus || 'N/A'} readOnly />
+              </CCol>
+              <CCol xs={12}>
+                <CFormLabel>Documents</CFormLabel>
+                <div>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    size="small"
+                    sx={{ mr: 1 }}
+                    onClick={() => handleDownload(selectedReport.id, selectedReport.docname, selectedReport.supportingDocname, 'original')}
+                  >
+                    Report
+                  </Button>
+                  {selectedReport.supportingDocumentPath && (
+                    <Button
+                      variant="contained"
+                      color="info"
+                      size="small"
+                      sx={{ mr: 1 }}
+                      onClick={() => handleDownload(selectedReport.id, selectedReport.supportingDocname, selectedReport.supportingDocname, 'supporting')}
+                    >
+                      Findings
+                    </Button>
+                  )}
+                </div>
               </CCol>
             </CForm>
           </DialogContent>
