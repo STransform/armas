@@ -64,6 +64,7 @@ export const getUnderReviewReports = async () => {
             supportingDocumentPath: report.supportingDocumentPath,
             supportingDocname: report.supportingDocname,
             remarks: report.remarks,
+            responseNeeded: report.response_needed || null,
             submittedByAuditorUsername: report.submittedByAuditor ? report.submittedByAuditor.username : null
         }));
     } catch (error) {
@@ -86,6 +87,8 @@ export const getCorrectedReports = async () => {
             supportingDocumentPath: report.supportingDocumentPath,
             supportingDocname: report.supportingDocname,
             remarks: report.remarks,
+            responseNeeded: report.response_needed || null,
+            createdBy:report.createdBy || null,
             reasonOfRejection: report.reason_of_rejection || null, 
             submittedByAuditorUsername: report.submittedByAuditor ? report.submittedByAuditor.username : null
         }));
@@ -121,10 +124,11 @@ export const assignAuditor = async (transactionId, auditorUsername) => {
     }
 };
 
-export const submitFindings = async (transactionId, findings, approverUsername, supportingDocument) => {
+export const submitFindings = async (transactionId, remarks, approverUsername, responseNeeded, supportingDocument) => {
     const formData = new FormData();
-    formData.append('findings', findings);
+    formData.append('remarks', remarks);
     formData.append('approverUsername', approverUsername);
+    formData.append('responseNeeded', responseNeeded);
     if (supportingDocument) {
         formData.append('supportingDocument', supportingDocument);
     }
@@ -181,7 +185,8 @@ export const getApprovedReports = async () => {
                 createdBy: report.createdBy || null, // createdBy
                 assignedByUsername: report.assignedByUsername || null, // assignedByUsername
                 lastModifiedBy: report.lastModifiedBy || null, // lastModifiedBy
-                approverUsername: report.approverUsername || null // approverUsername
+                approverUsername: report.approverUsername || null , // approverUsername
+                responseNeeded: report.responseNeeded || null 
             };
             console.log('Mapped report ID=' + report.id + ':', mappedReport);
             return mappedReport;
@@ -224,6 +229,7 @@ export const getRejectedReports = async () => {
                 supportingDocumentPath: report.supportingDocumentPath,
                 supportingDocname: report.supportingDocname,
                 remarks: report.remarks || null,
+                responseNeeded: report.response_needed || null, 
                 reasonOfRejection: report.reason_of_rejection || null, // Add reason_of_rejection
                 submittedByAuditorUsername: report.submittedByAuditor ? report.submittedByAuditor.username : null
             };
@@ -258,7 +264,10 @@ export const getMyTasks = async () => {
                 assignedAuditorUsername: task.assignedAuditorUsername || null,
                 createdBy: task.createdBy || null, // createdBy
                 assignedByUsername: task.assignedByUsername || null, // assignedByUsername
-                reasonOfRejection: task.reason_of_rejection || null
+                reasonOfRejection: task.reason_of_rejection || null ,
+                // findings: task.findings || task.remarks || null, // Map findings or remarks
+                remarks: task.remarks || null, // Keep remarks for compatibility
+                responseNeeded: task.responseNeeded || null
             };
             console.log('Mapped task ID=' + task.id + ':', mappedTask);
             return mappedTask;

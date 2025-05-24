@@ -22,6 +22,7 @@ public class MasterTransactionDTO {
     private String approverUsername; // Maps to user2.username for APPROVER (if Approved)
     private String remarks;
     private String reason_of_rejection;
+    private String responseNeeded;
 
     // Constructor to map from MasterTransaction
     public MasterTransactionDTO(MasterTransaction mt) {
@@ -47,6 +48,7 @@ public class MasterTransactionDTO {
                 : null;
         this.remarks = mt.getRemarks() != null ? mt.getRemarks() : null; // Map findings
         this.reason_of_rejection = mt.getReason_of_rejection() != null ? mt.getReason_of_rejection() : null;
+        this.responseNeeded = mt.getResponse_needed(); 
     }
 
     // Getters and setters
@@ -184,5 +186,12 @@ public class MasterTransactionDTO {
 
     public void setReason_of_rejection(String reason_of_rejection) {
         this.reason_of_rejection = reason_of_rejection;
+    }
+    public String getResponseNeeded() {
+        return responseNeeded;
+    }
+
+    public void setResponseNeeded(String responseNeeded) {
+        this.responseNeeded = responseNeeded;
     }
 }

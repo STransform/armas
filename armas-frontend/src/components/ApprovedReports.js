@@ -18,7 +18,8 @@ const ApprovedReports = () => {
                                 `CreatedBy=${report.createdBy}, ` +
                                 `AssignedByUsername=${report.assignedByUsername}, ` +
                                 `ApprovedBy=${report.lastModifiedBy}, ` +
-                                `Docname=${report.docname}`);
+                                `Docname=${report.docname}, ` +
+                                `ResponseNeeded=${report.responseNeeded}`);
                 });
                 setReports(data);
                 if (data.length === 0) {
@@ -75,6 +76,7 @@ const ApprovedReports = () => {
                             <th>Budget Year</th>
                             <th>Report Type</th>
                             <th>Auditor</th>
+                            <th>Response Needed</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>
@@ -87,6 +89,7 @@ const ApprovedReports = () => {
                                 <td>{report.fiscalYear || 'N/A'}</td>
                                 <td>{report.reportype || 'N/A'}</td>
                                 <td>{report.submittedByAuditorUsername || 'N/A'}</td>
+                                <td>{report.responseNeeded || 'N/A'}</td>
                                 <td>{report.reportstatus || 'N/A'}</td>
                                 <td>
                                     {report.id && report.supportingDocumentPath ? (
@@ -132,9 +135,9 @@ const ApprovedReports = () => {
                                     </div>
                                     <div className="col-md-6">
                                         <p><strong>Auditor:</strong> {selectedReport.submittedByAuditorUsername || 'N/A'}</p>
+                                        <p><strong>Response Needed:</strong> {selectedReport.responseNeeded || 'N/A'}</p>
                                         <p><strong>Approver:</strong> {selectedReport.lastModifiedBy || 'N/A'}</p>
                                         <p><strong>Created By:</strong> {selectedReport.createdBy || 'N/A'}</p>
-                                        {/* <p><strong>Document Name:</strong> {selectedReport.docname || 'N/A'}</p> */}
                                         <p><strong>Archiver:</strong> {selectedReport.assignedByUsername || 'N/A'}</p>
                                     </div>
                                 </div>

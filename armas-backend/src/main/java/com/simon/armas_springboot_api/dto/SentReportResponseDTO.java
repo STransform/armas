@@ -13,9 +13,12 @@ public class SentReportResponseDTO {
     private String remarks;
     private String user; // Add uploader's username
     private String submittedByAuditorUsername; // Add auditor's username
+     private String responseNeeded; 
 
     public SentReportResponseDTO(Integer id, String orgname, String reportype, String fiscal_year, Date createdDate,
-                                 String docname, String reportstatus, String remarks , String user, String submittedByAuditorUsername) {
+                                 String docname, String reportstatus, 
+                                 String remarks , String user, 
+                                 String submittedByAuditorUsername, String responseNeeded) {
         this.id = id;
         this.orgname = orgname != null ? orgname : "Unknown";
         this.reportype = reportype != null ? reportype : "Unknown";
@@ -26,6 +29,7 @@ public class SentReportResponseDTO {
         this.remarks = remarks;
         this.user = user;
         this.submittedByAuditorUsername = submittedByAuditorUsername;
+        this.responseNeeded = responseNeeded;
     }
 
     // Getters
@@ -39,4 +43,11 @@ public class SentReportResponseDTO {
     public String getRemarks() { return remarks; }
     public String getUser() { return user; }
     public String getSubmittedByAuditorUsername() { return submittedByAuditorUsername; }
+    public String getResponseNeeded() {
+        return responseNeeded;
+    }
+
+    public void setResponseNeeded(String responseNeeded) {
+        this.responseNeeded = responseNeeded;
+    }
 }

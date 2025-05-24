@@ -11,8 +11,10 @@ const AuditorTasks = () => {
     const [showApprovalModal, setShowApprovalModal] = useState(false);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [selectedTask, setSelectedTask] = useState(null);
-    const [findings, setFindings] = useState('');
-    const [reasonOfRejection, setReasonOfRejection] = useState(''); // New state for rejection reason
+    // const [findings, setFindings] = useState('');
+    const [remarks, setRemarks] = useState('');
+    const [reasonOfRejection, setReasonOfRejection] = useState('');
+    const [responseNeeded, setResponseNeeded] = useState('Pending'); // New state for response_needed
     const [approvalDocument, setApprovalDocument] = useState(null);
     const [approvers, setApprovers] = useState([]);
     const [selectedApprover, setSelectedApprover] = useState('');
@@ -25,11 +27,11 @@ const AuditorTasks = () => {
             const data = await getMyTasks();
             let filteredTasks;
             if (isSeniorAuditor) {
-                filteredTasks = data.filter(task => 
+                filteredTasks = data.filter(task =>
                     ['Assigned', 'Rejected', 'Under Review', 'Corrected'].includes(task.reportstatus)
                 );
             } else if (isApprover) {
-                filteredTasks = data.filter(task => 
+                filteredTasks = data.filter(task =>
                     ['Under Review', 'Corrected', 'Rejected'].includes(task.reportstatus)
                 );
             } else {
@@ -69,6 +71,10 @@ const AuditorTasks = () => {
     const handleSubmitFindings = async (task) => {
         setSelectedTask(task);
         setError('');
+        // setFindings('');
+        setRemarks('');
+        setResponseNeeded('Pending'); // Reset to default
+        setSelectedApprover('');
         try {
             const approversData = await getUsersByRole('APPROVER');
             setApprovers(approversData);
@@ -79,16 +85,18 @@ const AuditorTasks = () => {
     };
 
     const handleFindingsSubmit = async () => {
-        if (!findings || !selectedApprover) {
-            setError('Please enter findings and select an approver');
+        if (!remarks || !selectedApprover || !responseNeeded) {
+            setError('Please enter findings, select an approver, and select response needed');
             return;
         }
         try {
             const supportingDocument = document.getElementById('supportingDocument').files[0];
-            await submitFindings(selectedTask.id, findings, selectedApprover, supportingDocument);
+            await submitFindings(selectedTask.id, remarks, selectedApprover, responseNeeded, supportingDocument);
             setSuccess('Findings submitted successfully');
             setShowFindingsModal(false);
-            setFindings('');
+            // setFindings('');
+            setRemarks('');
+            setResponseNeeded('Pending');
             setSelectedApprover('');
             await fetchMyTasks();
         } catch (err) {
@@ -117,7 +125,7 @@ const AuditorTasks = () => {
 
     const handleReject = async (task) => {
         setSelectedTask(task);
-        setReasonOfRejection(''); // Reset rejection reason
+        setReasonOfRejection('');
         setError('');
         setShowFindingsModal(true);
     };
@@ -163,6 +171,7 @@ const AuditorTasks = () => {
                             <th>Budget Year</th>
                             <th>Report Type</th>
                             <th>Auditor</th>
+                            {/* <th>Response Needed</th> */}
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -175,10 +184,11 @@ const AuditorTasks = () => {
                                 <td>{task.fiscalYear || 'N/A'}</td>
                                 <td>{task.reportype || 'N/A'}</td>
                                 <td>
-                                    {task.reportstatus === 'Assigned' ? 
-                                        (task.assignedAuditorUsername || 'N/A') : 
+                                    {task.reportstatus === 'Assigned' ?
+                                        (task.assignedAuditorUsername || 'N/A') :
                                         (task.submittedByAuditorUsername || 'N/A')}
                                 </td>
+                                {/* <td>{task.responseNeeded || 'N/A'}</td> */}
                                 <td>
                                     <button
                                         className="btn btn-primary mr-2"
@@ -189,7 +199,7 @@ const AuditorTasks = () => {
                                     {task.supportingDocumentPath && (
                                         <button
                                             className="btn btn-info mr-2"
-                                            onClick={() => handleDownload(task.id, task.docname, task.supportingDocname, 'supporting')}
+                                            onClick={() => handleDownload(task.id, task.supportingDocname, task.supportingDocname, 'supporting')}
                                         >
                                             Findings
                                         </button>
@@ -244,13 +254,26 @@ const AuditorTasks = () => {
                                 {isSeniorAuditor ? (
                                     <>
                                         <div className="form-group">
-                                            <label htmlFor="findings">Findings:</label>
+                                            <label htmlFor="remarks">Findings:</label>
                                             <textarea
                                                 className="form-control"
-                                                id="findings"
-                                                value={findings}
-                                                onChange={(e) => setFindings(e.target.value)}
+                                                id="remarks"
+                                                value={remarks}
+                                                onChange={(e) => setRemarks(e.target.value)}
                                             />
+                                        </div>
+                                        <div className="form-group">
+                                            <label htmlFor="responseNeeded">Response Needed:</label>
+                                            <select
+                                                className="form-control"
+                                                id="responseNeeded"
+                                                value={responseNeeded}
+                                                onChange={(e) => setResponseNeeded(e.target.value)}
+                                            >
+                                                <option value="Pending">Pending</option>
+                                                <option value="Yes">Yes</option>
+                                                <option value="No">No</option>
+                                            </select>
                                         </div>
                                         <div className="form-group">
                                             <label htmlFor="approver">Select Approver:</label>
@@ -269,7 +292,7 @@ const AuditorTasks = () => {
                                             </select>
                                         </div>
                                         <div className="form-group">
-                                            <label htmlFor="supportingDocument">Attach Supporting Document:</label>
+                                            <label htmlFor="supportingDocument">Attach Supporting Document (Optional):</label>
                                             <input
                                                 type="file"
                                                 className="form-control"
@@ -370,7 +393,8 @@ const AuditorTasks = () => {
                                     <div className="col-md-6">
                                         <p><strong>Report Type:</strong> {selectedTask.reportype || 'N/A'}</p>
                                         <p><strong>Auditor:</strong> {selectedTask.submittedByAuditorUsername || selectedTask.assignedAuditorUsername || 'N/A'}</p>
-                                        <p><strong>Document Name:</strong> {selectedTask.docname || 'N/A'}</p>
+                                        <p><strong>Response Needed:</strong> {selectedTask.responseNeeded || 'N/A'}</p>
+                                        {/* <p><strong>Document Name:</strong> {selectedTask.docname || 'N/A'}</p> */}
                                         <p><strong>Archiver:</strong> {selectedTask.assignedByUsername || 'N/A'}</p>
                                     </div>
                                 </div>
