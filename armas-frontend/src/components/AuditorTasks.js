@@ -197,26 +197,6 @@ const AuditorTasks = () => {
                 <TableCell>
                   <Button
                     variant="contained"
-                    color="primary"
-                    size="small"
-                    sx={{ mr: 1 }}
-                    onClick={() => handleDownload(task.id, task.docname, task.supportingDocname, 'original')}
-                  >
-                    Reports
-                  </Button>
-                  {task.supportingDocumentPath && (
-                    <Button
-                      variant="contained"
-                      color="info"
-                      size="small"
-                      sx={{ mr: 1 }}
-                      onClick={() => handleDownload(task.id, task.supportingDocname, task.supportingDocname, 'supporting')}
-                    >
-                      Findings
-                    </Button>
-                  )}
-                  <Button
-                    variant="contained"
                     color="success"
                     size="small"
                     sx={{ mr: 1 }}
@@ -431,6 +411,31 @@ const AuditorTasks = () => {
                   <CFormInput value={selectedTask.reasonOfRejection} readOnly />
                 </CCol>
               )}
+              <CCol xs={12}>
+                <CFormLabel>Documents</CFormLabel>
+                <div>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    size="small"
+                    sx={{ mr: 1 }}
+                    onClick={() => handleDownload(selectedTask.id, selectedTask.docname, selectedTask.supportingDocname, 'original')}
+                  >
+                    Reports
+                  </Button>
+                  {selectedTask.supportingDocumentPath && (
+                    <Button
+                      variant="contained"
+                      color="info"
+                      size="small"
+                      sx={{ mr: 1 }}
+                      onClick={() => handleDownload(selectedTask.id, selectedTask.supportingDocname, selectedTask.supportingDocname, 'supporting')}
+                    >
+                      Findings
+                    </Button>
+                  )}
+                </div>
+              </CCol>
             </CForm>
           </DialogContent>
           <hr />

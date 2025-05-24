@@ -141,7 +141,7 @@ const FileDownload = () => {
                     size="small"
                     onClick={() => handleAssignAuditor(report)}
                   >
-                    Assign Auditor
+                    Assign
                   </Button>
                 </TableCell>
               </TableRow>

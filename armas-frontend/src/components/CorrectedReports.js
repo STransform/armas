@@ -148,26 +148,6 @@ const CorrectedReports = () => {
                 <TableCell>
                   <Button
                     variant="contained"
-                    color="primary"
-                    size="small"
-                    sx={{ mr: 1 }}
-                    onClick={() => handleDownload(report.id, report.docname, report.supportingDocname, 'original')}
-                  >
-                    Report
-                  </Button>
-                  {report.supportingDocumentPath && (
-                    <Button
-                      variant="contained"
-                      color="info"
-                      size="small"
-                      sx={{ mr: 1 }}
-                      onClick={() => handleDownload(report.id, report.supportingDocname, report.supportingDocname, 'supporting')}
-                    >
-                      Findings
-                    </Button>
-                  )}
-                  <Button
-                    variant="contained"
                     color="success"
                     size="small"
                     sx={{ mr: 1 }}
@@ -305,6 +285,31 @@ const CorrectedReports = () => {
               <CCol md={6}>
                 <CFormLabel>Audit Findings</CFormLabel>
                 <CFormInput value={selectedReport.remarks || 'No remarks available'} readOnly />
+              </CCol>
+              <CCol xs={12}>
+                <CFormLabel>Documents</CFormLabel>
+                <div>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    size="small"
+                    sx={{ mr: 1 }}
+                    onClick={() => handleDownload(selectedReport.id, selectedReport.docname, selectedReport.supportingDocname, 'original')}
+                  >
+                    Report
+                  </Button>
+                  {selectedReport.supportingDocumentPath && (
+                    <Button
+                      variant="contained"
+                      color="info"
+                      size="small"
+                      sx={{ mr: 1 }}
+                      onClick={() => handleDownload(selectedReport.id, selectedReport.supportingDocname, selectedReport.supportingDocname, 'supporting')}
+                    >
+                      Findings
+                    </Button>
+                  )}
+                </div>
               </CCol>
             </CForm>
           </DialogContent>
