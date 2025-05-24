@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CForm, CFormLabel, CFormInput, CCol } from '@coreui/react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Fade, Alert, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Fade, Alert, Table, TableBody, TableCell, TableHead, TableRow, TextField, TablePagination, TableContainer, Box } from '@mui/material';
 import { getMyTasks, downloadFile, submitFindings, approveReport, rejectReport, getUsersByRole } from '../file/upload_download';
 import { useAuth } from '../views/pages/AuthProvider';
 
@@ -19,6 +19,9 @@ const AuditorTasks = () => {
   const [approvalDocument, setApprovalDocument] = useState(null);
   const [approvers, setApprovers] = useState([]);
   const [selectedApprover, setSelectedApprover] = useState('');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [filterText, setFilterText] = useState('');
 
   const isSeniorAuditor = roles.includes('SENIOR_AUDITOR');
   const isApprover = roles.includes('APPROVER');
@@ -152,6 +155,29 @@ const AuditorTasks = () => {
     setShowDetailsModal(true);
   };
 
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const handleFilterChange = (event) => {
+    setFilterText(event.target.value);
+    setPage(0);
+  };
+
+  const filteredTasks = tasks.filter(task =>
+    (task.orgname || '').toLowerCase().includes(filterText.toLowerCase()) ||
+    (task.reportype || '').toLowerCase().includes(filterText.toLowerCase()) ||
+    (task.fiscalYear || '').toString().toLowerCase().includes(filterText.toLowerCase()) ||
+    (task.submittedByAuditorUsername || task.assignedAuditorUsername || '').toLowerCase().includes(filterText.toLowerCase()) ||
+    (task.reportstatus || '').toLowerCase().includes(filterText.toLowerCase()) ||
+    (task.responseNeeded || '').toLowerCase().includes(filterText.toLowerCase())
+  );
+
   return (
     <div className="container mt-5">
       <h2>{isSeniorAuditor ? 'Senior Auditor Tasks' : 'Approver Tasks'}</h2>
@@ -171,76 +197,102 @@ const AuditorTasks = () => {
         </Alert>
       )}
       {tasks.length > 0 && (
-        <Table sx={{ '& td': { fontSize: '1rem' }, '& th': { fontWeight: 'bold', fontSize: '1rem', backgroundColor: '#f5f5f5' }, '& tr:nth-of-type(odd)': { backgroundColor: '#f9f9f9' } }}>
-          <TableHead>
-            <TableRow>
-              <TableCell>Date</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Organization</TableCell>
-              <TableCell>Budget Year</TableCell>
-              <TableCell>Report Type</TableCell>
-              <TableCell>Auditor</TableCell>
-              <TableCell>Action</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {tasks.map(task => (
-              <TableRow key={task.id}>
-                <TableCell>{task.createdDate ? new Date(task.createdDate).toLocaleDateString() : 'N/A'}</TableCell>
-                <TableCell>{task.reportstatus || 'N/A'}</TableCell>
-                <TableCell>{task.orgname || 'N/A'}</TableCell>
-                <TableCell>{task.fiscalYear || 'N/A'}</TableCell>
-                <TableCell>{task.reportype || 'N/A'}</TableCell>
-                <TableCell>
-                  {task.reportstatus === 'Assigned' ? (task.assignedAuditorUsername || 'N/A') : (task.submittedByAuditorUsername || 'N/A')}
-                </TableCell>
-                <TableCell>
-                  <Button
-                    variant="contained"
-                    color="success"
-                    size="small"
-                    sx={{ mr: 1 }}
-                    onClick={() => handleDetails(task)}
-                  >
-                    Details
-                  </Button>
-                  {isSeniorAuditor && (task.reportstatus === 'Assigned' || task.reportstatus === 'Rejected') && (
-                    <Button
-                      variant="contained"
-                      color="secondary"
-                      size="small"
-                      sx={{ mr: 1 }}
-                      onClick={() => handleSubmitFindings(task)}
-                    >
-                      {task.reportstatus === 'Rejected' ? 'Resubmit' : 'Evaluate'}
-                    </Button>
-                  )}
-                  {isApprover && (task.reportstatus === 'Under Review' || task.reportstatus === 'Corrected') && (
-                    <>
+        <TableContainer>
+          <Box display="flex" justifyContent="flex-end" sx={{ padding: '6px', mb: 2 }}>
+            <TextField
+              label="Search Tasks"
+              variant="outlined"
+              value={filterText}
+              onChange={handleFilterChange}
+              sx={{ width: '40%' }}
+            />
+          </Box>
+          {filteredTasks.length > 0 ? (
+            <Table sx={{ '& td': { fontSize: '1rem' }, '& th': { fontWeight: 'bold', fontSize: '1rem', backgroundColor: '#f5f5f5' }, '& tr:nth-of-type(odd)': { backgroundColor: '#f9f9f9' } }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>#</TableCell>
+                  <TableCell>Date</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Organization</TableCell>
+                  <TableCell>Budget Year</TableCell>
+                  <TableCell>Report Type</TableCell>
+                  <TableCell>Auditor</TableCell>
+                  <TableCell>Action</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredTasks.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((task, index) => (
+                  <TableRow key={task.id}>
+                    <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                    <TableCell>{task.createdDate ? new Date(task.createdDate).toLocaleDateString() : 'N/A'}</TableCell>
+                    <TableCell>{task.reportstatus || 'N/A'}</TableCell>
+                    <TableCell>{task.orgname || 'N/A'}</TableCell>
+                    <TableCell>{task.fiscalYear || 'N/A'}</TableCell>
+                    <TableCell>{task.reportype || 'N/A'}</TableCell>
+                    <TableCell>
+                      {task.reportstatus === 'Assigned' ? (task.assignedAuditorUsername || 'N/A') : (task.submittedByAuditorUsername || 'N/A')}
+                    </TableCell>
+                    <TableCell>
                       <Button
                         variant="contained"
                         color="success"
                         size="small"
                         sx={{ mr: 1 }}
-                        onClick={() => handleApprove(task)}
+                        onClick={() => handleDetails(task)}
                       >
-                        Approve
+                        Details
                       </Button>
-                      <Button
-                        variant="contained"
-                        color="error"
-                        size="small"
-                        onClick={() => handleReject(task)}
-                      >
-                        Reject
-                      </Button>
-                    </>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                      {isSeniorAuditor && (task.reportstatus === 'Assigned' || task.reportstatus === 'Rejected') && (
+                        <Button
+                          variant="contained"
+                          color="secondary"
+                          size="small"
+                          sx={{ mr: 1 }}
+                          onClick={() => handleSubmitFindings(task)}
+                        >
+                          {task.reportstatus === 'Rejected' ? 'Resubmit' : 'Evaluate'}
+                        </Button>
+                      )}
+                      {isApprover && (task.reportstatus === 'Under Review' || task.reportstatus === 'Corrected') && (
+                        <>
+                          <Button
+                            variant="contained"
+                            color="success"
+                            size="small"
+                            sx={{ mr: 1 }}
+                            onClick={() => handleApprove(task)}
+                          >
+                            Approve
+                          </Button>
+                          <Button
+                            variant="contained"
+                            color="error"
+                            size="small"
+                            onClick={() => handleReject(task)}
+                          >
+                            Reject
+                          </Button>
+                        </>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div>No tasks found.</div>
+          )}
+          <TablePagination
+            component="div"
+            count={filteredTasks.length}
+            page={page}
+            onPageChange={handleChangePage}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            rowsPerPageOptions={[5, 10, 25]}
+          />
+        </TableContainer>
       )}
 
       {/* Findings/Rejection Modal */}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CForm, CFormLabel, CFormInput, CCol } from '@coreui/react';
-import { Table, TableBody, TableCell, TableHead, TableRow, Button, Dialog, DialogTitle, DialogContent, DialogActions, Fade, Alert } from '@mui/material';
+import { Table, TableBody, TableCell, TableHead, TableRow, Button, Dialog, DialogTitle, DialogContent, DialogActions, Fade, Alert, TextField, TablePagination, TableContainer, Box } from '@mui/material';
 import { getCorrectedReports, downloadFile, approveReport, rejectReport } from '../file/upload_download';
 import { useAuth } from '../views/pages/AuthProvider';
 
@@ -18,6 +18,9 @@ const CorrectedReports = () => {
   const [reasonOfRejection, setReasonOfRejection] = useState('');
   const [rejectionDocument, setRejectionDocument] = useState(null);
   const [approvalDocument, setApprovalDocument] = useState(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [filterText, setFilterText] = useState('');
 
   useEffect(() => {
     const fetchReports = async () => {
@@ -103,6 +106,29 @@ const CorrectedReports = () => {
     setShowDetailsModal(true);
   };
 
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const handleFilterChange = (event) => {
+    setFilterText(event.target.value);
+    setPage(0);
+  };
+
+  const filteredReports = reports.filter(report =>
+    (report.organization?.orgname || '').toLowerCase().includes(filterText.toLowerCase()) ||
+    (report.transactiondocument?.reportype || '').toLowerCase().includes(filterText.toLowerCase()) ||
+    (report.fiscal_year || '').toString().toLowerCase().includes(filterText.toLowerCase()) ||
+    (report.createdBy || '').toLowerCase().includes(filterText.toLowerCase()) ||
+    (report.submittedByAuditorUsername || '').toLowerCase().includes(filterText.toLowerCase()) ||
+    (report.responseNeeded || '').toLowerCase().includes(filterText.toLowerCase())
+  );
+
   return (
     <div className="container mt-5">
       <h2>Corrected Reports</h2>
@@ -122,68 +148,94 @@ const CorrectedReports = () => {
         </Alert>
       )}
       {reports.length > 0 && (
-        <Table sx={{ '& td': { fontSize: '1rem' }, '& th': { fontWeight: 'bold', fontSize: '1rem', backgroundColor: '#f5f5f5' }, '& tr:nth-of-type(odd)': { backgroundColor: '#f9f9f9' } }}>
-          <TableHead>
-            <TableRow>
-              <TableCell>Date</TableCell>
-              <TableCell>Organization</TableCell>
-              <TableCell>Budget Year</TableCell>
-              <TableCell>Report Type</TableCell>
-              <TableCell>Created by</TableCell>
-              <TableCell>Auditor</TableCell>
-              <TableCell>Response</TableCell>
-              <TableCell>Action</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {reports.map(report => (
-              <TableRow key={report.id}>
-                <TableCell>{report.createdDate ? new Date(report.createdDate).toLocaleDateString() : 'N/A'}</TableCell>
-                <TableCell>{report.organization?.orgname || 'N/A'}</TableCell>
-                <TableCell>{report.fiscal_year || 'N/A'}</TableCell>
-                <TableCell>{report.transactiondocument?.reportype || 'N/A'}</TableCell>
-                <TableCell>{report.createdBy || 'N/A'}</TableCell>
-                <TableCell>{report.submittedByAuditorUsername || 'N/A'}</TableCell>
-                <TableCell>{report.responseNeeded || 'N/A'}</TableCell>
-                <TableCell>
-                  <Button
-                    variant="contained"
-                    color="success"
-                    size="small"
-                    sx={{ mr: 1 }}
-                    onClick={() => handleDetails(report)}
-                  >
-                    Details
-                  </Button>
-                  {isApprover && (
-                    <>
+        <TableContainer>
+          <Box display="flex" justifyContent="flex-end" sx={{ padding: '6px', mb: 2 }}>
+            <TextField
+              label="Search Reports"
+              variant="outlined"
+              value={filterText}
+              onChange={handleFilterChange}
+              sx={{ width: '40%' }}
+            />
+          </Box>
+          {filteredReports.length > 0 ? (
+            <Table sx={{ '& td': { fontSize: '1rem' }, '& th': { fontWeight: 'bold', fontSize: '1rem', backgroundColor: '#f5f5f5' }, '& tr:nth-of-type(odd)': { backgroundColor: '#f9f9f9' } }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>#</TableCell>
+                  <TableCell>Date</TableCell>
+                  <TableCell>Organization</TableCell>
+                  <TableCell>Budget Year</TableCell>
+                  <TableCell>Report Type</TableCell>
+                  <TableCell>Created by</TableCell>
+                  <TableCell>Auditor</TableCell>
+                  <TableCell>Response</TableCell>
+                  <TableCell>Action</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredReports.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((report, index) => (
+                  <TableRow key={report.id}>
+                    <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                    <TableCell>{report.createdDate ? new Date(report.createdDate).toLocaleDateString() : 'N/A'}</TableCell>
+                    <TableCell>{report.organization?.orgname || 'N/A'}</TableCell>
+                    <TableCell>{report.fiscal_year || 'N/A'}</TableCell>
+                    <TableCell>{report.transactiondocument?.reportype || 'N/A'}</TableCell>
+                    <TableCell>{report.createdBy || 'N/A'}</TableCell>
+                    <TableCell>{report.submittedByAuditorUsername || 'N/A'}</TableCell>
+                    <TableCell>{report.responseNeeded || 'N/A'}</TableCell>
+                    <TableCell>
                       <Button
                         variant="contained"
                         color="success"
                         size="small"
                         sx={{ mr: 1 }}
-                        onClick={() => handleApprove(report)}
+                        onClick={() => handleDetails(report)}
                       >
-                        Approve
+                        Details
                       </Button>
-                      <Button
-                        variant="contained"
-                        color="error"
-                        size="small"
-                        onClick={() => handleReject(report)}
-                      >
-                        Reject
-                      </Button>
-                    </>
-                  )}
-                  {isSeniorAuditor && !isApprover && (
-                    <span className="text-muted">Awaiting Approval</span>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                      {isApprover && (
+                        <>
+                          <Button
+                            variant="contained"
+                            color="success"
+                            size="small"
+                            sx={{ mr: 1 }}
+                            onClick={() => handleApprove(report)}
+                          >
+                            Approve
+                          </Button>
+                          <Button
+                            variant="contained"
+                            color="error"
+                            size="small"
+                            onClick={() => handleReject(report)}
+                          >
+                            Reject
+                          </Button>
+                        </>
+                      )}
+                      {isSeniorAuditor && !isApprover && (
+                        <span className="text-muted">Awaiting Approval</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div>No reports found.</div>
+          )}
+          <TablePagination
+            component="div"
+            count={filteredReports.length}
+            page={page}
+            onPageChange={handleChangePage}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            rowsPerPageOptions={[5, 10, 25]}
+          />
+        </TableContainer>
       )}
 
       {/* Approval Modal */}
