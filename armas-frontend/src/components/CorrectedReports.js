@@ -11,6 +11,7 @@ const CorrectedReports = () => {
     const [success, setSuccess] = useState('');
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [showApprovalModal, setShowApprovalModal] = useState(false);
+    const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [selectedReport, setSelectedReport] = useState(null);
     const [reasonOfRejection, setReasonOfRejection] = useState('');
     const [rejectionDocument, setRejectionDocument] = useState(null);
@@ -95,6 +96,11 @@ const CorrectedReports = () => {
         }
     };
 
+    const handleDetails = (report) => {
+        setSelectedReport(report);
+        setShowDetailsModal(true);
+    };
+
     return (
         <div className="container mt-5">
             <h2>Corrected Reports</h2>
@@ -105,27 +111,30 @@ const CorrectedReports = () => {
                 <table className="table table-striped">
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            {/* <th>ID</th> */}
                             <th>Date</th>
                             <th>Organization</th>
                             <th>Budget Year</th>
                             <th>Report Type</th>
+                            <th>Created by</th>
                             <th>Auditor</th>
-                            <th>Audit findings</th>
+                            {/* <th>Response Needed</th> */}
+                            <th>Findings</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         {reports.map(report => (
                             <tr key={report.id}>
-                                <td>{report.id}</td>
+                                {/* <td>{report.id}</td> */}
                                 <td>{report.createdDate ? new Date(report.createdDate).toLocaleDateString() : 'N/A'}</td>
-                                <td>{report.orgname || (report.organization?.orgname) || 'N/A'}</td>
-                                <td>{report.fiscalYear || report.fiscal_year || 'N/A'}</td>
-                                <td>{report.reportype || (report.transactiondocument?.reportype) || 'N/A'}</td>
-                                
+                                <td>{report.organization?.orgname || 'N/A'}</td>
+                                <td>{report.fiscal_year || 'N/A'}</td>
+                                <td>{report.transactiondocument?.reportype || 'N/A'}</td>
+                                <td>{report.createdBy || 'N/A'}</td>
                                 <td>{report.submittedByAuditorUsername || 'N/A'}</td>
-                                <td>{report.remarks || 'N/A'}</td>
+                                <td>{report.responseNeeded || 'N/A'}</td>
+                                {/* <td>{report.remarks || 'N/A'}</td> */}
                                 <td>
                                     <button
                                         className="btn btn-primary mr-2"
@@ -136,11 +145,17 @@ const CorrectedReports = () => {
                                     {report.supportingDocumentPath && (
                                         <button
                                             className="btn btn-info mr-2"
-                                            onClick={() => handleDownload(report.id, report.docname, report.supportingDocname, 'supporting')}
+                                            onClick={() => handleDownload(report.id, report.supportingDocname, report.supportingDocname, 'supporting')}
                                         >
                                             Findings
                                         </button>
                                     )}
+                                    <button
+                                        className="btn btn-info mr-2"
+                                        onClick={() => handleDetails(report)}
+                                    >
+                                        Details
+                                    </button>
                                     {isApprover && (
                                         <>
                                             <button
@@ -235,6 +250,45 @@ const CorrectedReports = () => {
                                 </button>
                                 <button type="button" className="btn btn-primary" onClick={handleRejectSubmit}>
                                     Reject
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Details Modal */}
+            {showDetailsModal && selectedReport && (
+                <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog modal-lg">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Report Details</h5>
+                                <button type="button" className="btn-close" onClick={() => setShowDetailsModal(false)}></button>
+                            </div>
+                            <div className="modal-body">
+                                <div className="row">
+                                    <div className="col-md-6">
+                                        {/* <p><strong>ID:</strong> {selectedReport.id}</p> */}
+                                        <p><strong>Date:</strong> {selectedReport.createdDate ? new Date(selectedReport.createdDate).toLocaleDateString() : 'N/A'}</p>
+                                        <p><strong>Organization:</strong> {selectedReport.organization?.orgname || 'N/A'}</p>
+                                        <p><strong>Budget Year:</strong> {selectedReport.fiscal_year || 'N/A'}</p>
+                                    </div>
+                                    <div className="col-md-6">
+                                        <p><strong>Report Type:</strong> {selectedReport.transactiondocument?.reportype || 'N/A'}</p>
+                                        <p><strong>Auditor:</strong> {selectedReport.submittedByAuditorUsername || 'N/A'}</p>
+                                        <p><strong>Response Needed:</strong> {selectedReport.responseNeeded || 'N/A'}</p>
+                                        <p><strong>Audit findings:</strong> {selectedReport.remarks || 'No remarks available'}</p>
+                                    </div>
+                                    
+                                </div>
+                                <div className="row mt-3">
+                                   
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-secondary" onClick={() => setShowDetailsModal(false)}>
+                                    Close
                                 </button>
                             </div>
                         </div>

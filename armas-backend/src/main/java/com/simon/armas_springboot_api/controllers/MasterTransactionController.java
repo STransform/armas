@@ -151,18 +151,19 @@ public class MasterTransactionController {
         return ResponseEntity.ok(transaction);
     }
 
-    @PostMapping("/submit-findings/{transactionId}")
-    @PreAuthorize("hasRole('SENIOR_AUDITOR')")
-    public ResponseEntity<MasterTransaction> submitFindings(
-            @PathVariable Integer transactionId,
-            @RequestParam String findings,
-            @RequestParam String approverUsername,
-            @RequestParam(value = "supportingDocument", required = false) MultipartFile supportingDocument,
-            Principal principal) throws IOException {
-        MasterTransaction transaction = masterTransactionService.submitFindings(transactionId, findings,
-                approverUsername, principal.getName(), supportingDocument);
-        return ResponseEntity.ok(transaction);
-    }
+@PostMapping("/submit-findings/{transactionId}")
+@PreAuthorize("hasRole('SENIOR_AUDITOR')")
+public ResponseEntity<MasterTransaction> submitFindings(
+        @PathVariable Integer transactionId,
+        @RequestParam String remarks,
+        @RequestParam String approverUsername,
+        @RequestParam String responseNeeded,
+        @RequestParam(value = "supportingDocument", required = false) MultipartFile supportingDocument,
+        Principal principal) throws IOException {
+    MasterTransaction transaction = masterTransactionService.submitFindings(transactionId, remarks,
+            approverUsername, responseNeeded, principal.getName(), supportingDocument);
+    return ResponseEntity.ok(transaction);
+}
 
     @GetMapping("/approved-reports")
     @PreAuthorize("hasAnyRole('APPROVER', 'SENIOR_AUDITOR', 'ARCHIVER')")

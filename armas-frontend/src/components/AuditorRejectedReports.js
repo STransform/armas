@@ -8,6 +8,7 @@ const AuditorRejectedReports = () => {
     const [showModal, setShowModal] = useState(false);
     const [selectedReport, setSelectedReport] = useState(null);
     const [findings, setFindings] = useState('');
+    const [responseNeeded, setResponseNeeded] = useState('Pending'); // Default to Pending
     const [supportingDocument, setSupportingDocument] = useState(null);
     const [approvers, setApprovers] = useState([]);
     const [selectedApprover, setSelectedApprover] = useState('');
@@ -24,16 +25,18 @@ const AuditorRejectedReports = () => {
         fetchReports();
     }, []);
 
-    const handleDownload = async (id, docname, type = 'original') => {
+    const handleDownload = async (id, docname, supportingDocname, type) => {
         try {
             const response = await downloadFile(id, type);
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', docname);
+            const filename = type === 'original' ? docname : supportingDocname;
+            link.setAttribute('download', filename);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            setSuccess(`Successfully downloaded ${type} document`);
         } catch (err) {
             setError(`Failed to download file: ${err.message}`);
         }
@@ -42,6 +45,7 @@ const AuditorRejectedReports = () => {
     const handleEvaluate = async (report) => {
         setSelectedReport(report);
         setFindings('');
+        setResponseNeeded('Pending');
         setSupportingDocument(null);
         setSelectedApprover('');
         try {
@@ -54,15 +58,16 @@ const AuditorRejectedReports = () => {
     };
 
     const handleSubmit = async () => {
-        if (!findings || !selectedApprover) {
-            setError('Please enter findings and select an approver');
+        if (!findings || !selectedApprover || !responseNeeded) {
+            setError('Please enter findings, select an approver, and select response needed');
             return;
         }
         try {
-            await submitFindings(selectedReport.id, findings, selectedApprover, supportingDocument);
+            await submitFindings(selectedReport.id, findings, selectedApprover, responseNeeded, supportingDocument);
             setSuccess('Report resubmitted successfully');
             setShowModal(false);
             setFindings('');
+            setResponseNeeded('Pending');
             setSupportingDocument(null);
             setSelectedApprover('');
             const data = await getRejectedReports();
@@ -86,7 +91,8 @@ const AuditorRejectedReports = () => {
                             <th>Organization</th>
                             <th>Budget Year</th>
                             <th>Report Type</th>
-                            <th>Reason for Rejection</th>
+                            <th>Rejection Reason</th>
+                            <th>Response Needed</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -97,18 +103,19 @@ const AuditorRejectedReports = () => {
                                 <td>{report.organization?.orgname || 'N/A'}</td>
                                 <td>{report.fiscal_year || 'N/A'}</td>
                                 <td>{report.transactiondocument?.reportype || 'N/A'}</td>
-                                <td>{report.reasonOfRejection || 'N/A'}</td>
+                                <td>{report.remarks || 'N/A'}</td>
+                                <td>{report.responseNeeded || 'N/A'}</td>
                                 <td>
                                     <button
                                         className="btn btn-primary mr-2"
-                                        onClick={() => handleDownload(report.id, report.docname, 'original')}
+                                        onClick={() => handleDownload(report.id, report.docname, report.supportingDocname, 'original')}
                                     >
                                         Report
                                     </button>
                                     {report.supportingDocumentPath && (
                                         <button
                                             className="btn btn-info mr-2"
-                                            onClick={() => handleDownload(report.id, report.supportingDocname, 'supporting')}
+                                            onClick={() => handleDownload(report.id, report.supportingDocname, report.supportingDocname, 'supporting')}
                                         >
                                             Findings
                                         </button>
@@ -145,13 +152,17 @@ const AuditorRejectedReports = () => {
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label htmlFor="supportingDocument">Supporting Document (Optional):</label>
-                                    <input
-                                        type="file"
+                                    <label htmlFor="responseNeeded">Response Needed:</label>
+                                    <select
                                         className="form-control"
-                                        id="supportingDocument"
-                                        onChange={(e) => setSupportingDocument(e.target.files[0])}
-                                    />
+                                        id="responseNeeded"
+                                        value={responseNeeded}
+                                        onChange={(e) => setResponseNeeded(e.target.value)}
+                                    >
+                                        <option value="Pending">Pending</option>
+                                        <option value="Yes">Yes</option>
+                                        <option value="No">No</option>
+                                    </select>
                                 </div>
                                 <div className="form-group">
                                     <label htmlFor="approver">Select Approver:</label>
@@ -168,6 +179,15 @@ const AuditorRejectedReports = () => {
                                             </option>
                                         ))}
                                     </select>
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="supportingDocument">Supporting Document (Optional):</label>
+                                    <input
+                                        type="file"
+                                        className="form-control"
+                                        id="supportingDocument"
+                                        onChange={(e) => setSupportingDocument(e.target.files[0])}
+                                    />
                                 </div>
                             </div>
                             <div className="modal-footer">

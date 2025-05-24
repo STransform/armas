@@ -153,44 +153,50 @@ public class MasterTransactionService {
         return savedTransaction;
     }
 
-    @Transactional
-    public MasterTransaction submitFindings(Integer transactionId, String findings, String approverUsername,
-            String currentUsername, MultipartFile supportingDocument) throws IOException {
-        MasterTransaction transaction = masterTransactionRepository.findById(transactionId)
-                .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + transactionId));
+@Transactional
+public MasterTransaction submitFindings(Integer transactionId, String findings, String approverUsername,
+        String responseNeeded, String currentUsername, MultipartFile supportingDocument) throws IOException {
+    MasterTransaction transaction = masterTransactionRepository.findById(transactionId)
+            .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + transactionId));
 
-        // Validate transaction status
-        if (!Arrays.asList("Assigned", "Rejected").contains(transaction.getReportstatus())) {
-            throw new IllegalStateException("Can only submit findings for Assigned or Rejected reports");
-        }
-
-        // Fetch and validate the approver
-        User approver = userRepository.findByUsername(approverUsername);
-        if (approver == null || !approver.getRoles().stream().anyMatch(r -> "APPROVER".equals(r.getDescription()))) {
-            throw new IllegalArgumentException("Invalid Approver: " + approverUsername);
-        }
-
-        // Set transaction details
-        transaction.setRemarks(findings);
-        transaction.setUser2(approver);
-        // Set status to "Corrected" if previously Rejected, otherwise "Under Review"
-        transaction.setReportstatus(transaction.getReportstatus().equals("Rejected") ? "Corrected" : "Under Review");
-        transaction.setSubmittedByAuditor(userRepository.findByUsername(currentUsername));
-
-        // Handle supporting document
-        if (supportingDocument != null && !supportingDocument.isEmpty()) {
-            String supportingPath = fileStorageService.storeFile(supportingDocument, transaction, new Principal() {
-                @Override
-                public String getName() {
-                    return currentUsername;
-                }
-            }, true);
-            transaction.setSupportingDocumentPath(supportingPath);
-        }
-
-        transaction.setLastModifiedBy(currentUsername);
-        return masterTransactionRepository.save(transaction);
+    // Validate transaction status
+    if (!Arrays.asList("Assigned", "Rejected").contains(transaction.getReportstatus())) {
+        throw new IllegalStateException("Can only submit findings for Assigned or Rejected reports");
     }
+
+    // Fetch and validate the approver
+    User approver = userRepository.findByUsername(approverUsername);
+    if (approver == null || !approver.getRoles().stream().anyMatch(r -> "APPROVER".equals(r.getDescription()))) {
+        throw new IllegalArgumentException("Invalid Approver: " + approverUsername);
+    }
+
+    // Validate responseNeeded
+    if (!Arrays.asList("Pending", "Yes", "No").contains(responseNeeded)) {
+        throw new IllegalArgumentException("Invalid response_needed value: " + responseNeeded);
+    }
+
+    // Set transaction details
+    transaction.setRemarks(findings);
+    transaction.setUser2(approver);
+    transaction.setReportstatus(transaction.getReportstatus().equals("Rejected") ? "Corrected" : "Under Review");
+    transaction.setSubmittedByAuditor(userRepository.findByUsername(currentUsername));
+    transaction.setResponse_needed(responseNeeded); // Set response_needed
+
+    // Handle supporting document
+    if (supportingDocument != null && !supportingDocument.isEmpty()) {
+        String supportingPath = fileStorageService.storeFile(supportingDocument, transaction, new Principal() {
+            @Override
+            public String getName() {
+                return currentUsername;
+            }
+        }, true);
+        transaction.setSupportingDocumentPath(supportingPath);
+        transaction.setSupportingDocname(supportingDocument.getOriginalFilename());
+    }
+
+    transaction.setLastModifiedBy(currentUsername);
+    return masterTransactionRepository.save(transaction);
+}
 
     @Transactional
     public MasterTransaction approveReport(Integer transactionId, String currentUsername,
