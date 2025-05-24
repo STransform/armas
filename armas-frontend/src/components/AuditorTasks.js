@@ -19,31 +19,30 @@ const AuditorTasks = () => {
     const isSeniorAuditor = roles.includes('SENIOR_AUDITOR');
     const isApprover = roles.includes('APPROVER');
 
-    const fetchMyTasks = async () => {
-        try {
-            const data = await getMyTasks();
-            let filteredTasks;
-            if (isSeniorAuditor) {
-                filteredTasks = data.filter(task => 
-                    ['Assigned', 'Rejected', 'Under Review', 'Corrected', 'Approved'].includes(task.reportstatus)
-                );
-            } else if (isApprover) {
-                filteredTasks = data.filter(task => 
-                    ['Under Review', 'Corrected', 'Approved', 'Rejected'].includes(task.reportstatus)
-                );
-            } else {
-                filteredTasks = [];
-            }
-            setTasks(filteredTasks);
-            if (filteredTasks.length === 0) {
-                setError('No tasks available for your role.');
-            }
-            console.log('Filtered tasks:', JSON.stringify(filteredTasks, null, 2));
-        } catch (err) {
-            setError(`Failed to load tasks: ${err.message}`);
+const fetchMyTasks = async () => {
+    try {
+        const data = await getMyTasks();
+        let filteredTasks;
+        if (isSeniorAuditor) {
+            filteredTasks = data.filter(task => 
+                ['Assigned', 'Rejected', 'Under Review', 'Corrected'].includes(task.reportstatus) // Remove 'Approved'
+            );
+        } else if (isApprover) {
+            filteredTasks = data.filter(task => 
+                ['Under Review', 'Corrected',  'Rejected'].includes(task.reportstatus)
+            );
+        } else {
+            filteredTasks = [];
         }
-    };
-
+        setTasks(filteredTasks);
+        if (filteredTasks.length === 0) {
+            setError('No tasks available for your role.');
+        }
+        console.log('Filtered tasks:', JSON.stringify(filteredTasks, null, 2));
+    } catch (err) {
+        setError(`Failed to load tasks: ${err.message}`);
+    }
+};
     useEffect(() => {
         fetchMyTasks();
     }, [roles]);
