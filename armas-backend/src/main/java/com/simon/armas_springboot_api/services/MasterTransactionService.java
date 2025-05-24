@@ -56,7 +56,7 @@ public class MasterTransactionService {
 
     // Upload file by Uploader
    @Transactional
-    public MasterTransaction uploadFile(MultipartFile file, String responseNeeded, String fiscalYear,
+    public MasterTransaction uploadFile(MultipartFile file, String fiscalYear,String reportcategory,
             String transactionDocumentId, Principal principal) throws IOException {
         User user = userRepository.findByUsername(principal.getName());
         if (user == null)
@@ -79,7 +79,6 @@ public class MasterTransactionService {
         transaction.setFiscal_year(fiscalYear);
         transaction.setReportcategory(document.getReportype());
         transaction.setTransactiondocument(document);
-        transaction.setResponse_needed(responseNeeded);
         transaction.setFilepath(fileStorageService.storeFile(file, transaction, principal, false));
         transaction.setCreatedDate(new Date());
         transaction.setCreatedBy(principal.getName());

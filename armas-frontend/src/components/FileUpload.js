@@ -3,7 +3,7 @@ import { getDocuments, uploadFile } from '../file/upload_download';
 
 const FileUpload = ({ onUploadSuccess }) => {
     const [formData, setFormData] = useState({
-        response_needed: 'Report',
+        reportcategory: 'Report',
         fiscal_year: '',
         transactiondocumentid: '',
     });
@@ -48,7 +48,7 @@ const FileUpload = ({ onUploadSuccess }) => {
         }
 
         try {
-            await uploadFile(file, formData.response_needed, formData.fiscal_year, formData.transactiondocumentid);
+            await uploadFile(file, formData.reportcategory, formData.fiscal_year, formData.transactiondocumentid);
             setSuccess('File uploaded successfully');
             setFile(null);
             e.target.reset();
@@ -67,7 +67,7 @@ const FileUpload = ({ onUploadSuccess }) => {
             <form onSubmit={handleSubmit}>
                 <div className="mb-3">
                     <label className="form-label">Type</label>
-                    <select className="form-select" name="response_needed" value={formData.response_needed} onChange={handleChange}>
+                    <select className="form-select" name="reportcategory" value={formData.reportcategory} onChange={handleChange}>
                         <option value="Report">Report</option>
                         <option value="Feedback">Feedback</option>
                     </select>
