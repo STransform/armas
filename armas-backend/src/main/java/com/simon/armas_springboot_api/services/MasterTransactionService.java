@@ -55,8 +55,8 @@ public class MasterTransactionService {
     private DocumentRepository documentRepository;
 
     // Upload file by Uploader
-   @Transactional
-    public MasterTransaction uploadFile(MultipartFile file, String fiscalYear,String reportcategory,
+    @Transactional
+    public MasterTransaction uploadFile(MultipartFile file, String fiscalYear, String reportcategory,
             String transactionDocumentId, Principal principal) throws IOException {
         User user = userRepository.findByUsername(principal.getName());
         if (user == null)
@@ -98,21 +98,21 @@ public class MasterTransactionService {
     }
 
     public List<SentReportResponseDTO> getSentReportData(String role) {
-    List<String> statuses;
-    if ("ARCHIVER".equals(role)) {
-        statuses = Arrays.asList("Submitted", "Approved");
-    } else if ("SENIOR_AUDITOR".equals(role)) {
-        statuses = Arrays.asList("Assigned", "Rejected");
-    } else if ("APPROVER".equals(role)) {
-        statuses = Arrays.asList("Under Review");
-    } else {
-        statuses = Arrays.asList("Submitted", "Assigned", "Under Review", "Rejected", "Approved");
+        List<String> statuses;
+        if ("ARCHIVER".equals(role)) {
+            statuses = Arrays.asList("Submitted", "Approved");
+        } else if ("SENIOR_AUDITOR".equals(role)) {
+            statuses = Arrays.asList("Assigned", "Rejected");
+        } else if ("APPROVER".equals(role)) {
+            statuses = Arrays.asList("Under Review");
+        } else {
+            statuses = Arrays.asList("Submitted", "Assigned", "Under Review", "Rejected", "Approved");
+        }
+        System.out.println("Fetching reports for role: " + role + ", statuses: " + statuses);
+        List<SentReportResponseDTO> reports = masterTransactionRepository.fetchDataByStatuses(statuses);
+        System.out.println("Fetched reports: " + reports);
+        return reports;
     }
-    System.out.println("Fetching reports for role: " + role + ", statuses: " + statuses);
-    List<SentReportResponseDTO> reports = masterTransactionRepository.fetchDataByStatuses(statuses);
-    System.out.println("Fetched reports: " + reports);
-    return reports;
-}
 
     public List<UserDTO> getUsersByRole(String roleName) {
         System.out.println("Fetching users for role: " + roleName);
@@ -138,7 +138,8 @@ public class MasterTransactionService {
         }
 
         User auditor = userRepository.findByUsername(auditorUsername);
-        if (auditor == null || !auditor.getRoles().stream().anyMatch(r -> "SENIOR_AUDITOR".equals(r.getDescription()))) {
+        if (auditor == null
+                || !auditor.getRoles().stream().anyMatch(r -> "SENIOR_AUDITOR".equals(r.getDescription()))) {
             throw new IllegalArgumentException("Invalid Senior Auditor: " + auditorUsername);
         }
 
@@ -153,103 +154,106 @@ public class MasterTransactionService {
     }
 
     @Transactional
-public MasterTransaction submitFindings(Integer transactionId, String findings, String approverUsername,
-        String currentUsername, MultipartFile supportingDocument) throws IOException {
-    MasterTransaction transaction = masterTransactionRepository.findById(transactionId)
-            .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + transactionId));
-    
-    // Validate transaction status
-    if (!Arrays.asList("Assigned", "Rejected").contains(transaction.getReportstatus())) {
-        throw new IllegalStateException("Can only submit findings for Assigned or Rejected reports");
-    }
-    
-    // Fetch and validate the approver
-    User approver = userRepository.findByUsername(approverUsername);
-    if (approver == null || !approver.getRoles().stream().anyMatch(r -> "APPROVER".equals(r.getDescription()))) {
-        throw new IllegalArgumentException("Invalid Approver: " + approverUsername);
-    }
-    
-    // Set transaction details
-    transaction.setRemarks(findings);
-    transaction.setUser2(approver);
-    // Set status to "Corrected" if previously Rejected, otherwise "Under Review"
-    transaction.setReportstatus(transaction.getReportstatus().equals("Rejected") ? "Corrected" : "Under Review");
-    transaction.setSubmittedByAuditor(userRepository.findByUsername(currentUsername));
-    
-    // Handle supporting document
-    if (supportingDocument != null && !supportingDocument.isEmpty()) {
-        String supportingPath = fileStorageService.storeFile(supportingDocument, transaction, new Principal() {
-            @Override
-            public String getName() {
-                return currentUsername;
-            }
-        }, true);
-        transaction.setSupportingDocumentPath(supportingPath);
-    }
-    
-    transaction.setLastModifiedBy(currentUsername);
-    return masterTransactionRepository.save(transaction);
-}
+    public MasterTransaction submitFindings(Integer transactionId, String findings, String approverUsername,
+            String currentUsername, MultipartFile supportingDocument) throws IOException {
+        MasterTransaction transaction = masterTransactionRepository.findById(transactionId)
+                .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + transactionId));
 
-@Transactional
-public MasterTransaction approveReport(Integer transactionId, String currentUsername, MultipartFile approvalDocument) throws IOException {
-    MasterTransaction transaction = masterTransactionRepository.findById(transactionId)
-            .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + transactionId));
-    // ... validation ...
-    transaction.setReportstatus("Approved");
-    transaction.setLastModifiedBy(currentUsername);
+        // Validate transaction status
+        if (!Arrays.asList("Assigned", "Rejected").contains(transaction.getReportstatus())) {
+            throw new IllegalStateException("Can only submit findings for Assigned or Rejected reports");
+        }
 
-    if (approvalDocument != null && !approvalDocument.isEmpty()) {
-        String approvalPath = fileStorageService.storeFile(approvalDocument, transaction, new Principal() {
-            @Override
-            public String getName() {
-                return currentUsername;
-            }
-        }, true);
-        transaction.setSupportingDocumentPath(approvalPath);
-        System.out.println("Approver attachment: Path=" + approvalPath + ", Name=" + transaction.getSupportingDocname());
-    } else {
-        System.out.println("No Approver attachment provided for transaction ID=" + transactionId);
+        // Fetch and validate the approver
+        User approver = userRepository.findByUsername(approverUsername);
+        if (approver == null || !approver.getRoles().stream().anyMatch(r -> "APPROVER".equals(r.getDescription()))) {
+            throw new IllegalArgumentException("Invalid Approver: " + approverUsername);
+        }
+
+        // Set transaction details
+        transaction.setRemarks(findings);
+        transaction.setUser2(approver);
+        // Set status to "Corrected" if previously Rejected, otherwise "Under Review"
+        transaction.setReportstatus(transaction.getReportstatus().equals("Rejected") ? "Corrected" : "Under Review");
+        transaction.setSubmittedByAuditor(userRepository.findByUsername(currentUsername));
+
+        // Handle supporting document
+        if (supportingDocument != null && !supportingDocument.isEmpty()) {
+            String supportingPath = fileStorageService.storeFile(supportingDocument, transaction, new Principal() {
+                @Override
+                public String getName() {
+                    return currentUsername;
+                }
+            }, true);
+            transaction.setSupportingDocumentPath(supportingPath);
+        }
+
+        transaction.setLastModifiedBy(currentUsername);
+        return masterTransactionRepository.save(transaction);
     }
-
-    MasterTransaction savedTransaction = masterTransactionRepository.save(transaction);
-    System.out.println("Saved transaction: ID=" + savedTransaction.getId() + 
-                      ", SupportingDocumentPath=" + savedTransaction.getSupportingDocumentPath() + 
-                      ", SupportingDocname=" + savedTransaction.getSupportingDocname());
-    return savedTransaction;
-}
 
     @Transactional
-public MasterTransaction rejectReport(Integer transactionId, String rejectionReason, String currentUsername,
-        MultipartFile rejectionDocument) throws IOException {
-    MasterTransaction transaction = masterTransactionRepository.findById(transactionId)
-            .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + transactionId));
-    User currentUser = userRepository.findByUsername(currentUsername);
-    if (currentUser == null
-            || !currentUser.getRoles().stream().anyMatch(r -> "APPROVER".equals(r.getDescription()))) {
-        throw new IllegalArgumentException("Unauthorized: Must have APPROVER role");
+    public MasterTransaction approveReport(Integer transactionId, String currentUsername,
+            MultipartFile approvalDocument) throws IOException {
+        MasterTransaction transaction = masterTransactionRepository.findById(transactionId)
+                .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + transactionId));
+        // ... validation ...
+        transaction.setReportstatus("Approved");
+        transaction.setLastModifiedBy(currentUsername);
+
+        if (approvalDocument != null && !approvalDocument.isEmpty()) {
+            String approvalPath = fileStorageService.storeFile(approvalDocument, transaction, new Principal() {
+                @Override
+                public String getName() {
+                    return currentUsername;
+                }
+            }, true);
+            transaction.setSupportingDocumentPath(approvalPath);
+            System.out.println(
+                    "Approver attachment: Path=" + approvalPath + ", Name=" + transaction.getSupportingDocname());
+        } else {
+            System.out.println("No Approver attachment provided for transaction ID=" + transactionId);
+        }
+
+        MasterTransaction savedTransaction = masterTransactionRepository.save(transaction);
+        System.out.println("Saved transaction: ID=" + savedTransaction.getId() +
+                ", SupportingDocumentPath=" + savedTransaction.getSupportingDocumentPath() +
+                ", SupportingDocname=" + savedTransaction.getSupportingDocname());
+        return savedTransaction;
     }
-    if (!Arrays.asList("Under Review", "Corrected").contains(transaction.getReportstatus())) {
-        throw new IllegalStateException("Can only reject reports in Under Review or Corrected status");
+
+    @Transactional
+    public MasterTransaction rejectReport(Integer transactionId, String rejectionReason, String currentUsername,
+            MultipartFile rejectionDocument) throws IOException {
+        MasterTransaction transaction = masterTransactionRepository.findById(transactionId)
+                .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + transactionId));
+        User currentUser = userRepository.findByUsername(currentUsername);
+        if (currentUser == null
+                || !currentUser.getRoles().stream().anyMatch(r -> "APPROVER".equals(r.getDescription()))) {
+            throw new IllegalArgumentException("Unauthorized: Must have APPROVER role");
+        }
+        if (!Arrays.asList("Under Review", "Corrected").contains(transaction.getReportstatus())) {
+            throw new IllegalStateException("Can only reject reports in Under Review or Corrected status");
+        }
+        if (transaction.getUser2() == null || !transaction.getUser2().getId().equals(currentUser.getId())) {
+            throw new IllegalArgumentException("Unauthorized: Must be the assigned Approver");
+        }
+        transaction.setReportstatus("Rejected");
+        transaction.setReason_of_rejection(rejectionReason); // Store in new field
+        if (rejectionDocument != null && !rejectionDocument.isEmpty()) {
+            String rejectionPath = fileStorageService.storeFile(rejectionDocument, transaction, new Principal() {
+                @Override
+                public String getName() {
+                    return currentUsername;
+                }
+            }, true);
+            transaction.setSupportingDocumentPath(rejectionPath);
+            transaction.setSupportingDocname(rejectionDocument.getOriginalFilename());
+        }
+        transaction.setUser2(transaction.getSubmittedByAuditor());
+        transaction.setLastModifiedBy(currentUsername);
+        return masterTransactionRepository.save(transaction);
     }
-    if (transaction.getUser2() == null || !transaction.getUser2().getId().equals(currentUser.getId())) {
-        throw new IllegalArgumentException("Unauthorized: Must be the assigned Approver");
-    }
-    transaction.setReportstatus("Rejected");
-    transaction.setRemarks(rejectionReason);
-    if (rejectionDocument != null && !rejectionDocument.isEmpty()) {
-        String rejectionPath = fileStorageService.storeFile(rejectionDocument, transaction, new Principal() {
-            @Override
-            public String getName() {
-                return currentUsername;
-            }
-        }, true);
-        transaction.setSupportingDocumentPath(rejectionPath);
-    }
-    transaction.setUser2(transaction.getSubmittedByAuditor());
-    transaction.setLastModifiedBy(currentUsername);
-    return masterTransactionRepository.save(transaction);
-}
 
     public List<MasterTransaction> getTasks(Long userId, String role) {
         List<MasterTransaction> tasks = new ArrayList<>();
@@ -261,17 +265,18 @@ public MasterTransaction rejectReport(Integer transactionId, String rejectionRea
                 break;
             case "SENIOR_AUDITOR":
                 List<MasterTransaction> activeTasks = masterTransactionRepository.findActiveSeniorAuditorTasks(userId);
-                List<MasterTransaction> approvedTasks = masterTransactionRepository.findApprovedSeniorAuditorTasks(userId);
+                List<MasterTransaction> approvedTasks = masterTransactionRepository
+                        .findApprovedSeniorAuditorTasks(userId);
                 System.out.println("SENIOR_AUDITOR active tasks: " + activeTasks.size());
-                activeTasks.forEach(task -> System.out.println("Active task: ID=" + task.getId() + 
-                    ", Status=" + task.getReportstatus() + 
-                    ", User2=" + (task.getUser2() != null ? task.getUser2().getId() : "null") + 
-                    ", Docname=" + task.getDocname()));
+                activeTasks.forEach(task -> System.out.println("Active task: ID=" + task.getId() +
+                        ", Status=" + task.getReportstatus() +
+                        ", User2=" + (task.getUser2() != null ? task.getUser2().getId() : "null") +
+                        ", Docname=" + task.getDocname()));
                 System.out.println("SENIOR_AUDITOR approved tasks: " + approvedTasks.size());
-                approvedTasks.forEach(task -> System.out.println("Approved task: ID=" + task.getId() + 
-                    ", Status=" + task.getReportstatus() + 
-                    ", User2=" + (task.getUser2() != null ? task.getUser2().getId() : "null") + 
-                    ", Docname=" + task.getDocname()));
+                approvedTasks.forEach(task -> System.out.println("Approved task: ID=" + task.getId() +
+                        ", Status=" + task.getReportstatus() +
+                        ", User2=" + (task.getUser2() != null ? task.getUser2().getId() : "null") +
+                        ", Docname=" + task.getDocname()));
                 tasks.addAll(activeTasks);
                 tasks.addAll(approvedTasks);
                 break;
@@ -286,38 +291,40 @@ public MasterTransaction rejectReport(Integer transactionId, String rejectionRea
                 throw new IllegalArgumentException("Invalid role: " + role);
         }
         System.out.println("Total tasks returned: " + tasks.size());
-        tasks.forEach(task -> System.out.println("Task: ID=" + task.getId() + 
-            ", Status=" + task.getReportstatus() + 
-            ", User2=" + (task.getUser2() != null ? task.getUser2().getId() : "null") + 
-            ", Docname=" + task.getDocname()));
+        tasks.forEach(task -> System.out.println("Task: ID=" + task.getId() +
+                ", Status=" + task.getReportstatus() +
+                ", User2=" + (task.getUser2() != null ? task.getUser2().getId() : "null") +
+                ", Docname=" + task.getDocname()));
         return tasks;
     }
 
-public List<MasterTransactionDTO> getApprovedReports(String username, String role) {
-    List<MasterTransaction> reports;
-    if ("ARCHIVER".equals(role) || "APPROVER".equals(role)) {
-        reports = masterTransactionRepository.findByReportstatus("Approved");
-    } else if ("SENIOR_AUDITOR".equals(role)) {
-        User user = userRepository.findByUsername(username);
-        if (user == null) {
-            throw new IllegalArgumentException("User not found: " + username);
+    public List<MasterTransactionDTO> getApprovedReports(String username, String role) {
+        List<MasterTransaction> reports;
+        if ("ARCHIVER".equals(role) || "APPROVER".equals(role)) {
+            reports = masterTransactionRepository.findByReportstatus("Approved");
+        } else if ("SENIOR_AUDITOR".equals(role)) {
+            User user = userRepository.findByUsername(username);
+            if (user == null) {
+                throw new IllegalArgumentException("User not found: " + username);
+            }
+            reports = masterTransactionRepository.findByReportstatusAndSubmittedByAuditor("Approved", user);
+        } else {
+            throw new IllegalArgumentException("Invalid role for approved reports: " + role);
         }
-        reports = masterTransactionRepository.findByReportstatusAndSubmittedByAuditor("Approved", user);
-    } else {
-        throw new IllegalArgumentException("Invalid role for approved reports: " + role);
+        System.out.println("Fetched " + reports.size() + " approved reports for " + username + " (" + role + ")");
+        reports.forEach(report -> {
+            System.out.println("Report: ID=" + report.getId() +
+                    ", SupportingDocname=" + report.getSupportingDocname() +
+                    ", SupportingDocumentPath=" + report.getSupportingDocumentPath());
+        });
+        return reports.stream().map(MasterTransactionDTO::new).collect(Collectors.toList());
     }
-    System.out.println("Fetched " + reports.size() + " approved reports for " + username + " (" + role + ")");
-    reports.forEach(report -> {
-        System.out.println("Report: ID=" + report.getId() + 
-                          ", SupportingDocname=" + report.getSupportingDocname() + 
-                          ", SupportingDocumentPath=" + report.getSupportingDocumentPath());
-    });
-    return reports.stream().map(MasterTransactionDTO::new).collect(Collectors.toList());
-}
-  public List<MasterTransaction> getUnderReviewReports() {
-    return masterTransactionRepository.findUnderReviewReports();
-}
-public List<MasterTransaction> getCorrectedReports() {
-    return masterTransactionRepository.findCorrectedReports();
-}
+
+    public List<MasterTransaction> getUnderReviewReports() {
+        return masterTransactionRepository.findUnderReviewReports();
+    }
+
+    public List<MasterTransaction> getCorrectedReports() {
+        return masterTransactionRepository.findCorrectedReports();
+    }
 }

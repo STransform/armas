@@ -12,6 +12,7 @@ const AuditorTasks = () => {
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [selectedTask, setSelectedTask] = useState(null);
     const [findings, setFindings] = useState('');
+    const [reasonOfRejection, setReasonOfRejection] = useState(''); // New state for rejection reason
     const [approvalDocument, setApprovalDocument] = useState(null);
     const [approvers, setApprovers] = useState([]);
     const [selectedApprover, setSelectedApprover] = useState('');
@@ -19,30 +20,31 @@ const AuditorTasks = () => {
     const isSeniorAuditor = roles.includes('SENIOR_AUDITOR');
     const isApprover = roles.includes('APPROVER');
 
-const fetchMyTasks = async () => {
-    try {
-        const data = await getMyTasks();
-        let filteredTasks;
-        if (isSeniorAuditor) {
-            filteredTasks = data.filter(task => 
-                ['Assigned', 'Rejected', 'Under Review', 'Corrected'].includes(task.reportstatus) // Remove 'Approved'
-            );
-        } else if (isApprover) {
-            filteredTasks = data.filter(task => 
-                ['Under Review', 'Corrected',  'Rejected'].includes(task.reportstatus)
-            );
-        } else {
-            filteredTasks = [];
+    const fetchMyTasks = async () => {
+        try {
+            const data = await getMyTasks();
+            let filteredTasks;
+            if (isSeniorAuditor) {
+                filteredTasks = data.filter(task => 
+                    ['Assigned', 'Rejected', 'Under Review', 'Corrected'].includes(task.reportstatus)
+                );
+            } else if (isApprover) {
+                filteredTasks = data.filter(task => 
+                    ['Under Review', 'Corrected', 'Rejected'].includes(task.reportstatus)
+                );
+            } else {
+                filteredTasks = [];
+            }
+            setTasks(filteredTasks);
+            if (filteredTasks.length === 0) {
+                setError('No tasks available for your role.');
+            }
+            console.log('Filtered tasks:', JSON.stringify(filteredTasks, null, 2));
+        } catch (err) {
+            setError(`Failed to load tasks: ${err.message}`);
         }
-        setTasks(filteredTasks);
-        if (filteredTasks.length === 0) {
-            setError('No tasks available for your role.');
-        }
-        console.log('Filtered tasks:', JSON.stringify(filteredTasks, null, 2));
-    } catch (err) {
-        setError(`Failed to load tasks: ${err.message}`);
-    }
-};
+    };
+
     useEffect(() => {
         fetchMyTasks();
     }, [roles]);
@@ -115,21 +117,22 @@ const fetchMyTasks = async () => {
 
     const handleReject = async (task) => {
         setSelectedTask(task);
+        setReasonOfRejection(''); // Reset rejection reason
         setError('');
         setShowFindingsModal(true);
     };
 
     const handleRejectSubmit = async () => {
-        if (!findings) {
+        if (!reasonOfRejection) {
             setError('Please provide a reason for rejection');
             return;
         }
         try {
             const rejectionDocument = document.getElementById('rejectionDocument').files[0];
-            await rejectReport(selectedTask.id, findings, rejectionDocument);
+            await rejectReport(selectedTask.id, reasonOfRejection, rejectionDocument);
             setSuccess('Report rejected successfully');
             setShowFindingsModal(false);
-            setFindings('');
+            setReasonOfRejection('');
             await fetchMyTasks();
         } catch (err) {
             setError(`Failed to reject report: ${err.message}`);
@@ -228,7 +231,7 @@ const fetchMyTasks = async () => {
                 </table>
             )}
 
-            {/* Findings Modal for Senior Auditor */}
+            {/* Findings/Rejection Modal */}
             {showFindingsModal && (
                 <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
                     <div className="modal-dialog">
@@ -238,43 +241,63 @@ const fetchMyTasks = async () => {
                                 <button type="button" className="btn-close" onClick={() => setShowFindingsModal(false)}></button>
                             </div>
                             <div className="modal-body">
-                                <div className="form-group">
-                                    <label htmlFor="findings">{isSeniorAuditor ? 'Findings' : 'Reason for Rejection'}:</label>
-                                    <textarea
-                                        className="form-control"
-                                        id="findings"
-                                        value={findings}
-                                        onChange={(e) => setFindings(e.target.value)}
-                                    />
-                                </div>
-                                {isSeniorAuditor && (
-                                    <div className="form-group">
-                                        <label htmlFor="approver">Select Approver:</label>
-                                        <select
-                                            className="form-control"
-                                            id="approver"
-                                            value={selectedApprover}
-                                            onChange={(e) => setSelectedApprover(e.target.value)}
-                                        >
-                                            <option value="">Select Approver</option>
-                                            {approvers.map(approver => (
-                                                <option key={approver.id} value={approver.username}>
-                                                    {approver.firstName} {approver.lastName} ({approver.username})
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                {isSeniorAuditor ? (
+                                    <>
+                                        <div className="form-group">
+                                            <label htmlFor="findings">Findings:</label>
+                                            <textarea
+                                                className="form-control"
+                                                id="findings"
+                                                value={findings}
+                                                onChange={(e) => setFindings(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label htmlFor="approver">Select Approver:</label>
+                                            <select
+                                                className="form-control"
+                                                id="approver"
+                                                value={selectedApprover}
+                                                onChange={(e) => setSelectedApprover(e.target.value)}
+                                            >
+                                                <option value="">Select Approver</option>
+                                                {approvers.map(approver => (
+                                                    <option key={approver.id} value={approver.username}>
+                                                        {approver.firstName} {approver.lastName} ({approver.username})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="form-group">
+                                            <label htmlFor="supportingDocument">Attach Supporting Document:</label>
+                                            <input
+                                                type="file"
+                                                className="form-control"
+                                                id="supportingDocument"
+                                            />
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="form-group">
+                                            <label htmlFor="reasonOfRejection">Reason for Rejection:</label>
+                                            <textarea
+                                                className="form-control"
+                                                id="reasonOfRejection"
+                                                value={reasonOfRejection}
+                                                onChange={(e) => setReasonOfRejection(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label htmlFor="rejectionDocument">Attach Rejection Document (Optional):</label>
+                                            <input
+                                                type="file"
+                                                className="form-control"
+                                                id="rejectionDocument"
+                                            />
+                                        </div>
+                                    </>
                                 )}
-                                <div className="form-group">
-                                    <label htmlFor={isSeniorAuditor ? 'supportingDocument' : 'rejectionDocument'}>
-                                        {isSeniorAuditor ? 'Attach Supporting Document' : 'Attach Rejection Document'}:
-                                    </label>
-                                    <input
-                                        type="file"
-                                        className="form-control"
-                                        id={isSeniorAuditor ? 'supportingDocument' : 'rejectionDocument'}
-                                    />
-                                </div>
                             </div>
                             <div className="modal-footer">
                                 <button type="button" className="btn btn-secondary" onClick={() => setShowFindingsModal(false)}>
@@ -293,7 +316,7 @@ const fetchMyTasks = async () => {
                 </div>
             )}
 
-            {/* Approval Modal for Approver */}
+            {/* Approval Modal */}
             {showApprovalModal && (
                 <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
                     <div className="modal-dialog">
@@ -347,14 +370,16 @@ const fetchMyTasks = async () => {
                                     <div className="col-md-6">
                                         <p><strong>Report Type:</strong> {selectedTask.reportype || 'N/A'}</p>
                                         <p><strong>Auditor:</strong> {selectedTask.submittedByAuditorUsername || selectedTask.assignedAuditorUsername || 'N/A'}</p>
-                                        {/* <p><strong>Approver:</strong> {selectedTask.approverUsername || 'N/A'}</p> */}
                                         <p><strong>Document Name:</strong> {selectedTask.docname || 'N/A'}</p>
                                         <p><strong>Archiver:</strong> {selectedTask.assignedByUsername || 'N/A'}</p>
                                     </div>
                                 </div>
                                 <div className="row mt-3">
                                     <div className="col-12">
-                                        <p><strong>Remarks:</strong> {selectedTask.remarks || 'No remarks available'}</p>
+                                        <p><strong>Findings:</strong> {selectedTask.remarks || 'No findings available'}</p>
+                                        {selectedTask.reasonOfRejection && (
+                                            <p><strong>Reason for Rejection:</strong> {selectedTask.reasonOfRejection}</p>
+                                        )}
                                     </div>
                                 </div>
                             </div>
