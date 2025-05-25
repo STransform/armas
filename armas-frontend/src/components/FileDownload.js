@@ -138,7 +138,7 @@ const FileDownload = () => {
             <Table sx={{ '& td': { fontSize: '1rem' }, '& th': { fontWeight: 'bold', fontSize: '1rem', backgroundColor: '#f5f5f5' }, '& tr:nth-of-type(odd)': { backgroundColor: '#f9f9f9' } }}>
               <TableHead>
                 <TableRow>
-                  <TableCell>#</TableCell>
+                  {/* <TableCell>#</TableCell> */}
                   <TableCell>Submitted Date</TableCell>
                   <TableCell>Organization Name</TableCell>
                   <TableCell>Budget Year</TableCell>
@@ -151,7 +151,7 @@ const FileDownload = () => {
               <TableBody>
                 {filteredReports.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((report, index) => (
                   <TableRow key={report.id}>
-                    <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                    {/* <TableCell>{page * rowsPerPage + index + 1}</TableCell> */}
                     <TableCell>{report.createdDate ? new Date(report.createdDate).toLocaleDateString() : 'N/A'}</TableCell>
                     <TableCell>{report.orgname || 'N/A'}</TableCell>
                     <TableCell>{report.fiscal_year || 'N/A'}</TableCell>
