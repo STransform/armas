@@ -105,7 +105,7 @@ const FileDownload = () => {
 
   return (
     <div className="container mt-5">
-      <h2>Archiver View</h2>
+      {/* <h2>Archiver View</h2> */}
       {error && (
         <Alert severity="error" sx={{ mb: 2, boxShadow: '4px 4px 6px rgba(0, 0, 0, 0.1)', borderRadius: '8px' }}>
           {error}
@@ -117,7 +117,7 @@ const FileDownload = () => {
         </Alert>
       )}
 
-      <h3>Submitted Reports</h3>
+      <h3>Reports</h3>
       {submittedReports.length === 0 && !error && (
         <Alert severity="info" sx={{ mb: 2, boxShadow: '4px 4px 6px rgba(0, 0, 0, 0.1)', borderRadius: '8px' }}>
           No submitted reports available.

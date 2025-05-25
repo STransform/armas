@@ -13,7 +13,6 @@ const FileUpload = ({ onUploadSuccess }) => {
   const [documents, setDocuments] = useState([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-
   const budgetYears = ['2020', '2021', '2022', '2023', '2024', '2025'];
 
   useEffect(() => {
@@ -42,14 +41,26 @@ const FileUpload = ({ onUploadSuccess }) => {
     setFile(e.target.files[0]);
   };
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     if (!file) {
       setError('Please select a file');
       return;
     }
 
+    if (!formData.fiscal_year) {
+      setError('Please select a budget year');
+      return;
+    }
+
+    if (!formData.transactiondocumentid) {
+      setError('Please select a report type');
+      return;
+    }
+
     try {
+      setError('');
+      setSuccess('');
       await uploadFile(file, formData.reportcategory, formData.fiscal_year, formData.transactiondocumentid);
       setSuccess('File uploaded successfully');
       setFile(null);
@@ -61,10 +72,12 @@ const FileUpload = ({ onUploadSuccess }) => {
       e.target.reset();
       if (onUploadSuccess) onUploadSuccess();
     } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || 'File upload failed';
-      setError(`File upload failed: ${errorMessage}`);
+      const errorMessage = err.message || 'File upload failed';
+      setError(errorMessage);
+      setSuccess('');
+      console.log('Upload error:', errorMessage);
     }
-  };
+};
 
   return (
     <div className="container mt-5">

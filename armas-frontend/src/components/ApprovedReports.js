@@ -122,13 +122,13 @@ const ApprovedReports = () => {
             <Table sx={{ '& td': { fontSize: '1rem' }, '& th': { fontWeight: 'bold', fontSize: '1rem', backgroundColor: '#f5f5f5' }, '& tr:nth-of-type(odd)': { backgroundColor: '#f9f9f9' } }}>
               <TableHead>
                 <TableRow>
-                  <TableCell>#</TableCell>
+                  {/* <TableCell>#</TableCell> */}
                   <TableCell>Date</TableCell>
                   <TableCell>Organization</TableCell>
                   <TableCell>Budget Year</TableCell>
                   <TableCell>Report Type</TableCell>
                   <TableCell>Auditor</TableCell>
-                  <TableCell>Response Needed</TableCell>
+                  <TableCell>Response</TableCell>
                   <TableCell>Status</TableCell>
                   <TableCell>Action</TableCell>
                 </TableRow>
@@ -136,7 +136,7 @@ const ApprovedReports = () => {
               <TableBody>
                 {filteredReports.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((report, index) => (
                   <TableRow key={report.id || Math.random()}>
-                    <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                    {/* <TableCell>{page * rowsPerPage + index + 1}</TableCell> */}
                     <TableCell>{report.createdDate ? new Date(report.createdDate).toLocaleDateString() : 'N/A'}</TableCell>
                     <TableCell>{report.orgname || 'N/A'}</TableCell>
                     <TableCell>{report.fiscalYear || 'N/A'}</TableCell>

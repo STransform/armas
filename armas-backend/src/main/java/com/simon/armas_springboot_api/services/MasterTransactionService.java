@@ -58,33 +58,59 @@ public class MasterTransactionService {
     @Transactional
     public MasterTransaction uploadFile(MultipartFile file, String fiscalYear, String reportcategory,
             String transactionDocumentId, Principal principal) throws IOException {
+        // Fetch the user
         User user = userRepository.findByUsername(principal.getName());
-        if (user == null)
+        if (user == null) {
             throw new IllegalArgumentException("User not found");
+        }
 
+        // Check for duplicate document
         String docname = file.getOriginalFilename();
         if (masterTransactionRepository.existsByDocnameAndUser(docname, user)) {
             throw new IllegalArgumentException("Document already exists");
         }
 
+        // Fetch the document
         Document document = documentRepository.findById(transactionDocumentId)
                 .orElseThrow(() -> new IllegalArgumentException("Document not found"));
 
+        // Validation for Feedback category
+        if ("Feedback".equalsIgnoreCase(reportcategory.trim())) {
+            List<MasterTransaction> existingReports = masterTransactionRepository.findTransactionByDocumentId(
+                    "Report", transactionDocumentId, user.getOrganization().getId(), fiscalYear);
+            if (existingReports.isEmpty()) {
+                throw new IllegalArgumentException("Report for this feedback was not uploaded. Upload the report first!");
+            }
+            boolean hasResponseNeededYes = existingReports.stream()
+                    .anyMatch(report -> "Yes".equalsIgnoreCase(report.getResponse_needed()));
+            if (!hasResponseNeededYes) {
+                throw new IllegalArgumentException(
+                        "The uploaded report’s response_needed is not set to 'Yes'. Wait until the experts respond to your report.");
+            }
+        }
+
+        // Create and populate the transaction
         MasterTransaction transaction = new MasterTransaction();
         transaction.setUser(user);
         transaction.setUser2(null);
         transaction.setOrganization(user.getOrganization());
         transaction.setDocname(docname);
         transaction.setReportstatus("Submitted");
+        transaction.setReportcategory(reportcategory);
         transaction.setFiscal_year(fiscalYear);
-        transaction.setReportcategory(document.getReportype());
         transaction.setTransactiondocument(document);
         transaction.setFilepath(fileStorageService.storeFile(file, transaction, principal, false));
         transaction.setCreatedDate(new Date());
         transaction.setCreatedBy(principal.getName());
 
+        // Set default response_needed for Reports
+        if ("Report".equalsIgnoreCase(reportcategory.trim())) {
+            transaction.setResponse_needed("Pending");
+        }
+
         return masterTransactionRepository.save(transaction);
     }
+
 
     public Map<String, Path> getFilePaths(Integer id) {
         MasterTransaction transaction = masterTransactionRepository.findById(id)

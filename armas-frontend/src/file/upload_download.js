@@ -23,8 +23,9 @@ export const uploadFile = async (file, reportcategory, fiscal_year, transactiond
         });
         return response.data;
     } catch (error) {
-        console.error('Error uploading file:', error.message, error.response?.status, error.response?.data);
-        throw error;
+        const errorMessage = error.response?.data || error.message || 'File upload failed';
+        console.error('Error uploading file:', errorMessage);
+        throw new Error(errorMessage);
     }
 };
 
