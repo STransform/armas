@@ -33,8 +33,10 @@ public interface MasterTransactionRepository extends JpaRepository<MasterTransac
 
     @Query("FROM MasterTransaction m WHERE m.reportcategory = :reportcategory AND m.transactiondocument.id = :docid AND m.organization.id = :theoid AND m.fiscal_year = :fiscal_year")
     List<MasterTransaction> findTransactionByDocumentId(@Param("reportcategory") String reportcategory,
-            @Param("docid") String id, @Param("theoid") String oid, @Param("fiscal_year") String fiscal_year);
-
+                                                        @Param("docid") String id, 
+                                                        @Param("theoid") String oid, 
+                                                        @Param("fiscal_year") String fiscal_year);
+                                                        
     @Query("FROM MasterTransaction m WHERE m.reportcategory = :reportcategory AND m.transactiondocument.id = :docid AND m.fiscal_year = :fiscal_year")
     List<MasterTransaction> findNoneSendersByDocumentId(@Param("docid") String id,
             @Param("fiscal_year") String fiscal_year, @Param("reportcategory") String reportcategory);
@@ -144,4 +146,5 @@ List<MasterTransaction> findCompletedApproverTasks(
     List<MasterTransaction> findByReportstatus(String reportstatus);
 
     List<MasterTransaction> findByReportstatusAndSubmittedByAuditor(String reportstatus, User submittedByAuditor);
+    
 }

@@ -162,13 +162,13 @@ const CorrectedReports = () => {
             <Table sx={{ '& td': { fontSize: '1rem' }, '& th': { fontWeight: 'bold', fontSize: '1rem', backgroundColor: '#f5f5f5' }, '& tr:nth-of-type(odd)': { backgroundColor: '#f9f9f9' } }}>
               <TableHead>
                 <TableRow>
-                  <TableCell>#</TableCell>
+                  {/* <TableCell>#</TableCell> */}
                   <TableCell>Date</TableCell>
                   <TableCell>Organization</TableCell>
                   <TableCell>Budget Year</TableCell>
                   <TableCell>Report Type</TableCell>
                   <TableCell>Created by</TableCell>
-                  <TableCell>Auditor</TableCell>
+                  {/* <TableCell>Auditor</TableCell> */}
                   <TableCell>Response</TableCell>
                   <TableCell>Action</TableCell>
                 </TableRow>
@@ -176,13 +176,13 @@ const CorrectedReports = () => {
               <TableBody>
                 {filteredReports.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((report, index) => (
                   <TableRow key={report.id}>
-                    <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                    {/* <TableCell>{page * rowsPerPage + index + 1}</TableCell> */}
                     <TableCell>{report.createdDate ? new Date(report.createdDate).toLocaleDateString() : 'N/A'}</TableCell>
                     <TableCell>{report.organization?.orgname || 'N/A'}</TableCell>
                     <TableCell>{report.fiscal_year || 'N/A'}</TableCell>
                     <TableCell>{report.transactiondocument?.reportype || 'N/A'}</TableCell>
                     <TableCell>{report.createdBy || 'N/A'}</TableCell>
-                    <TableCell>{report.submittedByAuditorUsername || 'N/A'}</TableCell>
+                    {/* <TableCell>{report.submittedByAuditorUsername || 'N/A'}</TableCell> */}
                     <TableCell>{report.responseNeeded || 'N/A'}</TableCell>
                     <TableCell>
                       <Button

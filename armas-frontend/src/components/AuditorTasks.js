@@ -211,7 +211,7 @@ const AuditorTasks = () => {
             <Table sx={{ '& td': { fontSize: '1rem' }, '& th': { fontWeight: 'bold', fontSize: '1rem', backgroundColor: '#f5f5f5' }, '& tr:nth-of-type(odd)': { backgroundColor: '#f9f9f9' } }}>
               <TableHead>
                 <TableRow>
-                  <TableCell>#</TableCell>
+                  {/* <TableCell>#</TableCell> */}
                   <TableCell>Date</TableCell>
                   <TableCell>Status</TableCell>
                   <TableCell>Organization</TableCell>
@@ -224,7 +224,7 @@ const AuditorTasks = () => {
               <TableBody>
                 {filteredTasks.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((task, index) => (
                   <TableRow key={task.id}>
-                    <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                    {/* <TableCell>{page * rowsPerPage + index + 1}</TableCell> */}
                     <TableCell>{task.createdDate ? new Date(task.createdDate).toLocaleDateString() : 'N/A'}</TableCell>
                     <TableCell>{task.reportstatus || 'N/A'}</TableCell>
                     <TableCell>{task.orgname || 'N/A'}</TableCell>

@@ -63,8 +63,8 @@ public class MasterTransactionController {
             @RequestParam("fiscal_year") String fiscalYear,
             @RequestParam("transactiondocumentid") String transactionDocumentId,
             Principal principal) throws IOException {
-        MasterTransaction transaction = masterTransactionService.uploadFile(file, reportcategory, fiscalYear,
-                transactionDocumentId, principal);
+        MasterTransaction transaction = masterTransactionService.uploadFile(
+                file, fiscalYear, reportcategory, transactionDocumentId, principal);
         return ResponseEntity.ok(transaction);
     }
 
