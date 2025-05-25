@@ -4,6 +4,7 @@ import Brand from './components/Brand'
 import Organization from './components/Organization'
 import Directorate from './components/Directorate';
 import Document from './components/Document';
+import BudgetYear from './components/BudgetYear';
 import MasterTransaction from './components/MasterTransaction';
 const User = React.lazy(() => import('./components/Users'));
 import Role from './components/Role';
@@ -51,6 +52,7 @@ const routes = [
   { path: '/buttons/organizations', name: 'Organizations', element: Organization },
   { path: '/buttons/directorates', name: 'Directorates', element: Directorate },
   { path: '/buttons/documents', name: 'Documents', element: Document },
+  { path: '/buttons/budgetyear', name: 'BudgetYear', element: BudgetYear },
   { path: '/buttons/master-transaction', name: 'Master Transaction', element: MasterTransaction },
   { path: '/buttons/users', name: 'Users', element: User },
   { path:'/buttons/roles' , name:'Role', element:Role},

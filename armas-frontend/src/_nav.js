@@ -109,6 +109,12 @@ const Nav = () => {
           to: '/buttons/documents',
           icon: <CIcon icon={cilFile} customClassName="nav-icon" />,
         },
+         {
+          component: CNavItem,
+          name: 'Budget Year',
+          to: '/buttons/budgetyear',
+          icon: <CIcon icon={cilFile} customClassName="nav-icon" />,
+        },
         
         {
           component: CNavItem,
