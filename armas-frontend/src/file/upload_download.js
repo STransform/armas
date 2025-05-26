@@ -10,11 +10,11 @@ export const getDocuments = async () => {
     }
 };
 
-export const uploadFile = async (file, reportcategory, fiscal_year, transactiondocumentid) => {
+export const uploadFile = async (file, reportcategory, budgetYearId, transactiondocumentid) => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('reportcategory', reportcategory);
-    formData.append('fiscal_year', fiscal_year);
+    formData.append('budgetYearId', budgetYearId);
     formData.append('transactiondocumentid', transactiondocumentid);
 
     try {
@@ -26,6 +26,15 @@ export const uploadFile = async (file, reportcategory, fiscal_year, transactiond
         const errorMessage = error.response?.data || error.message || 'File upload failed';
         console.error('Error uploading file:', errorMessage);
         throw new Error(errorMessage);
+    }
+};
+export const getBudgetYears = async () => {
+    try {
+        const response = await axiosInstance.get('/transactions/budget-years');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching budget years:', error.message);
+        throw error;
     }
 };
 
@@ -53,13 +62,13 @@ export const downloadFile = async (id, type) => {
 export const getUnderReviewReports = async () => {
     try {
         const response = await axiosInstance.get('/transactions/under-review-reports');
-        console.log('Under review reports response:', response.data);
+        console.log('Under review reports raw response:', JSON.stringify(response.data, null, 2));
         return response.data.map(report => ({
             id: report.id,
             createdDate: report.createdDate,
             reportstatus: report.reportstatus,
             organization: { orgname: report.organization ? report.organization.orgname : null },
-            fiscal_year: report.fiscal_year,
+            fiscalYear: report.fiscal_year || report.fiscalYear || null,
             transactiondocument: { reportype: report.transactiondocument ? report.transactiondocument.reportype : null },
             docname: report.docname,
             supportingDocumentPath: report.supportingDocumentPath,
@@ -82,7 +91,7 @@ export const getCorrectedReports = async () => {
             createdDate: report.createdDate,
             reportstatus: report.reportstatus,
             organization: report.organization, // Pass the full organization object
-            fiscal_year: report.fiscal_year,   // Match the JSON field name (likely fiscal_year)
+            fiscalYear: report.fiscal_year || report.fiscalYear || null,
             transactiondocument: report.transactiondocument, // Pass the full transactiondocument object
             docname: report.docname,
             supportingDocumentPath: report.supportingDocumentPath,
@@ -133,6 +142,7 @@ export const submitFindings = async (transactionId, remarks, approverUsername, r
     if (supportingDocument) {
         formData.append('supportingDocument', supportingDocument);
     }
+    console.log('Submitting payload:', { transactionId, remarks, approverUsername, responseNeeded, supportingDocument: supportingDocument ? supportingDocument.name : 'none' });
     try {
         const response = await axiosInstance.post(`/transactions/submit-findings/${transactionId}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
@@ -143,7 +153,6 @@ export const submitFindings = async (transactionId, remarks, approverUsername, r
         throw error;
     }
 };
-
 
 export const approveReport = async (transactionId, approvalDocument) => {
     try {
@@ -170,24 +179,25 @@ export const approveReport = async (transactionId, approvalDocument) => {
 export const getApprovedReports = async () => {
     try {
         const response = await axiosInstance.get('/transactions/approved-reports');
-        console.log('Approved reports response:', JSON.stringify(response.data, null, 2));
+        console.log('Approved reports raw response:', JSON.stringify(response.data, null, 2));
         return response.data.map(report => {
+            console.log('Report ID=' + report.id + ' fiscal_year:', report.fiscal_year || report.fiscalYear);
             const mappedReport = {
                 id: report.id,
                 createdDate: report.createdDate,
                 reportstatus: report.reportstatus,
                 orgname: report.orgname,
-                fiscalYear: report.fiscalYear,
+                fiscalYear: report.fiscal_year || report.fiscalYear || null, // Use fiscalYear for consistency
                 reportype: report.reportype,
                 docname: report.docname,
                 supportingDocumentPath: report.supportingDocumentPath,
                 supportingDocname: report.supportingDocname,
                 submittedByAuditorUsername: report.submittedByAuditorUsername || null,
-                createdBy: report.createdBy || null, // createdBy
-                assignedByUsername: report.assignedByUsername || null, // assignedByUsername
-                lastModifiedBy: report.lastModifiedBy || null, // lastModifiedBy
-                approverUsername: report.approverUsername || null , // approverUsername
-                responseNeeded: report.responseNeeded || null 
+                createdBy: report.createdBy || null,
+                assignedByUsername: report.assignedByUsername || null,
+                lastModifiedBy: report.lastModifiedBy || null,
+                approverUsername: report.approverUsername || null,
+                responseNeeded: report.responseNeeded || null
             };
             console.log('Mapped report ID=' + report.id + ':', mappedReport);
             return mappedReport;
@@ -197,6 +207,7 @@ export const getApprovedReports = async () => {
         throw error;
     }
 };
+
    export const rejectReport = async (transactionId, rejectionReason, rejectionDocument) => {
     const formData = new FormData();
     formData.append('rejectionReason', rejectionReason);
@@ -219,20 +230,21 @@ export const getRejectedReports = async () => {
         const response = await axiosInstance.get('/transactions/rejected-reports');
         console.log('Rejected reports raw response:', JSON.stringify(response.data, null, 2));
         const mappedReports = response.data.map(report => {
+            console.log('Report ID=' + report.id + ' fiscal_year:', report.fiscal_year || report.fiscalYear);
             const mappedReport = {
                 id: report.id,
                 createdDate: report.createdDate,
                 reportstatus: report.reportstatus,
-                organization: { orgname: report.organization ? report.organization.orgname : null },
-                fiscal_year: report.fiscal_year,
-                transactiondocument: { reportype: report.transactiondocument ? report.transactiondocument.reportype : null },
+                organization: { orgname: report.orgname || null },
+                fiscal_year: report.fiscal_year || report.fiscalYear || null,
+                transactiondocument: { reportype: report.reportype || null },
                 docname: report.docname,
                 supportingDocumentPath: report.supportingDocumentPath,
                 supportingDocname: report.supportingDocname,
                 remarks: report.remarks || null,
-                responseNeeded: report.response_needed || null, 
-                reasonOfRejection: report.reason_of_rejection || null, // Add reason_of_rejection
-                submittedByAuditorUsername: report.submittedByAuditor ? report.submittedByAuditor.username : null
+                responseNeeded: report.responseNeeded || null,
+                reasonOfRejection: report.reason_of_rejection || null,
+                submittedByAuditorUsername: report.submittedByAuditorUsername || null
             };
             console.log('Mapped report ID=' + report.id + ':', mappedReport);
             return mappedReport;
@@ -251,26 +263,30 @@ export const getMyTasks = async () => {
         const response = await axiosInstance.get('/transactions/tasks');
         console.log('Tasks raw response:', JSON.stringify(response.data, null, 2));
         const mappedTasks = response.data.map(task => {
+            const cleanId = parseInt(String(task.id).split(':')[0], 10);
+            if (isNaN(cleanId)) {
+                console.error('Invalid task ID format:', task.id);
+            }
+            console.log('Task ID=' + cleanId + ' fiscal_year:', task.fiscal_year || task.fiscalYear);
             const mappedTask = {
-                id: task.id,
+                id: cleanId,
                 createdDate: task.createdDate,
                 reportstatus: task.reportstatus,
                 orgname: task.orgname,
-                fiscalYear: task.fiscalYear,
+                fiscalYear: task.fiscal_year || task.fiscalYear || null,
                 reportype: task.reportype,
                 docname: task.docname,
                 supportingDocumentPath: task.supportingDocumentPath,
                 supportingDocname: task.supportingDocname,
                 submittedByAuditorUsername: task.submittedByAuditorUsername || null,
                 assignedAuditorUsername: task.assignedAuditorUsername || null,
-                createdBy: task.createdBy || null, // createdBy
-                assignedByUsername: task.assignedByUsername || null, // assignedByUsername
-                reasonOfRejection: task.reason_of_rejection || null ,
-                // findings: task.findings || task.remarks || null, // Map findings or remarks
-                remarks: task.remarks || null, // Keep remarks for compatibility
+                createdBy: task.createdBy || null,
+                assignedByUsername: task.assignedByUsername || null,
+                reasonOfRejection: task.reason_of_rejection || null,
+                remarks: task.remarks || null,
                 responseNeeded: task.responseNeeded || null
             };
-            console.log('Mapped task ID=' + task.id + ':', mappedTask);
+            console.log('Mapped task ID=' + cleanId + ':', mappedTask);
             return mappedTask;
         });
         console.log('All mapped tasks:', mappedTasks);

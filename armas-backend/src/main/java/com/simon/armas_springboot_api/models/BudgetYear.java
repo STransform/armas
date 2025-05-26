@@ -16,7 +16,8 @@ public class BudgetYear {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String fiscal_year;
+    @Column(name = "fiscal_year")
+    private String fiscalYear;;
 //generate getter and setter
     public Long getId() {
         return id;
@@ -25,13 +26,12 @@ public class BudgetYear {
     public void setId(Long id) {
         this.id = id;
     }
-
-    public String getFiscal_year() {
-        return fiscal_year;
+ public String getFiscalYear() {
+        return fiscalYear;
     }
 
-    public void setFiscal_year(String fiscal_year) {
-        this.fiscal_year = fiscal_year;
+    public void setFiscalYear(String fiscalYear) {
+        this.fiscalYear = fiscalYear;
     }
 
     // @Override

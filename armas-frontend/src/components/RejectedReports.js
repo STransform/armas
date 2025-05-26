@@ -26,6 +26,7 @@ const RejectedReports = () => {
     const fetchReports = async () => {
       try {
         const data = await getRejectedReports();
+        console.log('Fetched reports:', data); // Debug log
         setReports(data);
         if (data.length === 0) {
           setError('No rejected reports available.');
@@ -112,7 +113,7 @@ const RejectedReports = () => {
   const filteredReports = reports.filter(report =>
     (report.organization?.orgname || '').toLowerCase().includes(filterText.toLowerCase()) ||
     (report.transactiondocument?.reportype || '').toLowerCase().includes(filterText.toLowerCase()) ||
-    (report.fiscal_year || '').toString().toLowerCase().includes(filterText.toLowerCase()) ||
+    (report.fiscal_year || report.fiscalYear || '').toString().toLowerCase().includes(filterText.toLowerCase()) ||
     (report.submittedByAuditorUsername || '').toLowerCase().includes(filterText.toLowerCase()) ||
     (report.responseNeeded || '').toLowerCase().includes(filterText.toLowerCase()) ||
     (report.reportstatus || '').toLowerCase().includes(filterText.toLowerCase()) ||
@@ -152,12 +153,10 @@ const RejectedReports = () => {
             <Table sx={{ '& td': { fontSize: '1rem' }, '& th': { fontWeight: 'bold', fontSize: '1rem', backgroundColor: '#f5f5f5' }, '& tr:nth-of-type(odd)': { backgroundColor: '#f9f9f9' } }}>
               <TableHead>
                 <TableRow>
-                  {/* <TableCell>#</TableCell> */}
                   <TableCell>Date</TableCell>
                   <TableCell>Organization</TableCell>
                   <TableCell>Budget Year</TableCell>
                   <TableCell>Report Type</TableCell>
-                  {/* <TableCell>Auditor</TableCell> */}
                   <TableCell>Response</TableCell>
                   <TableCell>Status</TableCell>
                   <TableCell>Action</TableCell>
@@ -166,12 +165,10 @@ const RejectedReports = () => {
               <TableBody>
                 {filteredReports.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((report, index) => (
                   <TableRow key={report.id}>
-                    {/* <TableCell>{page * rowsPerPage + index + 1}</TableCell> */}
                     <TableCell>{report.createdDate ? new Date(report.createdDate).toLocaleDateString() : 'N/A'}</TableCell>
                     <TableCell>{report.organization?.orgname || 'N/A'}</TableCell>
-                    <TableCell>{report.fiscal_year || 'N/A'}</TableCell>
+                    <TableCell>{report.fiscal_year || report.fiscalYear || 'N/A'}</TableCell>
                     <TableCell>{report.transactiondocument?.reportype || 'N/A'}</TableCell>
-                    {/* <TableCell>{report.submittedByAuditorUsername || 'N/A'}</TableCell> */}
                     <TableCell>{report.responseNeeded || 'N/A'}</TableCell>
                     <TableCell>{report.reportstatus || 'N/A'}</TableCell>
                     <TableCell>
@@ -191,7 +188,7 @@ const RejectedReports = () => {
                           size="small"
                           onClick={() => handleResubmit(report)}
                         >
-                          submit
+                          Submit
                         </Button>
                       )}
                     </TableCell>
@@ -297,7 +294,7 @@ const RejectedReports = () => {
               </CCol>
               <CCol md={6}>
                 <CFormLabel>Budget Year</CFormLabel>
-                <CFormInput value={selectedReport.fiscal_year || 'N/A'} readOnly />
+                <CFormInput value={selectedReport.fiscal_year || selectedReport.fiscalYear || 'N/A'} readOnly />
               </CCol>
               <CCol md={6}>
                 <CFormLabel>Report Type</CFormLabel>
@@ -313,7 +310,7 @@ const RejectedReports = () => {
               </CCol>
               <CCol md={6}>
                 <CFormLabel>Rejection Reason</CFormLabel>
-                <CFormInput value={selectedReport.reasonOfRejection || 'N/A'} readOnly />
+                <CFormInput value={selectedReport.reason_of_rejection || 'N/A'} readOnly />
               </CCol>
               <CCol md={6}>
                 <CFormLabel>Response Needed</CFormLabel>
