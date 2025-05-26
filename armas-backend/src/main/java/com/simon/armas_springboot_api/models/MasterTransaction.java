@@ -31,7 +31,10 @@ public class MasterTransaction extends Auditable<String> {
     @Column(length = 5000)
     private String reason_of_rejection;
     private String response_needed;
-    private String fiscal_year;
+    @ManyToOne
+    @JoinColumn(name = "budget_year_id")
+    private BudgetYear budgetYear;
+
     private String reportcategory;
     private String filepath;
     private String supportingDocumentPath;
@@ -86,8 +89,8 @@ public class MasterTransaction extends Auditable<String> {
     public void setReason_of_rejection(String reason_of_rejection) { this.reason_of_rejection = reason_of_rejection; }
     public String getResponse_needed() { return response_needed; }
     public void setResponse_needed(String response_needed) { this.response_needed = response_needed; }
-    public String getFiscal_year() { return fiscal_year; }
-    public void setFiscal_year(String fiscal_year) { this.fiscal_year = fiscal_year; }
+    // public String getFiscal_year() { return fiscal_year; }
+    // public void setFiscal_year(String fiscal_year) { this.fiscal_year = fiscal_year; }
     public String getReportcategory() { return reportcategory; }
     public void setReportcategory(String reportcategory) { this.reportcategory = reportcategory; }
     public String getFilepath() { return filepath; }
@@ -113,4 +116,11 @@ public class MasterTransaction extends Auditable<String> {
     public void setSubmittedByAuditor(User submittedByAuditor) { this.submittedByAuditor = submittedByAuditor; }
     public User getAssignedBy() { return assignedBy; }
     public void setAssignedBy(User assignedBy) { this.assignedBy = assignedBy; }
+    public BudgetYear getBudgetYear() {
+        return budgetYear;
+    }
+
+    public void setBudgetYear(BudgetYear budgetYear) {
+        this.budgetYear = budgetYear;
+    }
 }

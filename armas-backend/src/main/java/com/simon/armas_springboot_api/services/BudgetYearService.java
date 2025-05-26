@@ -10,29 +10,25 @@ import java.util.Optional;
 
 @Service
 public class BudgetYearService {
-    private final BudgetYearRepository budgetYearRepository;
-
-    @Autowired
-    public BudgetYearService(BudgetYearRepository budgetYearRepository) {
-        this.budgetYearRepository = budgetYearRepository;
-    }
+   @Autowired
+    private BudgetYearRepository budgetYearRepository;
 
     public List<BudgetYear> getAllBudgetYears() {
         return budgetYearRepository.findAll();
     }
 
     public BudgetYear getBudgetYearById(Long id) {
-        Optional<BudgetYear> budgetYear = budgetYearRepository.findById(id);
-        return budgetYear.orElseThrow(() -> new IllegalArgumentException("Budget year with ID " + id + " not found"));
+        return budgetYearRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Budget Year not found: " + id));
     }
 
-    public BudgetYear save(BudgetYear budget) {
-        return budgetYearRepository.save(budget);
+    public BudgetYear save(BudgetYear budgetYear) {
+        return budgetYearRepository.save(budgetYear);
     }
 
     public void deleteBudgetYear(Long id) {
         if (!budgetYearRepository.existsById(id)) {
-            throw new IllegalArgumentException("Budget year with ID " + id + " not found");
+            throw new IllegalArgumentException("Budget Year not found: " + id);
         }
         budgetYearRepository.deleteById(id);
     }
