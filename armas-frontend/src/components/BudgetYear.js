@@ -23,7 +23,7 @@ export default function BudgetYear() {
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState('success');
     const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
-    const [openAddEdit, setOpenAddEdit] = useState(false);
+    const [openAddEdit, setOpenAddEdit] = useState(true);
     const [openDetails, setOpenDetails] = useState(false);
     const [currentBudgetYear, setCurrentBudgetYear] = useState({
         id: null,
@@ -36,8 +36,8 @@ export default function BudgetYear() {
         setLoading(true);
         const fetchData = async () => {
             try {
-                const response = await axiosInstance.get('/budgetyears');
-                console.log("Budget Years fetched:", response.data);
+                const response = await axiosInstance.get('/budgetyears/');
+                console.log("Budget Years response data:", response.data);
                 setBudgetYears(Array.isArray(response.data) ? response.data : []);
                 setLoading(false);
             } catch (error) {
@@ -77,24 +77,38 @@ export default function BudgetYear() {
     const handleOpenAddEdit = () => { setFormMode('new'); clearForm(); setOpenAddEdit(true); };
     const handleCloseAddEdit = () => { setOpenAddEdit(false); };
     const handleCloseDetails = () => { setOpenDetails(false); };
-    const handleOpenEdit = (budgetYear) => { setCurrentBudgetYear(budgetYear); setFormMode('edit'); setOpenAddEdit(true); };
-    const handleOpenDetails = (budgetYear) => { setCurrentBudgetYear(budgetYear); setOpenDetails(true); };
-    const handleChangeAdd = (e) => { setCurrentBudgetYear({ ...currentBudgetYear, [e.target.id]: e.target.value }); };
+    const handleOpenEdit = (budgetYear) => { 
+        console.log("Opening edit for budget year:", budgetYear);
+        setCurrentBudgetYear(budgetYear); 
+        setFormMode('edit'); 
+        setOpenAddEdit(true); 
+    };
+    const handleOpenDetails = (budgetYear) => { 
+        console.log("Opening details for budget year:", budgetYear);
+        setCurrentBudgetYear(budgetYear); 
+        setOpenDetails(true); 
+    };
+    const handleChangeAdd = (e) => { 
+        console.log("Form input changed:", e.target.id, e.target.value);
+        setCurrentBudgetYear({ ...currentBudgetYear, [e.target.id]: e.target.value }); 
+    };
 
     const handleAddBudgetYear = async () => {
         try {
             console.log("Adding budget year with payload:", { fiscal_year: currentBudgetYear.fiscal_year });
-            const response = await axiosInstance.post('/budgetyears', { fiscal_year: currentBudgetYear.fiscal_year });
-            setBudgetYears(prev => [...prev, response.data]);
+            const response = await axiosInstance.post('/budgetyears/', { fiscal_year: currentBudgetYear.fiscal_year });
+            console.log("Add response data:", response.data);
+            const fetchResponse = await axiosInstance.get('/budgetyears/');
+            console.log("Refetched budget years:", fetchResponse.data);
+            setBudgetYears(Array.isArray(fetchResponse.data) ? fetchResponse.data : []);
             setSnackbarMessage('Budget Year added successfully!');
             setSnackbarSeverity('success');
             setSnackbarOpen(true);
             clearForm();
             handleCloseAddEdit();
         } catch (error) {
-            const msg = error.response?.status === 400 ? error.response.data :
-                        error.response?.data || 'Error adding budget year';
-            console.error('Add error:', error.response);
+            const msg = error.response?.data?.message || error.response?.data || 'Error adding budget year';
+            console.error('Add error:', error.response || error);
             setSnackbarMessage(msg);
             setSnackbarSeverity('error');
             setSnackbarOpen(true);
@@ -105,6 +119,7 @@ export default function BudgetYear() {
         try {
             console.log("Updating budget year with payload:", { fiscal_year: currentBudgetYear.fiscal_year });
             const response = await axiosInstance.put(`/budgetyears/${currentBudgetYear.id}`, { fiscal_year: currentBudgetYear.fiscal_year });
+            console.log("Update response data:", response.data);
             setBudgetYears(prev => prev.map(year => year.id === currentBudgetYear.id ? response.data : year));
             setSnackbarMessage('Budget Year updated successfully!');
             setSnackbarSeverity('success');
@@ -150,8 +165,6 @@ export default function BudgetYear() {
                                         <Table sx={{ '& td': { fontSize: '1rem' }, '& th': { fontWeight: 'bold', fontSize: '1rem', backgroundColor: '#f5f5f5' }, '& tr:nth-of-type(odd)': { backgroundColor: '#f9f9f9' } }}>
                                             <TableHead>
                                                 <TableRow>
-                                                    {/* <TableCell>#</TableCell>
-                                                    <TableCell>ID</TableCell> */}
                                                     <TableCell>Fiscal Year</TableCell>
                                                     <TableCell></TableCell>
                                                 </TableRow>
@@ -159,9 +172,7 @@ export default function BudgetYear() {
                                             <TableBody>
                                                 {filteredBudgetYears.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((year, index) => (
                                                     <TableRow key={year.id}>
-                                                        {/* <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                                                        <TableCell>{year.id}</TableCell> */}
-                                                        <TableCell>{year.fiscal_year}</TableCell>
+                                                        <TableCell>{year.fiscal_year || 'N/A'}</TableCell>
                                                         <TableCell>
                                                             <Box display="flex" justifyContent="flex-end">
                                                                 <Button variant="contained" color="success" size="small" startIcon={<VisibilityIcon />} onClick={() => handleOpenDetails(year)} style={{ marginRight: '8px' }}>Details</Button>
@@ -206,7 +217,7 @@ export default function BudgetYear() {
                     <CForm className="row g-3">
                         <CCol xs={12}>
                             <CFormLabel htmlFor="fiscal_year">Fiscal Year</CFormLabel>
-                            <CFormInput id="fiscal_year" value={currentBudgetYear.fiscal_year} onChange={handleChangeAdd} placeholder="Enter fiscal year" />
+                            <CFormInput id="fiscal_year" value={currentBudgetYear.fiscal_year || ''} onChange={handleChangeAdd} placeholder="Enter fiscal year" />
                         </CCol>
                     </CForm>
                 </DialogContent>
@@ -230,7 +241,7 @@ export default function BudgetYear() {
                 <DialogContent>
                     <CForm className="row g-3">
                         <CCol md={6}><CFormLabel>ID</CFormLabel><CFormInput value={currentBudgetYear.id || ''} readOnly /></CCol>
-                        <CCol md={6}><CFormLabel>Fiscal Year</CFormLabel><CFormInput value={currentBudgetYear.fiscal_year} readOnly /></CCol>
+                        <CCol md={6}><CFormLabel>Fiscal Year</CFormLabel><CFormInput value={currentBudgetYear.fiscal_year || ''} readOnly /></CCol>
                     </CForm>
                 </DialogContent>
                 <hr />

@@ -2,6 +2,7 @@ package com.simon.armas_springboot_api.controllers;
 
 import com.simon.armas_springboot_api.models.BudgetYear;
 import com.simon.armas_springboot_api.services.BudgetYearService;
+import com.simon.armas_springboot_api.dto.BudgetYearDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,38 +27,44 @@ public class BudgetYearController {
         this.budgetYearService = budgetYearService;
     }
 
-    @GetMapping
-    public ResponseEntity<List<BudgetYear>> getAllBudgetYears() {
-        List<BudgetYear> budgetYears = budgetYearService.getAllBudgetYears();
+    @GetMapping("/")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SENIOR_AUDITOR', 'APPROVER', 'ARCHIVER')")
+    public ResponseEntity<List<BudgetYearDTO>> getBudgetYears() {
+        System.out.println("Received GET request for /budgetyears/");
+        List<BudgetYearDTO> budgetYears = budgetYearService.getAllBudgetYears();
         return ResponseEntity.ok(budgetYears);
+    }
+
+    @PostMapping("/")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<BudgetYearDTO> createBudgetYear(@RequestBody BudgetYearDTO budgetYearDTO) {
+        System.out.println("Received POST request for /budgetyears/ with payload: " + budgetYearDTO);
+        BudgetYearDTO saved = budgetYearService.save(budgetYearDTO);
+        return ResponseEntity.ok(saved);
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SENIOR_AUDITOR', 'APPROVER', 'ARCHIVER')")
-    public ResponseEntity<BudgetYear> getBudgetYearById(@PathVariable Long id) {
-        BudgetYear budgetYear = budgetYearService.getBudgetYearById(id);
+    public ResponseEntity<BudgetYearDTO> getBudgetYearById(@PathVariable Long id) {
+        System.out.println("Received GET request for /budgetyears/" + id);
+        BudgetYearDTO budgetYear = budgetYearService.getBudgetYearById(id);
         return ResponseEntity.ok(budgetYear);
     }
 
-    @PostMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<BudgetYear> createBudgetYear(@RequestBody BudgetYear budgetYear) {
-        BudgetYear savedBudgetYear = budgetYearService.save(budgetYear);
-        return ResponseEntity.ok(savedBudgetYear);
-    }
-
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<BudgetYear> updateBudgetYear(@PathVariable Long id, @RequestBody BudgetYear budgetYear) {
-        BudgetYear existing = budgetYearService.getBudgetYearById(id);
-        existing.setFiscalYear(budgetYear.getFiscalYear()); // Fixed: Use setFiscalYear and getFiscalYear
-        BudgetYear updatedBudgetYear = budgetYearService.save(existing);
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<BudgetYearDTO> updateBudgetYear(@PathVariable Long id, @RequestBody BudgetYearDTO budgetYearDTO) {
+        System.out.println("Received PUT request for /budgetyears/" + id + " with payload: " + budgetYearDTO);
+        BudgetYearDTO existing = budgetYearService.getBudgetYearById(id);
+        existing.setFiscalYear(budgetYearDTO.getFiscalYear());
+        BudgetYearDTO updatedBudgetYear = budgetYearService.save(existing);
         return ResponseEntity.ok(updatedBudgetYear);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteBudgetYear(@PathVariable Long id) {
+        System.out.println("Received DELETE request for /budgetyears/" + id);
         budgetYearService.deleteBudgetYear(id);
         return ResponseEntity.noContent().build();
     }
