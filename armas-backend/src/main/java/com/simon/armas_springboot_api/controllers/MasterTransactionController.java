@@ -65,39 +65,74 @@ public class MasterTransactionController {
         return ResponseEntity.ok(transaction);
     }
 
-    @GetMapping("/download/{id}/{type}")
-    @PreAuthorize("hasAnyRole('APPROVER', 'SENIOR_AUDITOR', 'ARCHIVER', 'USER')")
-    public ResponseEntity<Resource> downloadFile(@PathVariable Integer id, @PathVariable String type)
-            throws IOException {
-        MasterTransaction transaction = masterTransactionRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + id));
+    // In MasterTransactionController.java
+@GetMapping("/download/{id}/{type}")
+@PreAuthorize("hasAnyRole('APPROVER', 'SENIOR_AUDITOR', 'ARCHIVER', 'USER')")
+public ResponseEntity<Resource> downloadFile(
+        @PathVariable Integer id,
+        @PathVariable String type,
+        Principal principal) throws IOException {
+    MasterTransaction transaction = masterTransactionRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + id));
 
-        String filePath;
-        String fileName;
-        if ("original".equals(type)) {
-            filePath = transaction.getFilepath();
-            fileName = transaction.getDocname();
-        } else if ("supporting".equals(type)) {
-            filePath = transaction.getSupportingDocumentPath();
-            fileName = transaction.getSupportingDocname();
-        } else {
-            return ResponseEntity.badRequest().build();
+    // Restrict letter download to the original uploader (USER)
+    if ("letter".equals(type)) {
+        User currentUser = userRepository.findByUsername(principal.getName());
+        if (currentUser == null || !currentUser.getId().equals(transaction.getUser().getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
+    }
 
-        if (filePath == null || fileName == null || !Files.exists(Paths.get(filePath))) {
-            return ResponseEntity.notFound().build();
-        }
+    String filePath;
+    String fileName;
+    if ("original".equals(type)) {
+        filePath = transaction.getFilepath();
+        fileName = transaction.getDocname();
+    } else if ("supporting".equals(type)) {
+        filePath = transaction.getSupportingDocumentPath();
+        fileName = transaction.getSupportingDocname();
+    } else if ("letter".equals(type)) {
+        filePath = transaction.getLetterPath();
+        fileName = transaction.getLetterDocname();
+    } else {
+        return ResponseEntity.badRequest().build();
+    }
 
-        Resource resource = new UrlResource(Paths.get(filePath).toUri());
-        String contentType = Files.probeContentType(Paths.get(filePath));
-        if (contentType == null) {
-            contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
-        }
+    if (filePath == null || fileName == null || !Files.exists(Paths.get(filePath))) {
+        return ResponseEntity.notFound().build();
+    }
 
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(contentType))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
-                .body(resource);
+    Resource resource = new UrlResource(Paths.get(filePath).toUri());
+    String contentType = Files.probeContentType(Paths.get(filePath));
+    if (contentType == null) {
+        contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+    }
+
+    return ResponseEntity.ok()
+            .contentType(MediaType.parseMediaType(contentType))
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+            .body(resource);
+}
+ @GetMapping("/my-reports")
+@PreAuthorize("hasRole('USER')")
+public ResponseEntity<List<MasterTransaction>> getMyReports(Principal principal) {
+    User user = userRepository.findByUsername(principal.getName());
+    if (user == null) {
+        throw new IllegalStateException("User not found: " + principal.getName());
+    }
+    List<MasterTransaction> reports = masterTransactionRepository.findByUserIdWithLetters(user.getId());
+    System.out.println("Fetched reports for user " + principal.getName() + ": " + reports.size());
+    reports.forEach(report -> System.out.println("Report ID=" + report.getId() + ", LetterDocname=" + report.getLetterDocname()));
+    return ResponseEntity.ok(reports);
+}
+    @PostMapping("/upload-letter/{transactionId}")
+    @PreAuthorize("hasRole('ARCHIVER')")
+    public ResponseEntity<MasterTransaction> uploadLetter(
+            @PathVariable Integer transactionId,
+            @RequestParam("letter") MultipartFile letter,
+            Principal principal) throws IOException {
+        MasterTransaction transaction = masterTransactionService.uploadLetter(transactionId, letter, principal.getName());
+        return ResponseEntity.ok(transaction);
     }
 
     @GetMapping("/sent-reports")
@@ -211,11 +246,20 @@ public class MasterTransactionController {
         return ResponseEntity.ok(transaction);
     }
 
-    @GetMapping("/rejected-reports")
-    @PreAuthorize("hasAnyRole('ARCHIVER', 'SENIOR_AUDITOR', 'APPROVER')")
-    public ResponseEntity<List<MasterTransaction>> getRejectedReports() {
-        return ResponseEntity.ok(masterTransactionRepository.findByReportStatus("Rejected"));
-    }
+@GetMapping("/rejected-reports")
+@PreAuthorize("hasAnyRole('ARCHIVER', 'SENIOR_AUDITOR', 'APPROVER')")
+public ResponseEntity<List<MasterTransaction>> getRejectedReports() {
+    List<MasterTransaction> reports = masterTransactionRepository.findByReportStatus("Rejected");
+    System.out.println("Rejected reports fetched: " + reports.size());
+    reports.forEach(report -> {
+        System.out.println("Report ID=" + report.getId() +
+                ", Orgname=" + (report.getOrganization() != null ? report.getOrganization().getOrgname() : "null") +
+                ", FiscalYear=" + (report.getBudgetYear() != null ? report.getBudgetYear().getFiscalYear() : "null") +
+                ", ReportType=" + (report.getTransactiondocument() != null ? report.getTransactiondocument().getReportype() : "null") +
+                ", ResponseNeeded=" + report.getResponse_needed());
+    });
+    return ResponseEntity.ok(reports);
+}
 
     @GetMapping("/tasks")
     @PreAuthorize("hasAnyRole('ARCHIVER', 'SENIOR_AUDITOR', 'APPROVER')")
@@ -266,4 +310,6 @@ public class MasterTransactionController {
         BudgetYear saved = budgetYearRepository.save(budgetYear);
         return ResponseEntity.ok(saved);
     }
+
+   
 }

@@ -110,15 +110,15 @@ const RejectedReports = () => {
     setPage(0);
   };
 
-  const filteredReports = reports.filter(report =>
+ const filteredReports = reports.filter(report =>
     (report.organization?.orgname || '').toLowerCase().includes(filterText.toLowerCase()) ||
     (report.transactiondocument?.reportype || '').toLowerCase().includes(filterText.toLowerCase()) ||
-    (report.fiscal_year || report.fiscalYear || '').toString().toLowerCase().includes(filterText.toLowerCase()) ||
+    (report.fiscalYear || '').toString().toLowerCase().includes(filterText.toLowerCase()) ||
     (report.submittedByAuditorUsername || '').toLowerCase().includes(filterText.toLowerCase()) ||
     (report.responseNeeded || '').toLowerCase().includes(filterText.toLowerCase()) ||
     (report.reportstatus || '').toLowerCase().includes(filterText.toLowerCase()) ||
     (report.remarks || '').toLowerCase().includes(filterText.toLowerCase())
-  );
+);
 
   return (
     <div className="container mt-5">
@@ -278,81 +278,82 @@ const RejectedReports = () => {
       )}
 
       {/* Details Modal */}
-      {showDetailsModal && selectedReport && (
-        <Dialog open={showDetailsModal} onClose={() => setShowDetailsModal(false)} TransitionComponent={Fade} TransitionProps={{ timeout: 800 }} maxWidth="md">
-          <DialogTitle>Report Details</DialogTitle>
-          <hr />
-          <DialogContent>
+      {/* Details Modal */}
+{showDetailsModal && selectedReport && (
+    <Dialog open={showDetailsModal} onClose={() => setShowDetailsModal(false)} TransitionComponent={Fade} TransitionProps={{ timeout: 800 }} maxWidth="md">
+        <DialogTitle>Report Details</DialogTitle>
+        <hr />
+        <DialogContent>
             <CForm className="row g-3">
-              <CCol md={6}>
-                <CFormLabel>Date</CFormLabel>
-                <CFormInput value={selectedReport.createdDate ? new Date(selectedReport.createdDate).toLocaleDateString() : 'N/A'} readOnly />
-              </CCol>
-              <CCol md={6}>
-                <CFormLabel>Organization</CFormLabel>
-                <CFormInput value={selectedReport.organization?.orgname || 'N/A'} readOnly />
-              </CCol>
-              <CCol md={6}>
-                <CFormLabel>Budget Year</CFormLabel>
-                <CFormInput value={selectedReport.fiscal_year || selectedReport.fiscalYear || 'N/A'} readOnly />
-              </CCol>
-              <CCol md={6}>
-                <CFormLabel>Report Type</CFormLabel>
-                <CFormInput value={selectedReport.transactiondocument?.reportype || 'N/A'} readOnly />
-              </CCol>
-              <CCol md={6}>
-                <CFormLabel>Auditor</CFormLabel>
-                <CFormInput value={selectedReport.submittedByAuditorUsername || 'N/A'} readOnly />
-              </CCol>
-              <CCol md={6}>
-                <CFormLabel>Audit Findings</CFormLabel>
-                <CFormInput value={selectedReport.remarks || 'N/A'} readOnly />
-              </CCol>
-              <CCol md={6}>
-                <CFormLabel>Rejection Reason</CFormLabel>
-                <CFormInput value={selectedReport.reason_of_rejection || 'N/A'} readOnly />
-              </CCol>
-              <CCol md={6}>
-                <CFormLabel>Response Needed</CFormLabel>
-                <CFormInput value={selectedReport.responseNeeded || 'N/A'} readOnly />
-              </CCol>
-              <CCol md={6}>
-                <CFormLabel>Status</CFormLabel>
-                <CFormInput value={selectedReport.reportstatus || 'N/A'} readOnly />
-              </CCol>
-              <CCol xs={12}>
-                <CFormLabel>Documents</CFormLabel>
-                <div>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    size="small"
-                    sx={{ mr: 1 }}
-                    onClick={() => handleDownload(selectedReport.id, selectedReport.docname, selectedReport.supportingDocname, 'original')}
-                  >
-                    Report
-                  </Button>
-                  {selectedReport.supportingDocumentPath && (
-                    <Button
-                      variant="contained"
-                      color="info"
-                      size="small"
-                      sx={{ mr: 1 }}
-                      onClick={() => handleDownload(selectedReport.id, selectedReport.supportingDocname, selectedReport.supportingDocname, 'supporting')}
-                    >
-                      Findings
-                    </Button>
-                  )}
-                </div>
-              </CCol>
+                <CCol md={6}>
+                    <CFormLabel>Date</CFormLabel>
+                    <CFormInput value={selectedReport.createdDate ? new Date(selectedReport.createdDate).toLocaleDateString() : 'N/A'} readOnly />
+                </CCol>
+                <CCol md={6}>
+                    <CFormLabel>Organization</CFormLabel>
+                    <CFormInput value={selectedReport.organization?.orgname || 'N/A'} readOnly />
+                </CCol>
+                <CCol md={6}>
+                    <CFormLabel>Budget Year</CFormLabel>
+                    <CFormInput value={selectedReport.fiscalYear || 'N/A'} readOnly /> {/* Use fiscalYear */}
+                </CCol>
+                <CCol md={6}>
+                    <CFormLabel>Report Type</CFormLabel>
+                    <CFormInput value={selectedReport.transactiondocument?.reportype || 'N/A'} readOnly />
+                </CCol>
+                <CCol md={6}>
+                    <CFormLabel>Auditor</CFormLabel>
+                    <CFormInput value={selectedReport.assignedAuditorUsername || 'N/A'} readOnly />
+                </CCol>
+                <CCol md={6}>
+                    <CFormLabel>Audit Findings</CFormLabel>
+                    <CFormInput value={selectedReport.remarks || 'N/A'} readOnly />
+                </CCol>
+                <CCol md={6}>
+                    <CFormLabel>Rejection Reason</CFormLabel>
+                    <CFormInput value={selectedReport.reasonOfRejection || 'N/A'} readOnly /> {/* Use reasonOfRejection */}
+                </CCol>
+                <CCol md={6}>
+                    <CFormLabel>Response Needed</CFormLabel>
+                    <CFormInput value={selectedReport.responseNeeded || 'N/A'} readOnly />
+                </CCol>
+                <CCol md={6}>
+                    <CFormLabel>Status</CFormLabel>
+                    <CFormInput value={selectedReport.reportstatus || 'N/A'} readOnly />
+                </CCol>
+                <CCol xs={12}>
+                    <CFormLabel>Documents</CFormLabel>
+                    <div>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            size="small"
+                            sx={{ mr: 1 }}
+                            onClick={() => handleDownload(selectedReport.id, selectedReport.docname, selectedReport.supportingDocname, 'original')}
+                        >
+                            Report
+                        </Button>
+                        {selectedReport.supportingDocumentPath && (
+                            <Button
+                                variant="contained"
+                                color="info"
+                                size="small"
+                                sx={{ mr: 1 }}
+                                onClick={() => handleDownload(selectedReport.id, selectedReport.supportingDocname, selectedReport.supportingDocname, 'supporting')}
+                            >
+                                Findings
+                            </Button>
+                        )}
+                    </div>
+                </CCol>
             </CForm>
-          </DialogContent>
-          <hr />
-          <DialogActions>
+        </DialogContent>
+        <hr />
+        <DialogActions>
             <Button onClick={() => setShowDetailsModal(false)} color="primary">Close</Button>
-          </DialogActions>
-        </Dialog>
-      )}
+        </DialogActions>
+    </Dialog>
+)}
     </div>
   );
 };

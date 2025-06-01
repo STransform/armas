@@ -1,14 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { CForm, CFormLabel, CFormInput, CCol } from '@coreui/react';
 import { Table, TableBody, TableCell, TableHead, TableRow, Button, Dialog, DialogTitle, DialogContent, DialogActions, Fade, Alert, TextField, TablePagination, TableContainer, Box } from '@mui/material';
-import { getApprovedReports, downloadFile } from '../file/upload_download';
+import { getApprovedReports, downloadFile, uploadLetter } from '../file/upload_download';
+import { useAuth } from '../views/pages/AuthProvider';
 
 const ApprovedReports = () => {
+  const { roles } = useAuth();
+  const isArchiver = roles.includes('ARCHIVER');
   const [reports, setReports] = useState([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showLetterUploadModal, setShowLetterUploadModal] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
+  const [letterFile, setLetterFile] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [filterText, setFilterText] = useState('');
@@ -18,16 +23,6 @@ const ApprovedReports = () => {
       try {
         const data = await getApprovedReports();
         console.log('Fetched approved reports:', JSON.stringify(data, null, 2));
-        data.forEach(report => {
-          console.log(
-            `Report ID=${report.id}: ` +
-            `CreatedBy=${report.createdBy}, ` +
-            `AssignedByUsername=${report.assignedByUsername}, ` +
-            `ApprovedBy=${report.lastModifiedBy}, ` +
-            `Docname=${report.docname}, ` +
-            `ResponseNeeded=${report.responseNeeded}`
-          );
-        });
         setReports(data);
         if (data.length === 0) {
           setError('No approved reports available.');
@@ -39,22 +34,22 @@ const ApprovedReports = () => {
     fetchReports();
   }, []);
 
-  const handleDownload = async (id, supportingDocname, type = 'supporting') => {
+  const handleDownload = async (id, filename, type = 'supporting') => {
     try {
-      console.log(`Downloading file: id=${id}, type=${type}, supportingDocname=${supportingDocname}`);
+      console.log(`Downloading file: id=${id}, type=${type}, filename=${filename}`);
       const response = await downloadFile(id, type);
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', supportingDocname || 'file');
+      link.setAttribute('download', filename || 'file');
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      setSuccess('Approver attachment downloaded successfully');
+      setSuccess(`Successfully downloaded ${type === 'letter' ? 'letter' : 'approver attachment'}`);
     } catch (err) {
       const errorMessage = err.response?.status === 404
-        ? 'Approver attachment not found'
-        : `Failed to download Approver attachment: ${err.message}`;
+        ? `${type === 'letter' ? 'Letter' : 'Approver attachment'} not found`
+        : `Failed to download: ${err.message}`;
       setError(errorMessage);
       console.error('Download error:', err);
     }
@@ -64,6 +59,30 @@ const ApprovedReports = () => {
     console.log('Selected report:', JSON.stringify(report, null, 2));
     setSelectedReport(report);
     setShowDetailsModal(true);
+  };
+
+  const handleLetterUpload = () => {
+    setLetterFile(null);
+    setError('');
+    setShowLetterUploadModal(true);
+  };
+
+  const handleLetterSubmit = async () => {
+    if (!letterFile) {
+      setError('Please select a file');
+      return;
+    }
+    try {
+      await uploadLetter(selectedReport.id, letterFile);
+      setSuccess('Letter uploaded successfully');
+      setShowLetterUploadModal(false);
+      setLetterFile(null);
+      // Refresh reports to reflect the uploaded letter
+      const data = await getApprovedReports();
+      setReports(data);
+    } catch (err) {
+      setError(`Failed to upload letter: ${err.message}`);
+    }
   };
 
   const handleChangePage = (event, newPage) => {
@@ -122,7 +141,6 @@ const ApprovedReports = () => {
             <Table sx={{ '& td': { fontSize: '1rem' }, '& th': { fontWeight: 'bold', fontSize: '1rem', backgroundColor: '#f5f5f5' }, '& tr:nth-of-type(odd)': { backgroundColor: '#f9f9f9' } }}>
               <TableHead>
                 <TableRow>
-                  {/* <TableCell>#</TableCell> */}
                   <TableCell>Date</TableCell>
                   <TableCell>Organization</TableCell>
                   <TableCell>Budget Year</TableCell>
@@ -134,9 +152,8 @@ const ApprovedReports = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredReports.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((report, index) => (
+                {filteredReports.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((report) => (
                   <TableRow key={report.id || Math.random()}>
-                    {/* <TableCell>{page * rowsPerPage + index + 1}</TableCell> */}
                     <TableCell>{report.createdDate ? new Date(report.createdDate).toLocaleDateString() : 'N/A'}</TableCell>
                     <TableCell>{report.orgname || 'N/A'}</TableCell>
                     <TableCell>{report.fiscalYear || 'N/A'}</TableCell>
@@ -220,7 +237,7 @@ const ApprovedReports = () => {
                 <CFormLabel>Archiver</CFormLabel>
                 <CFormInput value={selectedReport.assignedByUsername || 'N/A'} readOnly />
               </CCol>
-              <CCol xs={12}>
+              <CCol xs={6}>
                 <CFormLabel>Documents</CFormLabel>
                 <div>
                   {selectedReport.id && selectedReport.supportingDocumentPath ? (
@@ -238,11 +255,65 @@ const ApprovedReports = () => {
                   )}
                 </div>
               </CCol>
+              <CCol xs={6}>
+                <CFormLabel>Letter</CFormLabel>
+                <div>
+                  {isArchiver && (
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      size="small"
+                      sx={{ mr: 1 }}
+                      onClick={handleLetterUpload}
+                    >
+                      Send Letter
+                    </Button>
+                  )}
+                  {selectedReport.letterDocname ? (
+                    <Button
+                      variant="contained"
+                      color="info"
+                      size="small"
+                      sx={{ mr: 1 }}
+                      onClick={() => handleDownload(selectedReport.id, selectedReport.letterDocname, 'letter')}
+                    >
+                      Download Letter
+                    </Button>
+                  ) : (
+                    <span className="text-muted">No letter uploaded</span>
+                  )}
+                </div>
+              </CCol>
             </CForm>
           </DialogContent>
           <hr />
           <DialogActions>
             <Button onClick={() => setShowDetailsModal(false)} color="primary">Close</Button>
+          </DialogActions>
+        </Dialog>
+      )}
+
+      {/* Letter Upload Modal */}
+      {showLetterUploadModal && (
+        <Dialog open={showLetterUploadModal} onClose={() => setShowLetterUploadModal(false)} TransitionComponent={Fade} TransitionProps={{ timeout: 800 }} maxWidth="md">
+          <DialogTitle>Upload Letter</DialogTitle>
+          <hr />
+          <DialogContent>
+            <CForm className="row g-3">
+              <CCol xs={12}>
+                <CFormLabel htmlFor="letterFile">Choose Letter File</CFormLabel>
+                <CFormInput
+                  type="file"
+                  id="letterFile"
+                  onChange={(e) => setLetterFile(e.target.files[0])}
+                />
+              </CCol>
+            </CForm>
+          </DialogContent>
+          <hr />
+          <DialogActions>
+            <Button onClick={() => setShowLetterUploadModal(false)} color="primary">Cancel</Button>
+            <Button onClick={handleLetterSubmit} color="primary" variant="contained">Submit</Button>
           </DialogActions>
         </Dialog>
       )}

@@ -23,7 +23,8 @@ const ApprovedReports = React.lazy(() => import('./components/ApprovedReports'))
 const RejectedReports = React.lazy(() => import('./components/RejectedReports'));
 const UnderReviewReports = React.lazy(() => import('./components/UnderReviewReports'));
 const CorrectedReports = React.lazy(() => import('./components/CorrectedReports'));
-
+const FileHistory = React.lazy(() => import('./components/FileHistory'));
+const LetterDownload = React.lazy(() => import('./components/LetterDownload'));
 // Base
 const Accordion = React.lazy(() => import('./views/base/accordion/Accordion'))
 const Breadcrumbs = React.lazy(() => import('./views/base/breadcrumbs/Breadcrumbs'))
@@ -64,6 +65,8 @@ const routes = [
   { path: '/transactions/rejected-reports', name: 'Rejected Reports', element: RejectedReports },
   { path: '/transactions/under-review-reports', name: 'Under Review Reports', element: UnderReviewReports },
   { path: '/transactions/corrected-reports', name: 'Corrected Reports', element: CorrectedReports },
+  { path: '/file-history', name: 'File History', element: FileHistory },
+   { path: '/buttons/letter-download', name: 'File Download', element: LetterDownload },
   { path: '/dashboard', name: 'Dashboard', element: Dashboard },
   { path: '/theme', name: 'Theme', element: Colors, exact: true },
   { path: '/theme/colors', name: 'Colors', element: Colors },

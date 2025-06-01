@@ -39,6 +39,11 @@ public class MasterTransaction extends Auditable<String> {
     private String filepath;
     private String supportingDocumentPath;
     private String supportingDocname;
+    @Column(name = "letter_path")
+    private String letterPath; // Path to the letter uploaded by ARCHIVER
+
+    @Column(name = "letter_docname")
+    private String letterDocname; // Name of the letter file
     @Transient
     private String current_orgname;
     @Transient
@@ -123,4 +128,8 @@ public class MasterTransaction extends Auditable<String> {
     public void setBudgetYear(BudgetYear budgetYear) {
         this.budgetYear = budgetYear;
     }
+    public String getLetterPath() { return letterPath; }
+    public void setLetterPath(String letterPath) { this.letterPath = letterPath; }
+    public String getLetterDocname() { return letterDocname; }
+    public void setLetterDocname(String letterDocname) { this.letterDocname = letterDocname; }
 }
