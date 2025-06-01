@@ -28,6 +28,21 @@ export const uploadFile = async (file, reportcategory, budgetYearId, transaction
         throw new Error(errorMessage);
     }
 };
+// In upload_download.js
+export const uploadLetter = async (transactionId, letter) => {
+    const formData = new FormData();
+    formData.append('letter', letter);
+    try {
+        const response = await axiosInstance.post(`/transactions/upload-letter/${transactionId}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        console.log('Letter upload response:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('Error uploading letter:', error.message, error.response?.status, error.response?.data);
+        throw error;
+    }
+};
 export const getBudgetYears = async () => {
     try {
         const response = await axiosInstance.get('/transactions/budget-years');
@@ -192,6 +207,7 @@ export const getApprovedReports = async () => {
                 docname: report.docname,
                 supportingDocumentPath: report.supportingDocumentPath,
                 supportingDocname: report.supportingDocname,
+                letterDocname: report.letterDocname || null, 
                 submittedByAuditorUsername: report.submittedByAuditorUsername || null,
                 createdBy: report.createdBy || null,
                 assignedByUsername: report.assignedByUsername || null,
@@ -230,19 +246,19 @@ export const getRejectedReports = async () => {
         const response = await axiosInstance.get('/transactions/rejected-reports');
         console.log('Rejected reports raw response:', JSON.stringify(response.data, null, 2));
         const mappedReports = response.data.map(report => {
-            console.log('Report ID=' + report.id + ' fiscal_year:', report.fiscal_year || report.fiscalYear);
+            console.log('Report ID=' + report.id + ' fiscalYear:', report.budgetYear?.fiscalYear || null);
             const mappedReport = {
                 id: report.id,
                 createdDate: report.createdDate,
                 reportstatus: report.reportstatus,
-                organization: { orgname: report.orgname || null },
-                fiscal_year: report.fiscal_year || report.fiscalYear || null,
-                transactiondocument: { reportype: report.reportype || null },
+                organization: { orgname: report.organization?.orgname || null },
+                fiscalYear: report.budgetYear?.fiscalYear || null, // Use budgetYear.fiscalYear
+                transactiondocument: { reportype: report.transactiondocument?.reportype || null },
                 docname: report.docname,
                 supportingDocumentPath: report.supportingDocumentPath,
                 supportingDocname: report.supportingDocname,
                 remarks: report.remarks || null,
-                responseNeeded: report.responseNeeded || null,
+                responseNeeded: report.response_needed || null, // Use response_needed (snake_case)
                 reasonOfRejection: report.reason_of_rejection || null,
                 submittedByAuditorUsername: report.submittedByAuditorUsername || null
             };

@@ -82,6 +82,12 @@ const Nav = () => {
       to: '/buttons/file-history',
       icon: <CIcon icon={cilCloudUpload} customClassName="nav-icon" />,
     },
+     {
+      component: CNavItem,
+      name: 'Download File',
+      to: '/buttons/letter-download',
+      icon: <CIcon icon={cilCloudUpload} customClassName="nav-icon" />,
+    },
   ];
 
   const adminItems = [
@@ -140,12 +146,12 @@ const Nav = () => {
           to: '/buttons/file-upload',
           icon: <CIcon icon={cilCloudUpload} customClassName="nav-icon" />,
         },
-        {
-          component: CNavItem,
-          name: 'File Download',
-          to: '/buttons/file-download',
-          icon: <CIcon icon={cilCloudDownload} customClassName="nav-icon" />,
-        },
+       {
+        component: CNavItem,
+        name: 'Download File',
+        to: '/buttons/letter-download',
+        icon: <CIcon icon={cilCloudDownload} customClassName="nav-icon" />,
+      }
       ],
     },
   ];

@@ -85,7 +85,7 @@ public class SecurityConfig {
                         .requestMatchers("/transactions/auditor-tasks/**").hasAnyRole("SENIOR_AUDITOR", "APPROVER", "ADMIN")
                         .requestMatchers("/transactions/tasks").permitAll()
                         .requestMatchers("/transactions/approved-reports").hasAnyRole("APPROVER", "ARCHIVER","SENIOR_AUDITOR")
-                        .requestMatchers("/transactions/download/**").hasAnyRole("ARCHIVER", "SENIOR_AUDITOR", "APPROVER")
+                        .requestMatchers("/transactions/download/**").hasAnyRole("ARCHIVER", "SENIOR_AUDITOR", "APPROVER","USER")
                         
                             
 

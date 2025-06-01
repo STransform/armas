@@ -114,7 +114,34 @@ public class MasterTransactionService {
 
         return masterTransactionRepository.save(transaction);
     }
+    
+    @Transactional
+    public MasterTransaction uploadLetter(Integer transactionId, MultipartFile letter, String currentUsername) throws IOException {
+        User archiver = userRepository.findByUsername(currentUsername);
+        if (archiver == null || !archiver.getRoles().stream().anyMatch(r -> "ARCHIVER".equals(r.getDescription()))) {
+            throw new IllegalArgumentException("Unauthorized: Must be an ARCHIVER");
+        }
 
+        MasterTransaction transaction = masterTransactionRepository.findById(transactionId)
+                .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + transactionId));
+
+        if (letter == null || letter.isEmpty()) {
+            throw new IllegalArgumentException("Letter file is required");
+        }
+
+        String letterPath = fileStorageService.storeFile(letter, transaction, new Principal() {
+            @Override
+            public String getName() {
+                return currentUsername;
+            }
+        }, true); // true indicates a supporting/letter file
+
+        transaction.setLetterPath(letterPath);
+        transaction.setLetterDocname(letter.getOriginalFilename());
+        transaction.setLastModifiedBy(currentUsername);
+
+        return masterTransactionRepository.save(transaction);
+    }
 
     public Map<String, Path> getFilePaths(Integer id) {
         MasterTransaction transaction = masterTransactionRepository.findById(id)

@@ -96,9 +96,7 @@ List<MasterTransaction> findRejectedReports();
            "LEFT JOIN FETCH m.assignedBy " +
            "LEFT JOIN FETCH m.submittedByAuditor " +
            "WHERE m.user2.id = :userId AND m.reportstatus IN :statuses")
-    List<MasterTransaction> findApproverTasks(
-            @Param("userId") Long userId,
-            @Param("statuses") List<String> statuses);
+    List<MasterTransaction> findApproverTasks(@Param("userId") Long userId,@Param("statuses") List<String> statuses);
 
 @Query("SELECT m FROM MasterTransaction m " +
        "LEFT JOIN FETCH m.user " +
@@ -162,4 +160,19 @@ List<MasterTransaction> findUnderReviewReports();
     @Query("SELECT m FROM MasterTransaction m LEFT JOIN FETCH m.budgetYear WHERE m.id = :id")
     Optional<MasterTransaction> findByIdWithBudgetYear(@Param("id") Integer id);
     
+    @Query("SELECT m FROM MasterTransaction m " +
+       "LEFT JOIN FETCH m.organization " +
+       "LEFT JOIN FETCH m.budgetYear " +
+       "LEFT JOIN FETCH m.transactiondocument " +
+       "WHERE m.user.id = :userId")
+List<MasterTransaction> findByUserId(@Param("userId") Long userId);
+@Query("SELECT m FROM MasterTransaction m " +
+           "LEFT JOIN FETCH m.user " +
+           "LEFT JOIN FETCH m.organization " +
+           "LEFT JOIN FETCH m.budgetYear " +
+           "LEFT JOIN FETCH m.transactiondocument " +
+           "LEFT JOIN FETCH m.submittedByAuditor " +
+           "LEFT JOIN FETCH m.assignedBy " +
+           "WHERE m.user.id = :userId")
+    List<MasterTransaction> findByUserIdWithLetters(@Param("userId") Long userId);
 }
