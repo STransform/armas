@@ -56,59 +56,55 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
-        return httpSecurity
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/register", "/login").permitAll() // Adjusted to match new mappings
-                        .requestMatchers(HttpMethod.POST, "/users").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/users").permitAll()
-                        .requestMatchers("/roles/**").permitAll()
-                        .requestMatchers("/organizations/**").hasAnyRole("ADMIN", "SENIOR_AUDITOR", "APPROVER")
-                        .requestMatchers("/directorates/**").hasRole("ADMIN")
-                        .requestMatchers("/documents/**").hasRole("ADMIN")
-                        .requestMatchers("/budgetyears/**").hasRole("ADMIN")
-                        .requestMatchers("/budget-years/**").hasAnyRole("ADMIN", "USER", "ARCHIVER", "SENIOR_AUDITOR", "APPROVER")
-                        .requestMatchers("/master-transactions/**").hasRole("ADMIN")
-                        .requestMatchers("/userPrivilegeAssignments/**").hasRole("ADMIN")
-                        .requestMatchers("/buttons/forms/**").hasRole("USER")
-                        .requestMatchers("/buttons/charts/**").hasRole("USER")
-                        .requestMatchers("/transactions/upload").hasAnyRole( "USER", "ADMIN")
-                        .requestMatchers("/transactions/sent-reports").hasAnyRole("ARCHIVER", "SENIOR_AUDITOR", "APPROVER")
-                        .requestMatchers("/transactions/listdocuments").hasAnyRole("ADMIN", "USER", "ARCHIVER", "SENIOR_AUDITOR", "APPROVER")
-                        .requestMatchers("/transactions/users-by-role/**").hasAnyRole("ARCHIVER", "SENIOR_AUDITOR", "APPROVER")
-                        .requestMatchers("/transactions/assign/**").hasRole("ARCHIVER")
-                        .requestMatchers("/transactions/submit-findings/**").hasRole("SENIOR_AUDITOR")
-                        .requestMatchers("/transactions/approve/**").hasRole("APPROVER")
-                        .requestMatchers("/transactions/reject/**").hasRole("APPROVER")
-                        .requestMatchers("/transactions/auditor-tasks/**").hasAnyRole("SENIOR_AUDITOR", "APPROVER", "ADMIN")
-                        .requestMatchers("/transactions/tasks").permitAll()
-                        .requestMatchers("/transactions/approved-reports").hasAnyRole("APPROVER", "ARCHIVER","SENIOR_AUDITOR")
-                        .requestMatchers("/transactions/download/**").hasAnyRole("ARCHIVER", "SENIOR_AUDITOR", "APPROVER","USER")
-                        
-                            
-
-                        
-                        .anyRequest().authenticated()
-                )
-                .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
-                        .authenticationEntryPoint((request, response, authException) -> {
-                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
-                        })
-                )
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .httpBasic(withDefaults())
-                .exceptionHandling(exceptions -> exceptions
-                        .authenticationEntryPoint((request, response, authException) -> {
-                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication required");
-                        })
-                )
-                .build();
-    }
-
+public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
+    return httpSecurity
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .csrf(csrf -> csrf.disable())
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+            .requestMatchers("/register", "/login").permitAll()
+            .requestMatchers(HttpMethod.POST, "/users").permitAll()
+            .requestMatchers(HttpMethod.GET, "/users").permitAll()
+            .requestMatchers("/roles/**").permitAll()
+            .requestMatchers("/organizations/**").hasAnyRole("ADMIN", "SENIOR_AUDITOR", "APPROVER")
+            .requestMatchers("/directorates/**").hasRole("ADMIN")
+            .requestMatchers("/documents/**").hasRole("ADMIN")
+            .requestMatchers("/budgetyears/**").hasRole("ADMIN")
+            .requestMatchers("/budget-years/**").hasAnyRole("ADMIN", "USER", "ARCHIVER", "SENIOR_AUDITOR", "APPROVER")
+            .requestMatchers("/master-transactions/**").hasRole("ADMIN")
+            .requestMatchers("/userPrivilegeAssignments/**").hasRole("ADMIN")
+            .requestMatchers("/buttons/forms/**").hasRole("USER")
+            .requestMatchers("/buttons/charts/**").hasRole("USER")
+            .requestMatchers("/transactions/upload").hasAnyRole("USER", "ADMIN")
+            .requestMatchers("/transactions/sent-reports").hasAnyRole("ARCHIVER", "SENIOR_AUDITOR", "APPROVER")
+            .requestMatchers("/transactions/listdocuments").hasAnyRole("ADMIN", "USER", "ARCHIVER", "SENIOR_AUDITOR", "APPROVER")
+            .requestMatchers("/transactions/users-by-role/**").hasAnyRole("ARCHIVER", "SENIOR_AUDITOR", "APPROVER")
+            .requestMatchers("/transactions/assign/**").hasRole("ARCHIVER")
+            .requestMatchers("/transactions/submit-findings/**").hasRole("SENIOR_AUDITOR")
+            .requestMatchers("/transactions/approve/**").hasRole("APPROVER")
+            .requestMatchers("/transactions/reject/**").hasRole("APPROVER")
+            .requestMatchers("/transactions/auditor-tasks/**").hasAnyRole("SENIOR_AUDITOR", "APPROVER", "ADMIN", "ARCHIVER", "USER")
+            .requestMatchers("/transactions/tasks").permitAll()
+            .requestMatchers("/transactions/approved-reports").hasAnyRole("APPROVER", "ARCHIVER", "SENIOR_AUDITOR")
+            .requestMatchers("/transactions/download/**").hasAnyRole("ARCHIVER", "SENIOR_AUDITOR", "APPROVER", "USER")
+            .requestMatchers("/transactions/dashboard-stats").hasAnyRole("USER", "ADMIN", "SENIOR_AUDITOR", "APPROVER", "ARCHIVER") // Added
+            .anyRequest().authenticated()
+        )
+        .oauth2ResourceServer(oauth2 -> oauth2
+            .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+            .authenticationEntryPoint((request, response, authException) -> {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+            })
+        )
+        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .httpBasic(withDefaults())
+        .exceptionHandling(exceptions -> exceptions
+            .authenticationEntryPoint((request, response, authException) -> {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication required");
+            })
+        )
+        .build();
+}
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
