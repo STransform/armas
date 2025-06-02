@@ -316,3 +316,92 @@ export const getMyTasks = async () => {
         throw error;
     }
 };
+export const getReportNonSenders = async (reportTypeId, budgetYearId) => {
+    try {
+        const response = await axiosInstance.get('/transactions/report-non-senders', {
+            params: { reportTypeId, budgetYearId }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching report non-senders:', error.message);
+        throw error;
+    }
+};
+
+export const getReportsByOrgAndFilters = async (reportype, fiscalYear, orgId) => {
+    try {
+        const response = await axiosInstance.get('/transactions/reports-by-org', {
+            params: { reportype, fiscalYear, orgId }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching reports by org:', error.message);
+        throw error;
+    }
+};
+
+export const getAllOrganizationsWithReports = async () => {
+    try {
+        const response = await axiosInstance.get('/transactions/organizations-with-reports');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching organizations with reports:', error.message);
+        throw error;
+    }
+};
+
+export const getFeedbackNonSenders = async (reportTypeId, budgetYearId) => {
+    try {
+        const response = await axiosInstance.get('/transactions/feedback-non-senders', {
+            params: { reportTypeId, budgetYearId }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching feedback non-senders:', error.message);
+        throw error;
+    }
+};
+
+
+export const getFeedbackSenders = async (reportype, fiscalYear) => {
+    try {
+        const response = await axiosInstance.get('/transactions/feedback-senders', {
+            params: { reportype, fiscalYear }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching feedback senders:', error.message);
+        throw error;
+    }
+};
+export const getOrganizationsWhoSentReports = async () => {
+    try {
+        const response = await axiosInstance.get('/transactions/organizations-sent-reports');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching organizations who sent reports:', error.message);
+        throw error;
+    }
+};
+
+export const getOrganizationsWhoSentFeedback = async () => {
+    try {
+        const response = await axiosInstance.get('/transactions/organizations-sent-feedback');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching feedback senders:', error.message);
+        throw error;
+    }
+};
+
+export const hasOrganizationSentReport = async (organizationId, reportTypeId, budgetYearId) => {
+    try {
+        const response = await axiosInstance.get('/transactions/has-sent-report', {
+            params: { organizationId, reportTypeId, budgetYearId }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error checking if organization sent report:', error.message);
+        throw error;
+    }
+};
