@@ -219,7 +219,7 @@ const Login = () => {
                       </CButton>
                     </CCol>
                     <CCol xs={6} className="text-right">
-                      <Link to="/forgot_password">
+                      <Link to="/login">
                         <CButton color="link" className="px-0" style={{ color: 'white' }}>
                           Forgot password?
                         </CButton>
