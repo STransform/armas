@@ -35,6 +35,9 @@ import java.util.List;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
+//import collection here
+import java.util.Collections;
+
 
 @RestController
 @RequestMapping("/transactions")
@@ -314,13 +317,24 @@ public ResponseEntity<List<MasterTransaction>> getRejectedReports() {
     }
 
     @GetMapping("/report-non-senders")
-    @PreAuthorize("hasAnyRole('SENIOR_AUDITOR', 'APPROVER')")
-    public ResponseEntity<List<Organization>> getReportNonSenders(
-            @RequestParam String reportype,
-            @RequestParam String fiscalYear) {
+@PreAuthorize("hasAnyRole('SENIOR_AUDITOR', 'APPROVER')")
+public ResponseEntity<List<Organization>> getReportNonSenders(
+        @RequestParam String reportype,
+        @RequestParam String fiscalYear) {
+    System.out.println("Received request for report non-senders: reportype=" + reportype + ", fiscalYear=" + fiscalYear);
+    try {
         List<Organization> nonSenders = masterTransactionService.getReportNonSenders(reportype, fiscalYear);
+        System.out.println("Returning " + nonSenders.size() + " non-senders");
         return ResponseEntity.ok(nonSenders);
+    } catch (IllegalArgumentException e) {
+        System.err.println("Validation error: " + e.getMessage());
+        return ResponseEntity.badRequest().body(Collections.emptyList());
+    } catch (Exception e) {
+        System.err.println("Error in getReportNonSenders: " + e.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Collections.emptyList());
     }
+}
 
     @GetMapping("/reports-by-org")
     @PreAuthorize("hasAnyRole('SENIOR_AUDITOR', 'APPROVER')")
@@ -339,14 +353,25 @@ public ResponseEntity<List<MasterTransaction>> getRejectedReports() {
         return ResponseEntity.ok(organizations);
     }
 
-    @GetMapping("/feedback-non-senders")
-    @PreAuthorize("hasAnyRole('SENIOR_AUDITOR', 'APPROVER')")
-    public ResponseEntity<List<Organization>> getFeedbackNonSenders(
-            @RequestParam String reportype,
-            @RequestParam String fiscalYear) {
+@GetMapping("/feedback-non-senders")
+@PreAuthorize("hasAnyRole('SENIOR_AUDITOR', 'APPROVER')")
+public ResponseEntity<List<Organization>> getFeedbackNonSenders(
+        @RequestParam String reportype,
+        @RequestParam String fiscalYear) {
+    System.out.println("Received request for feedback non-senders: reportype=" + reportype + ", fiscalYear=" + fiscalYear);
+    try {
         List<Organization> nonSenders = masterTransactionService.getFeedbackNonSenders(reportype, fiscalYear);
+        System.out.println("Returning " + nonSenders.size() + " feedback non-senders");
         return ResponseEntity.ok(nonSenders);
+    } catch (IllegalArgumentException e) {
+        System.err.println("Validation error: " + e.getMessage());
+        return ResponseEntity.badRequest().body(Collections.emptyList());
+    } catch (Exception e) {
+        System.err.println("Error in getFeedbackNonSenders: " + e.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Collections.emptyList());
     }
+}
 
     @GetMapping("/feedback-senders")
     @PreAuthorize("hasAnyRole('SENIOR_AUDITOR', 'APPROVER')")

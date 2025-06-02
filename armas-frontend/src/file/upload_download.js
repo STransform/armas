@@ -316,15 +316,21 @@ export const getMyTasks = async () => {
         throw error;
     }
 };
-export const getReportNonSenders = async (reportTypeId, budgetYearId) => {
+export const getReportNonSenders = async (reportype, fiscalYear) => {
     try {
+        console.log('Fetching report non-senders:', { reportype, fiscalYear });
         const response = await axiosInstance.get('/transactions/report-non-senders', {
-            params: { reportTypeId, budgetYearId }
+            params: { reportype, fiscalYear }
         });
+        console.log('Report non-senders response:', response.data);
         return response.data;
     } catch (error) {
-        console.error('Error fetching report non-senders:', error.message);
-        throw error;
+        console.error('Error fetching report non-senders:', {
+            message: error.message,
+            status: error.response?.status,
+            data: error.response?.data
+        });
+        throw new Error(error.response?.data?.message || 'Request failed with status code ' + (error.response?.status || 'unknown'));
     }
 };
 
@@ -350,15 +356,21 @@ export const getAllOrganizationsWithReports = async () => {
     }
 };
 
-export const getFeedbackNonSenders = async (reportTypeId, budgetYearId) => {
+export const getFeedbackNonSenders = async (reportype, fiscalYear) => {
     try {
+        console.log('Fetching feedback non-senders:', { reportype, fiscalYear });
         const response = await axiosInstance.get('/transactions/feedback-non-senders', {
-            params: { reportTypeId, budgetYearId }
+            params: { reportype, fiscalYear }
         });
+        console.log('Feedback non-senders response:', response.data);
         return response.data;
     } catch (error) {
-        console.error('Error fetching feedback non-senders:', error.message);
-        throw error;
+        console.error('Error fetching feedback non-senders:', {
+            message: error.message,
+            status: error.response?.status,
+            data: error.response?.data
+        });
+        throw new Error(error.response?.data?.message || 'Request failed with status code ' + (error.response?.status || 'unknown'));
     }
 };
 
