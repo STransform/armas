@@ -4,6 +4,7 @@ import com.simon.armas_springboot_api.dto.SentReportResponseDTO;
 import com.simon.armas_springboot_api.models.Document;
 import com.simon.armas_springboot_api.models.MasterTransaction;
 import com.simon.armas_springboot_api.models.User;
+import com.simon.armas_springboot_api.models.Organization;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -175,4 +176,39 @@ List<MasterTransaction> findByUserId(@Param("userId") Long userId);
            "LEFT JOIN FETCH m.assignedBy " +
            "WHERE m.user.id = :userId")
     List<MasterTransaction> findByUserIdWithLetters(@Param("userId") Long userId);
+
+// 1. Report Non-Senders by Report Type and Budget Year
+    @Query("SELECT DISTINCT o FROM Organization o WHERE o.id NOT IN " +
+           "(SELECT m.organization.id FROM MasterTransaction m WHERE m.reportcategory = 'Report' " +
+           "AND m.transactiondocument.reportype = :reportype AND m.budgetYear.fiscalYear = :fiscalYear)")
+    List<Organization> findReportNonSendersByReportTypeAndBudgetYear(
+            @Param("reportype") String reportype,
+            @Param("fiscalYear") String fiscalYear);
+// To Check if Organization Sent Report by Budget Year, Report Type, and Organization
+    @Query("SELECT m FROM MasterTransaction m WHERE m.reportcategory = 'Report' " +
+           "AND m.transactiondocument.reportype = :reportype " +
+           "AND m.budgetYear.fiscalYear = :fiscalYear " +
+           "AND m.organization.id = :orgId")
+    List<MasterTransaction> findReportsByOrgAndReportTypeAndBudgetYear(
+            @Param("reportype") String reportype,
+            @Param("fiscalYear") String fiscalYear,
+            @Param("orgId") String orgId);
+     // All Organizations That Sent Reports
+    @Query("SELECT DISTINCT m.organization FROM MasterTransaction m WHERE m.reportcategory = 'Report'")
+    List<Organization> findAllOrganizationsWithReports();
+
+    // Feedback Non-Senders by Report Type and Budget Year
+    @Query("SELECT DISTINCT o FROM Organization o WHERE o.id NOT IN " +
+           "(SELECT m.organization.id FROM MasterTransaction m WHERE m.reportcategory = 'Feedback' " +
+           "AND m.transactiondocument.reportype = :reportype AND m.budgetYear.fiscalYear = :fiscalYear)")
+    List<Organization> findFeedbackNonSendersByReportTypeAndBudgetYear(
+            @Param("reportype") String reportype,
+            @Param("fiscalYear") String fiscalYear);
+    // Feedback Senders by Report Type and Budget Year
+    @Query("SELECT m FROM MasterTransaction m WHERE m.reportcategory = 'Feedback' " +
+           "AND m.transactiondocument.reportype = :reportype " +
+           "AND m.budgetYear.fiscalYear = :fiscalYear")
+    List<MasterTransaction> findFeedbackSendersByReportTypeAndBudgetYear(
+            @Param("reportype") String reportype,
+            @Param("fiscalYear") String fiscalYear);
 }

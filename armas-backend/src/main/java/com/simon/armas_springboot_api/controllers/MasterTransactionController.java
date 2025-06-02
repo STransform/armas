@@ -10,6 +10,8 @@ import com.simon.armas_springboot_api.repositories.UserRepository;
 import com.simon.armas_springboot_api.services.MasterTransactionService;
 import com.simon.armas_springboot_api.dto.UserDTO;
 import com.simon.armas_springboot_api.models.User;
+import com.simon.armas_springboot_api.models.Organization;
+import com.simon.armas_springboot_api.repositories.OrganizationRepository;
 import org.springframework.http.HttpStatus;
 import com.simon.armas_springboot_api.dto.MasterTransactionDTO;
 import com.simon.armas_springboot_api.dto.SentReportResponseDTO;
@@ -311,5 +313,47 @@ public ResponseEntity<List<MasterTransaction>> getRejectedReports() {
         return ResponseEntity.ok(saved);
     }
 
-   
+    @GetMapping("/report-non-senders")
+    @PreAuthorize("hasAnyRole('SENIOR_AUDITOR', 'APPROVER')")
+    public ResponseEntity<List<Organization>> getReportNonSenders(
+            @RequestParam String reportype,
+            @RequestParam String fiscalYear) {
+        List<Organization> nonSenders = masterTransactionService.getReportNonSenders(reportype, fiscalYear);
+        return ResponseEntity.ok(nonSenders);
+    }
+
+    @GetMapping("/reports-by-org")
+    @PreAuthorize("hasAnyRole('SENIOR_AUDITOR', 'APPROVER')")
+    public ResponseEntity<List<MasterTransactionDTO>> getReportsByOrgAndFilters(
+            @RequestParam String reportype,
+            @RequestParam String fiscalYear,
+            @RequestParam String orgId) {
+        List<MasterTransactionDTO> reports = masterTransactionService.getReportsByOrgAndFilters(reportype, fiscalYear, orgId);
+        return ResponseEntity.ok(reports);
+    }
+
+    @GetMapping("/organizations-with-reports")
+    @PreAuthorize("hasAnyRole('SENIOR_AUDITOR', 'APPROVER')")
+    public ResponseEntity<List<Organization>> getAllOrganizationsWithReports() {
+        List<Organization> organizations = masterTransactionService.getAllOrganizationsWithReports();
+        return ResponseEntity.ok(organizations);
+    }
+
+    @GetMapping("/feedback-non-senders")
+    @PreAuthorize("hasAnyRole('SENIOR_AUDITOR', 'APPROVER')")
+    public ResponseEntity<List<Organization>> getFeedbackNonSenders(
+            @RequestParam String reportype,
+            @RequestParam String fiscalYear) {
+        List<Organization> nonSenders = masterTransactionService.getFeedbackNonSenders(reportype, fiscalYear);
+        return ResponseEntity.ok(nonSenders);
+    }
+
+    @GetMapping("/feedback-senders")
+    @PreAuthorize("hasAnyRole('SENIOR_AUDITOR', 'APPROVER')")
+    public ResponseEntity<List<MasterTransactionDTO>> getFeedbackSenders(
+            @RequestParam String reportype,
+            @RequestParam String fiscalYear) {
+        List<MasterTransactionDTO> senders = masterTransactionService.getFeedbackSenders(reportype, fiscalYear);
+        return ResponseEntity.ok(senders);
+    }
 }

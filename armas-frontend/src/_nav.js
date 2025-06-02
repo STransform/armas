@@ -21,6 +21,7 @@ import {
   cilGroup,
   cilBuilding,
   cilTransfer,
+  cilFilter, // Add this import
 } from '@coreui/icons';
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react';
 import { useAuth } from './views/pages/AuthProvider';
@@ -62,7 +63,6 @@ const Nav = () => {
         { component: CNavItem, name: 'Error 500', to: '/500' },
       ],
     },
-   
   ];
 
   const userItems = [
@@ -82,7 +82,7 @@ const Nav = () => {
       to: '/buttons/file-history',
       icon: <CIcon icon={cilCloudUpload} customClassName="nav-icon" />,
     },
-     {
+    {
       component: CNavItem,
       name: 'Download File',
       to: '/buttons/letter-download',
@@ -115,13 +115,12 @@ const Nav = () => {
           to: '/buttons/documents',
           icon: <CIcon icon={cilFile} customClassName="nav-icon" />,
         },
-         {
+        {
           component: CNavItem,
           name: 'Budget Year',
           to: '/buttons/budgetyear',
           icon: <CIcon icon={cilFile} customClassName="nav-icon" />,
         },
-        
         {
           component: CNavItem,
           name: 'Users',
@@ -146,12 +145,12 @@ const Nav = () => {
           to: '/buttons/file-upload',
           icon: <CIcon icon={cilCloudUpload} customClassName="nav-icon" />,
         },
-       {
-        component: CNavItem,
-        name: 'Download File',
-        to: '/buttons/letter-download',
-        icon: <CIcon icon={cilCloudDownload} customClassName="nav-icon" />,
-      }
+        {
+          component: CNavItem,
+          name: 'Download File',
+          to: '/buttons/letter-download',
+          icon: <CIcon icon={cilCloudDownload} customClassName="nav-icon" />,
+        },
       ],
     },
   ];
@@ -167,7 +166,7 @@ const Nav = () => {
               {
                 component: CNavItem,
                 name: 'File Download',
-                to: '/buttons/file-download', // Updated to match archiverItems path
+                to: '/buttons/file-download',
                 icon: <CIcon icon={cilCloudDownload} customClassName="nav-icon" />,
               },
               {
@@ -199,17 +198,23 @@ const Nav = () => {
                 icon: <CIcon icon={cilCloudDownload} customClassName="nav-icon" />,
               },
               {
-              component: CNavItem,
-              name: 'Under Review',
-              to: '/transactions/under-review-reports',
-              icon: <CIcon icon={cilTask} customClassName="nav-icon" />,
-          },
-          {
-            component: CNavItem,
-            name: 'Corrected Reports',
-            to: '/transactions/corrected-reports',
-            icon: <CIcon icon={cilTask} customClassName="nav-icon" />,
-        },
+                component: CNavItem,
+                name: 'Under Review',
+                to: '/transactions/under-review-reports',
+                icon: <CIcon icon={cilTask} customClassName="nav-icon" />,
+              },
+              {
+                component: CNavItem,
+                name: 'Corrected Reports',
+                to: '/transactions/corrected-reports',
+                icon: <CIcon icon={cilTask} customClassName="nav-icon" />,
+              },
+              {
+                component: CNavItem,
+                name: 'Advanced Filters',
+                to: '/transactions/advanced-filters',
+                icon: <CIcon icon={cilFilter} customClassName="nav-icon" />,
+              },
             ]
           : []),
       ],
@@ -220,7 +225,6 @@ const Nav = () => {
     ...commonItems,
     ...(isUser ? userItems : []),
     ...(isAdmin ? adminItems : []),
-    // ...(isArchiver ? archiverItems : []), // Commented out to avoid duplication
     ...((isArchiver || isSeniorAuditor || isApprover) ? transactionItems : []),
   ];
 

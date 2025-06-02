@@ -25,6 +25,7 @@ const UnderReviewReports = React.lazy(() => import('./components/UnderReviewRepo
 const CorrectedReports = React.lazy(() => import('./components/CorrectedReports'));
 const FileHistory = React.lazy(() => import('./components/FileHistory'));
 const LetterDownload = React.lazy(() => import('./components/LetterDownload'));
+const AdvancedFilters = React.lazy(() => import('./components/AdvancedFilters'));
 // Base
 const Accordion = React.lazy(() => import('./views/base/accordion/Accordion'))
 const Breadcrumbs = React.lazy(() => import('./views/base/breadcrumbs/Breadcrumbs'))
@@ -67,6 +68,7 @@ const routes = [
   { path: '/transactions/corrected-reports', name: 'Corrected Reports', element: CorrectedReports },
   { path: '/file-history', name: 'File History', element: FileHistory },
    { path: '/buttons/letter-download', name: 'File Download', element: LetterDownload },
+   { path: '/transactions/advanced-filters', name: 'Advanced Filters', element: AdvancedFilters },
   { path: '/dashboard', name: 'Dashboard', element: Dashboard },
   { path: '/theme', name: 'Theme', element: Colors, exact: true },
   { path: '/theme/colors', name: 'Colors', element: Colors },

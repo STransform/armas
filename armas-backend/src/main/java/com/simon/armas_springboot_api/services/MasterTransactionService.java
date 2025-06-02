@@ -417,4 +417,28 @@ public List<MasterTransactionDTO> getRejectedReports() {
     public List<MasterTransaction> getCorrectedReports() {
         return masterTransactionRepository.findCorrectedReports();
     }
+
+     public List<Organization> getReportNonSenders(String reportype, String fiscalYear) {
+        return masterTransactionRepository.findReportNonSendersByReportTypeAndBudgetYear(reportype, fiscalYear);
+    }
+
+    public List<MasterTransactionDTO> getReportsByOrgAndFilters(String reportype, String fiscalYear, String orgId) {
+        List<MasterTransaction> transactions = masterTransactionRepository
+                .findReportsByOrgAndReportTypeAndBudgetYear(reportype, fiscalYear, orgId);
+        return transactions.stream().map(MasterTransactionDTO::new).collect(Collectors.toList());
+    }
+
+    public List<Organization> getAllOrganizationsWithReports() {
+        return masterTransactionRepository.findAllOrganizationsWithReports();
+    }
+
+    public List<Organization> getFeedbackNonSenders(String reportype, String fiscalYear) {
+        return masterTransactionRepository.findFeedbackNonSendersByReportTypeAndBudgetYear(reportype, fiscalYear);
+    }
+
+    public List<MasterTransactionDTO> getFeedbackSenders(String reportype, String fiscalYear) {
+        List<MasterTransaction> transactions = masterTransactionRepository
+                .findFeedbackSendersByReportTypeAndBudgetYear(reportype, fiscalYear);
+        return transactions.stream().map(MasterTransactionDTO::new).collect(Collectors.toList());
+    }
 }
