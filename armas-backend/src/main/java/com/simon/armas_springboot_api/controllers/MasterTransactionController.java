@@ -29,6 +29,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.HashMap;
+import org.springframework.web.bind.annotation.GetMapping;
+
 import java.security.Principal;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
@@ -381,4 +384,17 @@ public ResponseEntity<List<Organization>> getFeedbackNonSenders(
         List<MasterTransactionDTO> senders = masterTransactionService.getFeedbackSenders(reportype, fiscalYear);
         return ResponseEntity.ok(senders);
     }
+
+@GetMapping("/dashboard-stats")
+@PreAuthorize("hasAnyRole('SENIOR_AUDITOR', 'APPROVER', 'ARCHIVER', 'ADMIN')")
+public ResponseEntity<Map<String, Long>> getDashboardStats(@RequestParam String fiscalYear) {
+    Map<String, Long> stats = new HashMap<>();
+    stats.put("totalOrganizations", masterTransactionService.getTotalOrganizations());
+    stats.put("totalReportTypes", masterTransactionService.getTotalReportTypes());
+    stats.put("senders", masterTransactionService.getSendersCount(fiscalYear));
+    stats.put("nonSenders", masterTransactionService.getNonSendersCount(fiscalYear));
+    stats.put("auditPlanSenders", masterTransactionService.getSendersCountForReportType("Audit Plan", fiscalYear));
+    stats.put("auditPlanNonSenders", masterTransactionService.getNonSendersCountForReportType("Audit Plan", fiscalYear));
+    return ResponseEntity.ok(stats);
+}
 }

@@ -8,6 +8,7 @@ import com.simon.armas_springboot_api.models.User;
 import com.simon.armas_springboot_api.models.BudgetYear;
 import com.simon.armas_springboot_api.repositories.BudgetYearRepository;
 import com.simon.armas_springboot_api.repositories.DocumentRepository;
+import com.simon.armas_springboot_api.repositories.OrganizationRepository;
 import com.simon.armas_springboot_api.repositories.MasterTransactionRepository;
 import com.simon.armas_springboot_api.repositories.OrganizationRepository;
 import com.simon.armas_springboot_api.repositories.UserRepository;
@@ -58,6 +59,9 @@ public class MasterTransactionService {
 
     @Autowired
     private DocumentRepository documentRepository;
+    @Autowired
+    private OrganizationRepository organizationRepository;
+
 
     // Upload file by Uploader
    @Transactional
@@ -496,4 +500,29 @@ public List<MasterTransactionDTO> getRejectedReports() {
                 .findFeedbackSendersByReportTypeAndBudgetYear(reportype, fiscalYear);
         return transactions.stream().map(MasterTransactionDTO::new).collect(Collectors.toList());
     }
+
+
+    public long getTotalOrganizations() {
+    return organizationRepository.count();
+}
+
+public long getTotalReportTypes() {
+    return documentRepository.count();
+}
+
+public long getSendersCount(String fiscalYear) {
+    return masterTransactionRepository.countSendersByFiscalYear(fiscalYear);
+}
+
+public long getNonSendersCount(String fiscalYear) {
+    return getTotalOrganizations() - getSendersCount(fiscalYear);
+}
+
+public long getSendersCountForReportType(String reportype, String fiscalYear) {
+    return masterTransactionRepository.countSendersByReportTypeAndFiscalYear(reportype, fiscalYear);
+}
+
+public long getNonSendersCountForReportType(String reportype, String fiscalYear) {
+    return getTotalOrganizations() - getSendersCountForReportType(reportype, fiscalYear);
+}
 }

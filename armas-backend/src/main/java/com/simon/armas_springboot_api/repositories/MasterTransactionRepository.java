@@ -221,4 +221,12 @@ List<Organization> findFeedbackNonSendersByReportTypeAndBudgetYear(
     List<MasterTransaction> findFeedbackSendersByReportTypeAndBudgetYear(
             @Param("reportype") String reportype,
             @Param("fiscalYear") String fiscalYear);
+   
+ @Query("SELECT COUNT(DISTINCT m.organization) FROM MasterTransaction m WHERE m.reportcategory = 'Report' AND m.budgetYear.fiscalYear = :fiscalYear")
+long countSendersByFiscalYear(@Param("fiscalYear") String fiscalYear);
+
+@Query("SELECT COUNT(DISTINCT m.organization) FROM MasterTransaction m WHERE m.reportcategory = 'Report' AND m.transactiondocument.reportype = :reportype AND m.budgetYear.fiscalYear = :fiscalYear")
+long countSendersByReportTypeAndFiscalYear(@Param("reportype") String reportype, @Param("fiscalYear") String fiscalYear);
+
+
 }
