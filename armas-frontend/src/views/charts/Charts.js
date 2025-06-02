@@ -13,7 +13,7 @@ import { CChartBar, CChartLine, CChartPie } from '@coreui/react-chartjs';
 import axios from 'axios';
 import { CIcon } from '@coreui/icons-react';
 import { cilBuilding, cilClipboard, cilCheckCircle, cilXCircle, cilChartPie, cilLineStyle } from '@coreui/icons';
-import './chart.css'; // Corrected import (lowercase, same folder)
+import './chart.css'; // Updated to match correct file name
 import 'animate.css';
 
 // Configure Axios
@@ -82,10 +82,10 @@ const Charts = () => {
     if (selectedFiscalYear) {
       setLoading(true);
       axios
-        .get(`/transactions/dashboard-stats?fiscalYear=${selectedFiscalYear}`) // Fixed typo
+        .get(`/transactions/dashboard-stats?fiscalYear=${selectedFiscalYear}`)
         .then((response) => {
           console.log('Dashboard Stats Response:', response.data);
-          setStats(response.data);
+          setStats(response.data || stats);
           setLoading(false);
         })
         .catch((error) => {
@@ -94,7 +94,15 @@ const Charts = () => {
             status: error.response?.status,
             data: error.response?.data,
           });
-          setError(`Failed to load dashboard statistics: ${error.response?.data?.message || error.message}`);
+          let errorMessage = 'Failed to load dashboard statistics.';
+          if (error.response?.status === 404) {
+            errorMessage = `No statistics available for fiscal year ${selectedFiscalYear}.`;
+          } else if (error.response?.status === 403) {
+            errorMessage = 'You do not have permission to view dashboard statistics.';
+          } else {
+            errorMessage = error.response?.data?.message || error.message;
+          }
+          setError(errorMessage);
           setLoading(false);
         });
     }
@@ -103,9 +111,17 @@ const Charts = () => {
   const handleFiscalYearChange = (e) => {
     setSelectedFiscalYear(e.target.value);
     setError(null);
+    setStats({
+      totalOrganizations: 0,
+      totalReportTypes: 0,
+      senders: 0,
+      nonSenders: 0,
+      auditPlanSenders: 0,
+      auditPlanNonSenders: 0,
+    });
   };
 
-  if (error) {
+  if (error && budgetYears.length === 0) {
     return (
       <CCard className="mb-5 shadow-sm border-0">
         <CCardBody>
@@ -124,19 +140,6 @@ const Charts = () => {
         <CCardBody className="text-center">
           <CSpinner color="primary" size="lg" />
           <p className="mt-2 text-muted">Loading dashboard...</p>
-        </CCardBody>
-      </CCard>
-    );
-  }
-
-  if (budgetYears.length === 0) {
-    return (
-      <CCard className="mb-5 shadow-sm border-0">
-        <CCardBody>
-          <CAlert color="warning" className="d-flex align-items-center">
-            <CIcon icon={cilXCircle} size="lg" className="me-2 animate__animated animate__pulse" />
-            <span>No fiscal years available. Please contact an administrator.</span>
-          </CAlert>
         </CCardBody>
       </CCard>
     );
@@ -168,7 +171,16 @@ const Charts = () => {
           </CCard>
         </CCol>
 
-        {selectedFiscalYear && (
+        {error && (
+          <CCol xs={12}>
+            <CAlert color="warning" className="d-flex align-items-center mb-4">
+              <CIcon icon={cilXCircle} size="lg" className="me-2 animate__animated animate__pulse" />
+              <span>{error}</span>
+            </CAlert>
+          </CCol>
+        )}
+
+        {selectedFiscalYear && !error && (
           <>
             {/* Stat Cards */}
             <CCol xs={12} sm={6} lg={4}>
@@ -293,11 +305,11 @@ const Charts = () => {
                 </CCardBody>
               </CCard>
             </CCol>
-            <CCol xs={12} lg={6}>
+            <CCol xs={6} lg={6}>
               <CCard className="mb-4 shadow-sm border-0 animate__animated animate__fadeInUp">
                 <CCardHeader className="bg-gradient-success text-white">
                   <CIcon icon={cilChartPie} size="lg" className="me-2" />
-                  Audit Plan Distribution
+                  Audit Plan
                 </CCardHeader>
                 <CCardBody>
                   <CChartPie
@@ -330,7 +342,7 @@ const Charts = () => {
                 </CCardBody>
               </CCard>
             </CCol>
-            <CCol xs={12}>
+            <CCol xs={6} lg={6}>
               <CCard className="mb-4 shadow-sm border-0 animate__animated animate__fadeInUp">
                 <CCardHeader className="bg-gradient-primary text-white">
                   <CIcon icon={cilLineStyle} size="lg" className="me-2" />

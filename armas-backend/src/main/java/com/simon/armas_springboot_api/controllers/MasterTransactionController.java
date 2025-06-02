@@ -386,7 +386,7 @@ public ResponseEntity<List<Organization>> getFeedbackNonSenders(
     }
 
 @GetMapping("/dashboard-stats")
-@PreAuthorize("hasAnyRole('SENIOR_AUDITOR', 'APPROVER', 'ARCHIVER', 'ADMIN')")
+@PreAuthorize("hasAnyRole('SENIOR_AUDITOR', 'APPROVER', 'ARCHIVER', 'ADMIN','USER')")
 public ResponseEntity<Map<String, Long>> getDashboardStats(@RequestParam String fiscalYear) {
     Map<String, Long> stats = new HashMap<>();
     stats.put("totalOrganizations", masterTransactionService.getTotalOrganizations());
