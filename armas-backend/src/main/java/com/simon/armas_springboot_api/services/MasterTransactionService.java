@@ -418,10 +418,37 @@ public List<MasterTransactionDTO> getRejectedReports() {
         return masterTransactionRepository.findCorrectedReports();
     }
 
-     public List<Organization> getReportNonSenders(String reportype, String fiscalYear) {
-        return masterTransactionRepository.findReportNonSendersByReportTypeAndBudgetYear(reportype, fiscalYear);
+    public List<Organization> getReportNonSenders(String reportype, String fiscalYear) {
+    System.out.println("Fetching report non-senders: reportype=" + reportype + ", fiscalYear=" + fiscalYear);
+    try {
+        // Validate parameters
+        if (reportype == null || reportype.trim().isEmpty()) {
+            throw new IllegalArgumentException("Report type is required");
+        }
+        if (fiscalYear == null || fiscalYear.trim().isEmpty()) {
+            throw new IllegalArgumentException("Fiscal year is required");
+        }
+        // Check if BudgetYear exists
+        boolean budgetYearExists = budgetYearRepository.existsByFiscalYear(fiscalYear);
+        if (!budgetYearExists) {
+            System.out.println("No BudgetYear found for fiscalYear: " + fiscalYear);
+            return new ArrayList<>(); // Return empty list if no matching budget year
+        }
+        // Check if Document exists
+        boolean documentExists = documentRepository.existsByReportype(reportype);
+        if (!documentExists) {
+            System.out.println("No Document found for reportype: " + reportype);
+            return new ArrayList<>(); // Return empty list if no matching document
+        }
+        List<Organization> nonSenders = masterTransactionRepository.findReportNonSendersByReportTypeAndBudgetYear(reportype, fiscalYear);
+        System.out.println("Found " + nonSenders.size() + " non-senders");
+        return nonSenders;
+    } catch (Exception e) {
+        System.err.println("Error fetching report non-senders: " + e.getMessage());
+        e.printStackTrace();
+        throw new RuntimeException("Failed to fetch report non-senders: " + e.getMessage(), e);
     }
-
+}
     public List<MasterTransactionDTO> getReportsByOrgAndFilters(String reportype, String fiscalYear, String orgId) {
         List<MasterTransaction> transactions = masterTransactionRepository
                 .findReportsByOrgAndReportTypeAndBudgetYear(reportype, fiscalYear, orgId);
@@ -433,8 +460,36 @@ public List<MasterTransactionDTO> getRejectedReports() {
     }
 
     public List<Organization> getFeedbackNonSenders(String reportype, String fiscalYear) {
-        return masterTransactionRepository.findFeedbackNonSendersByReportTypeAndBudgetYear(reportype, fiscalYear);
+    System.out.println("Fetching feedback non-senders: reportype=" + reportype + ", fiscalYear=" + fiscalYear);
+    try {
+        // Validate parameters
+        if (reportype == null || reportype.trim().isEmpty()) {
+            throw new IllegalArgumentException("Report type is required");
+        }
+        if (fiscalYear == null || fiscalYear.trim().isEmpty()) {
+            throw new IllegalArgumentException("Fiscal year is required");
+        }
+        // Check if BudgetYear exists
+        boolean budgetYearExists = budgetYearRepository.existsByFiscalYear(fiscalYear);
+        if (!budgetYearExists) {
+            System.out.println("No BudgetYear found for fiscalYear: " + fiscalYear);
+            return new ArrayList<>(); // Return empty list if no matching budget year
+        }
+        // Check if Document exists
+        boolean documentExists = documentRepository.existsByReportype(reportype);
+        if (!documentExists) {
+            System.out.println("No Document found for reportype: " + reportype);
+            return new ArrayList<>(); // Return empty list if no matching document
+        }
+        List<Organization> nonSenders = masterTransactionRepository.findFeedbackNonSendersByReportTypeAndBudgetYear(reportype, fiscalYear);
+        System.out.println("Found " + nonSenders.size() + " feedback non-senders");
+        return nonSenders;
+    } catch (Exception e) {
+        System.err.println("Error fetching feedback non-senders: " + e.getMessage());
+        e.printStackTrace();
+        throw new RuntimeException("Failed to fetch feedback non-senders: " + e.getMessage(), e);
     }
+}
 
     public List<MasterTransactionDTO> getFeedbackSenders(String reportype, String fiscalYear) {
         List<MasterTransaction> transactions = masterTransactionRepository

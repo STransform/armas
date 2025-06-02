@@ -14,4 +14,7 @@ public interface BudgetYearRepository extends JpaRepository<BudgetYear, Long> {
     Optional<BudgetYear> findByFiscalYear(String fiscalYear);
     @Query("SELECT new com.simon.armas_springboot_api.dto.BudgetYearDTO(b.id, b.fiscalYear) FROM BudgetYear b")
     List<BudgetYearDTO> findAllBudgetYears();
+
+    boolean existsByFiscalYear(String fiscalYear);
+   
 }
