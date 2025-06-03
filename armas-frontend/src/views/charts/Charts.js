@@ -1,20 +1,95 @@
 import React, { useState, useEffect } from 'react';
 import {
-  CCard,
-  CCardBody,
-  CCol,
-  CCardHeader,
-  CRow,
-  CFormSelect,
-  CSpinner,
-  CAlert,
-} from '@coreui/react';
-import { CChartBar, CChartLine, CChartPie } from '@coreui/react-chartjs';
+  Box,
+  Grid,
+  Card,
+  CardContent,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  CircularProgress,
+  Alert,
+  Typography,
+  AppBar,
+  Toolbar,
+  IconButton,
+  Drawer,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Avatar,
+} from '@mui/material';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { Bar, Pie, Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
+  Tooltip,
+} from 'chart.js';
 import axios from 'axios';
-import { CIcon } from '@coreui/icons-react';
-import { cilBuilding, cilClipboard, cilCheckCircle, cilXCircle, cilChartPie, cilLineStyle } from '@coreui/icons';
-import './chart.css'; // Updated to match correct file name
+import {
+  Business,
+  Description,
+  CheckCircle,
+  Cancel,
+  PieChart,
+  Timeline,
+  Menu as MenuIcon,
+  Dashboard as DashboardIcon,
+} from '@mui/icons-material';
+import './Chart.css';
 import 'animate.css';
+
+// Register Chart.js components
+ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Tooltip);
+
+// Custom Materially-inspired theme
+const theme = createTheme({
+  palette: {
+    primary: { main: '#1a2035' },
+    secondary: { main: '#00c4b4' },
+    warning: { main: '#ff9800' },
+    danger: { main: '#dc3545' },
+    success: { main: '#28a745' },
+    background: { default: '#f4f7fa', paper: '#ffffff' },
+    text: { primary: '#1a2035', secondary: '#6c757d' },
+  },
+  typography: {
+    fontFamily: '"Poppins", "Roboto", "Helvetica", sans-serif',
+    h4: { fontWeight: 600 },
+    h5: { fontWeight: 600 },
+    subtitle1: { fontWeight: 500, fontSize: '0.875rem' },
+    subtitle2: { fontWeight: 400, fontSize: '0.6875rem' },
+  },
+  components: {
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: 12,
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+        },
+      },
+    },
+    MuiAvatar: {
+      styleOverrides: {
+        root: {
+          width: 40,
+          height: 40,
+          backgroundColor: 'inherit',
+          color: '#fff',
+        },
+      },
+    },
+  },
+});
 
 // Configure Axios
 axios.defaults.baseURL = 'http://localhost:8080';
@@ -50,6 +125,7 @@ const Charts = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Fetch budget years
   useEffect(() => {
@@ -121,299 +197,434 @@ const Charts = () => {
     });
   };
 
+  const toggleDrawer = () => {
+    setDrawerOpen(!drawerOpen);
+  };
+
   if (error && budgetYears.length === 0) {
     return (
-      <CCard className="mb-5 shadow-sm border-0">
-        <CCardBody>
-          <CAlert color="danger" className="d-flex align-items-center">
-            <CIcon icon={cilXCircle} size="lg" className="me-2 animate__animated animate__pulse" />
-            <span>{error}</span>
-          </CAlert>
-        </CCardBody>
-      </CCard>
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Alert severity="error" icon={<Cancel />}>
+            {error}
+          </Alert>
+        </CardContent>
+      </Card>
     );
   }
 
   if (loading) {
     return (
-      <CCard className="mb-5 shadow-sm border-0">
-        <CCardBody className="text-center">
-          <CSpinner color="primary" size="lg" />
-          <p className="mt-2 text-muted">Loading dashboard...</p>
-        </CCardBody>
-      </CCard>
+      <Card sx={{ mb: 3 }}>
+        <CardContent sx={{ textAlign: 'center' }}>
+          <CircularProgress color="primary" />
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+            Loading dashboard...
+          </Typography>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="dashboard-container">
-      <CRow>
-        {/* Fiscal Year Selection */}
-        <CCol xs={4}>
-          <CCard className="mb-4 shadow-sm border-0 animate__animated animate__fadeIn">
-            <CCardHeader className="bg-gradient-primary text-white">
-              <h5 className="mb-0">Select Fiscal Year</h5>
-            </CCardHeader>
-            <CCardBody>
-              <CFormSelect
-                value={selectedFiscalYear}
-                onChange={handleFiscalYearChange}
-                className="custom-select"
-              >
-                <option value="">Choose a fiscal year</option>
-                {budgetYears.map((year) => (
-                  <option key={year.id} value={year.fiscalYear}>
-                    {year.fiscalYear}
-                  </option>
-                ))}
-              </CFormSelect>
-            </CCardBody>
-          </CCard>
-        </CCol>
+    <ThemeProvider theme={theme}>
+      <Box sx={{ display: 'flex' }}>
+        {/* Sidebar */}
+        <Drawer
+          variant="temporary"
+          open={drawerOpen}
+          onClose={toggleDrawer}
+          sx={{
+            '& .MuiDrawer-paper': {
+              width: 250,
+              bgcolor: 'primary.main',
+              color: 'white',
+            },
+          }}
+        >
+          <List>
+            <ListItem button>
+              <ListItemIcon sx={{ color: 'white' }}>
+                <DashboardIcon />
+              </ListItemIcon>
+              <ListItemText primary="Dashboard" />
+            </ListItem>
+          </List>
+        </Drawer>
 
-        {error && (
-          <CCol xs={12}>
-            <CAlert color="warning" className="d-flex align-items-center mb-4">
-              <CIcon icon={cilXCircle} size="lg" className="me-2 animate__animated animate__pulse" />
-              <span>{error}</span>
-            </CAlert>
-          </CCol>
-        )}
+        {/* Main Content */}
+        <Box sx={{ flexGrow: 1, p: 3 }}>
+          <AppBar position="static" color="transparent" elevation={0}>
+            <Toolbar>
+              <IconButton edge="start" color="inherit" onClick={toggleDrawer}>
+                <MenuIcon />
+              </IconButton>
+              <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                Dashboard
+              </Typography>
+            </Toolbar>
+          </AppBar>
 
-        {selectedFiscalYear && !error && (
-          <>
-            {/* Stat Cards */}
-            <CCol xs={12} sm={6} lg={4}>
-              <CCard className="mb-4 stat-card shadow-sm border-0 animate__animated animate__fadeInUp">
-                <CCardHeader className="bg-gradient-info text-white">
-                  <CIcon icon={cilBuilding} size="lg" className="me-2" />
-                  Total Organizations
-                </CCardHeader>
-                <CCardBody>
-                  <h3 className="text-primary">{stats.totalOrganizations}</h3>
-                </CCardBody>
-              </CCard>
-            </CCol>
-            <CCol xs={12} sm={6} lg={4}>
-              <CCard className="mb-4 stat-card shadow-sm border-0 animate__animated animate__fadeInUp">
-                <CCardHeader className="bg-gradient-success text-white">
-                  <CIcon icon={cilClipboard} size="lg" className="me-2" />
-                  Total Report Types
-                </CCardHeader>
-                <CCardBody>
-                  <h3 className="text-success">{stats.totalReportTypes}</h3>
-                </CCardBody>
-              </CCard>
-            </CCol>
-            <CCol xs={12} sm={6} lg={4}>
-              <CCard className="mb-4 stat-card shadow-sm border-0 animate__animated animate__fadeInUp">
-                <CCardHeader className="bg-gradient-warning text-white">
-                  <CIcon icon={cilCheckCircle} size="lg" className="me-2" />
-                  Total Senders
-                </CCardHeader>
-                <CCardBody>
-                  <h3 className="text-warning">{stats.senders}</h3>
-                </CCardBody>
-              </CCard>
-            </CCol>
-            <CCol xs={12} sm={6} lg={4}>
-              <CCard className="mb-4 stat-card shadow-sm border-0 animate__animated animate__fadeInUp">
-                <CCardHeader className="bg-gradient-danger text-white">
-                  <CIcon icon={cilXCircle} size="lg" className="me-2" />
-                  Total Non-Senders
-                </CCardHeader>
-                <CCardBody>
-                  <h3 className="text-danger">{stats.nonSenders}</h3>
-                </CCardBody>
-              </CCard>
-            </CCol>
-            <CCol xs={12} sm={6} lg={4}>
-              <CCard className="mb-4 stat-card shadow-sm border-0 animate__animated animate__fadeInUp">
-                <CCardHeader className="bg-gradient-primary text-white">
-                  <CIcon icon={cilCheckCircle} size="lg" className="me-2" />
-                  Audit Plan Senders
-                </CCardHeader>
-                <CCardBody>
-                  <h3 className="text-primary">{stats.auditPlanSenders}</h3>
-                </CCardBody>
-              </CCard>
-            </CCol>
-            <CCol xs={12} sm={6} lg={4}>
-              <CCard className="mb-4 stat-card shadow-sm border-0 animate__animated animate__fadeInUp">
-                <CCardHeader className="bg-gradient-secondary text-white">
-                  <CIcon icon={cilXCircle} size="lg" className="me-2" />
-                  Audit Plan Non-Senders
-                </CCardHeader>
-                <CCardBody>
-                  <h3 className="text-secondary">{stats.auditPlanNonSenders}</h3>
-                </CCardBody>
-              </CCard>
-            </CCol>
+          <Box className="dashboard-container">
+            <Grid container spacing={3}>
+              {/* First Row: Fiscal Year and Selected Stat Cards */}
+              <Grid item xs={12}>
+                <Grid container spacing={3}>
+                  {/* Fiscal Year Selection */}
+                  <Grid item xs={12} sm={6} md={4} lg={3}>
+                    <Card className="stat-card hrm-main-card primary">
+                      <CardContent sx={{ p: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}>
+                            <Timeline sx={{ fontSize: 18 }} />
+                          </Avatar>
+                          <Typography variant="h5" color="primary">
+                            Fiscal Year
+                          </Typography>
+                        </Box>
+                        <FormControl fullWidth variant="outlined">
+                          <Select
+                            value={selectedFiscalYear}
+                            onChange={handleFiscalYearChange}
+                            label="Choose a fiscal year"
+                            sx={{ borderRadius: 2 }}
+                          >
+                            <MenuItem value="">Choose a fiscal year</MenuItem>
+                            {budgetYears.map((year) => (
+                              <MenuItem key={year.id} value={year.fiscalYear}>
+                                {year.fiscalYear}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      </CardContent>
+                    </Card>
+                  </Grid>
 
-            {/* Charts */}
-            <CCol xs={12} lg={6}>
-              <CCard className="mb-4 shadow-sm border-0 animate__animated animate__fadeInUp">
-                <CCardHeader className="bg-gradient-info text-white">
-                  <CIcon icon={cilChartPie} size="lg" className="me-2" />
-                  Senders vs Non-Senders
-                </CCardHeader>
-                <CCardBody>
-                  <CChartBar
-                    data={{
-                      labels: ['Senders', 'Non-Senders'],
-                      datasets: [
-                        {
-                          label: 'Number of Organizations',
-                          backgroundColor: (context) => {
-                            const chart = context.chart;
-                            const { ctx, chartArea } = chart;
-                            if (!chartArea) return;
-                            return [
-                              getGradient(ctx, chartArea, '#36A2EB', '#4BC0C0'),
-                              getGradient(ctx, chartArea, '#FF6384', '#FF9F40'),
-                            ];
-                          },
-                          data: [stats.senders, stats.nonSenders],
-                          borderRadius: 8,
-                        },
-                      ],
-                    }}
-                    options={{
-                      plugins: {
-                        tooltip: {
-                          backgroundColor: 'rgba(0,0,0,0.8)',
-                          titleFont: { size: 14 },
-                          bodyFont: { size: 12 },
-                        },
-                      },
-                      scales: {
-                        y: {
-                          beginAtZero: true,
-                          title: { display: true, text: 'Number of Organizations', font: { size: 14 } },
-                          grid: { color: '#e9ecef' },
-                        },
-                        x: {
-                          grid: { display: false },
-                        },
-                      },
-                      animation: {
-                        duration: 1000,
-                        easing: 'easeOutQuart',
-                      },
-                    }}
-                  />
-                </CCardBody>
-              </CCard>
-            </CCol>
-            <CCol xs={6} lg={6}>
-              <CCard className="mb-4 shadow-sm border-0 animate__animated animate__fadeInUp">
-                <CCardHeader className="bg-gradient-success text-white">
-                  <CIcon icon={cilChartPie} size="lg" className="me-2" />
-                  Audit Plan
-                </CCardHeader>
-                <CCardBody>
-                  <CChartPie
-                    data={{
-                      labels: ['Senders', 'Non-Senders'],
-                      datasets: [
-                        {
-                          data: [stats.auditPlanSenders, stats.auditPlanNonSenders],
-                          backgroundColor: ['#36A2EB', '#FF6384'],
-                          hoverBackgroundColor: ['#4BC0C0', '#FF9F40'],
-                          borderWidth: 2,
-                          borderColor: '#fff',
-                        },
-                      ],
-                    }}
-                    options={{
-                      plugins: {
-                        tooltip: {
-                          backgroundColor: 'rgba(0,0,0,0.8)',
-                          titleFont: { size: 14 },
-                          bodyFont: { size: 12 },
-                        },
-                      },
-                      animation: {
-                        duration: 1000,
-                        easing: 'easeOutQuart',
-                      },
-                    }}
-                  />
-                </CCardBody>
-              </CCard>
-            </CCol>
-            <CCol xs={6} lg={6}>
-              <CCard className="mb-4 shadow-sm border-0 animate__animated animate__fadeInUp">
-                <CCardHeader className="bg-gradient-primary text-white">
-                  <CIcon icon={cilLineStyle} size="lg" className="me-2" />
-                  Sender Statistics
-                </CCardHeader>
-                <CCardBody>
-                  <CChartLine
-                    data={{
-                      labels: [selectedFiscalYear],
-                      datasets: [
-                        {
-                          label: 'Total Senders',
-                          backgroundColor: (context) => {
-                            const chart = context.chart;
-                            const { ctx, chartArea } = chart;
-                            if (!chartArea) return;
-                            return getGradient(ctx, chartArea, 'rgba(151, 187, 205, 0.2)', 'rgba(151, 187, 205, 0.5)');
-                          },
-                          borderColor: '#36A2EB',
-                          pointBackgroundColor: '#36A2EB',
-                          pointBorderColor: '#fff',
-                          data: [stats.senders],
-                          fill: true,
-                        },
-                        {
-                          label: 'Audit Plan Senders',
-                          backgroundColor: (context) => {
-                            const chart = context.chart;
-                            const { ctx, chartArea } = chart;
-                            if (!chartArea) return;
-                            return getGradient(ctx, chartArea, 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 0.5)');
-                          },
-                          borderColor: '#FF6384',
-                          pointBackgroundColor: '#FF6384',
-                          pointBorderColor: '#fff',
-                          data: [stats.auditPlanSenders],
-                          fill: true,
-                        },
-                      ],
-                    }}
-                    options={{
-                      plugins: {
-                        tooltip: {
-                          backgroundColor: 'rgba(0,0,0,0.8)',
-                          titleFont: { size: 14 },
-                          bodyFont: { size: 12 },
-                        },
-                      },
-                      scales: {
-                        y: {
-                          beginAtZero: true,
-                          title: { display: true, text: 'Number of Senders', font: { size: 14 } },
-                          grid: { color: '#e9ecef' },
-                        },
-                        x: {
-                          grid: { display: false },
-                        },
-                      },
-                      animation: {
-                        duration: 1000,
-                        easing: 'easeOutQuart',
-                      },
-                    }}
-                  />
-                </CCardBody>
-              </CCard>
-            </CCol>
-          </>
-        )}
-      </CRow>
-    </div>
+                  {/* Total Organizations */}
+                  <Grid item xs={12} sm={6} md={4} lg={3}>
+                    <Card className="stat-card hrm-main-card primary">
+                      <CardContent sx={{ p: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}>
+                            <Business sx={{ fontSize: 18 }} />
+                          </Avatar>
+                          <Box>
+                            <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 1 }}>
+                              Total Organizations
+                            </Typography>
+                            <Typography variant="h5" color="primary">
+                              {stats.totalOrganizations}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+
+                  {/* Total Report Types */}
+                  <Grid item xs={12} sm={6} md={4} lg={3}>
+                    <Card className="stat-card hrm-main-card secondary">
+                      <CardContent sx={{ p: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Avatar sx={{ bgcolor: 'secondary.main', mr: 2 }}>
+                            <Description sx={{ fontSize: 18 }} />
+                          </Avatar>
+                          <Box>
+                            <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 1 }}>
+                              Total Report Types
+                            </Typography>
+                            <Typography variant="h5" color="secondary">
+                              {stats.totalReportTypes}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+
+                  {/* Total Senders */}
+                  <Grid item xs={12} sm={6} md={4} lg={3}>
+                    <Card className="stat-card hrm-main-card success">
+                      <CardContent sx={{ p: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Avatar sx={{ bgcolor: 'success.main', mr: 2 }}>
+                            <CheckCircle sx={{ fontSize: 18 }} />
+                          </Avatar>
+                          <Box>
+                            <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 1 }}>
+                              Total Senders
+                            </Typography>
+                            <Typography variant="h5" sx={{ color: 'success.main' }}>
+                              {stats.senders}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                </Grid>
+              </Grid>
+
+              {error && (
+                <Grid item xs={12}>
+                  <Alert severity="error" icon={<Cancel />} sx={{ mb: 3 }}>
+                    {error}
+                  </Alert>
+                </Grid>
+              )}
+
+              {selectedFiscalYear && !error && (
+                <>
+                  {/* Remaining Stat Cards */}
+                  <Grid item xs={12}>
+                    <Grid container spacing={3}>
+                      {/* Total Non-Senders */}
+                      <Grid item xs={12} sm={6} md={4} lg={3}>
+                        <Card className="stat-card hrm-main-card danger">
+                          <CardContent sx={{ p: 2 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              <Avatar sx={{ bgcolor: 'danger.main', mr: 2 }}>
+                                <Cancel sx={{ fontSize: 18 }} />
+                              </Avatar>
+                              <Box>
+                                <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 1 }}>
+                                  Total Non-Senders
+                                </Typography>
+                                <Typography variant="h5" sx={{ color: 'danger.main' }}>
+                                  {stats.nonSenders}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+
+                      {/* Audit Plan Senders */}
+                      <Grid item xs={12} sm={6} md={4} lg={3}>
+                        <Card className="stat-card hrm-main-card primary">
+                          <CardContent sx={{ p: 2 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}>
+                                <CheckCircle sx={{ fontSize: 18 }} />
+                              </Avatar>
+                              <Box>
+                                <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 1 }}>
+                                  Audit Plan Senders
+                                </Typography>
+                                <Typography variant="h5" color="primary">
+                                  {stats.auditPlanSenders}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+
+                      {/* Audit Plan Non-Senders */}
+                      <Grid item xs={12} sm={6} md={4} lg={3}>
+                        <Card className="stat-card hrm-main-card warning">
+                          <CardContent sx={{ p: 2 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              <Avatar sx={{ bgcolor: 'warning.main', mr: 2 }}>
+                                <Cancel sx={{ fontSize: 18 }} />
+                              </Avatar>
+                              <Box>
+                                <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 1 }}>
+                                  Audit Plan Non-Senders
+                                </Typography>
+                                <Typography variant="h5" sx={{ color: 'warning.main' }}>
+                                  {stats.auditPlanNonSenders}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    </Grid>
+                  </Grid>
+
+                  {/* Charts */}
+                  <Grid item xs={12} md={6}>
+                    <Card className="animate__animated animate__fadeInUp">
+                      <CardContent sx={{ bgcolor: 'primary.main', color: 'white', p: 2, borderRadius: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <PieChart sx={{ mr: 1 }} />
+                          <Typography variant="h6">Senders vs Non-Senders</Typography>
+                        </Box>
+                      </CardContent>
+                      <CardContent sx={{ p: 2 }}>
+                        <Box className="chart-container">
+                          <Bar
+                            data={{
+                              labels: ['Senders', 'Non-Senders'],
+                              datasets: [
+                                {
+                                  label: 'Number of Organizations',
+                                  backgroundColor: (context) => {
+                                    const chart = context.chart;
+                                    const { ctx, chartArea } = chart;
+                                    if (!chartArea) return;
+                                    return [
+                                      getGradient(ctx, chartArea, '#1a2035', '#00c4b4'),
+                                      getGradient(ctx, chartArea, '#dc3545', '#ff8a65'),
+                                    ];
+                                  },
+                                  data: [stats.senders, stats.nonSenders],
+                                  borderRadius: 8,
+                                },
+                              ],
+                            }}
+                            options={{
+                              maintainAspectRatio: false,
+                              plugins: {
+                                tooltip: {
+                                  backgroundColor: 'rgba(0,0,0,0.8)',
+                                  titleFont: { size: 14 },
+                                  bodyFont: { size: 12 },
+                                },
+                              },
+                              scales: {
+                                y: {
+                                  beginAtZero: true,
+                                  title: { display: true, text: 'Number of Organizations', font: { size: 14 } },
+                                  grid: { color: '#e0e0e0' },
+                                },
+                                x: { grid: { display: false } },
+                              },
+                              animation: {
+                                duration: 1000,
+                                easing: 'easeOutQuart',
+                              },
+                            }}
+                            height={300}
+                          />
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <Card className="animate__animated animate__fadeInUp">
+                      <CardContent sx={{ bgcolor: 'secondary.main', color: 'white', p: 2, borderRadius: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <PieChart sx={{ mr: 1 }} />
+                          <Typography variant="h6">Audit Plan</Typography>
+                        </Box>
+                      </CardContent>
+                      <CardContent sx={{ p: 2 }}>
+                        <Box className="chart-container">
+                          <Pie
+                            data={{
+                              labels: ['Senders', 'Non-Senders'],
+                              datasets: [
+                                {
+                                  data: [stats.auditPlanSenders, stats.auditPlanNonSenders],
+                                  backgroundColor: ['#1a2035', '#dc3545'],
+                                  hoverBackgroundColor: ['#00c4b4', '#ff8a65'],
+                                  borderWidth: 2,
+                                  borderColor: '#fff',
+                                },
+                              ],
+                            }}
+                            options={{
+                              maintainAspectRatio: false,
+                              plugins: {
+                                tooltip: {
+                                  backgroundColor: 'rgba(0,0,0,0.8)',
+                                  titleFont: { size: 14 },
+                                  bodyFont: { size: 12 },
+                                },
+                              },
+                              animation: {
+                                duration: 1000,
+                                easing: 'easeOutQuart',
+                              },
+                            }}
+                            height={300}
+                          />
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <Card className="animate__animated animate__fadeInUp">
+                      <CardContent sx={{ bgcolor: 'primary.main', color: 'white', p: 2, borderRadius: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Timeline sx={{ mr: 1 }} />
+                          <Typography variant="h6">Sender Statistics</Typography>
+                        </Box>
+                      </CardContent>
+                      <CardContent sx={{ p: 2 }}>
+                        <Box className="chart-container">
+                          <Line
+                            data={{
+                              labels: [selectedFiscalYear],
+                              datasets: [
+                                {
+                                  label: 'Total Senders',
+                                  backgroundColor: (context) => {
+                                    const chart = context.chart;
+                                    const { ctx, chartArea } = chart;
+                                    if (!chartArea) return;
+                                    return getGradient(ctx, chartArea, 'rgba(26, 32, 53, 0.2)', 'rgba(26, 32, 53, 0.5)');
+                                  },
+                                  borderColor: '#1a2035',
+                                  pointBackgroundColor: '#1a2035',
+                                  pointBorderColor: '#fff',
+                                  data: [stats.senders],
+                                  fill: true,
+                                },
+                                {
+                                  label: 'Audit Plan Senders',
+                                  backgroundColor: (context) => {
+                                    const chart = context.chart;
+                                    const { ctx, chartArea } = chart;
+                                    if (!chartArea) return;
+                                    return getGradient(ctx, chartArea, 'rgba(0, 196, 180, 0.2)', 'rgba(0, 196, 180, 0.5)');
+                                  },
+                                  borderColor: '#00c4b4',
+                                  pointBackgroundColor: '#00c4b4',
+                                  pointBorderColor: '#fff',
+                                  data: [stats.auditPlanSenders],
+                                  fill: true,
+                                },
+                              ],
+                            }}
+                            options={{
+                              maintainAspectRatio: false,
+                              plugins: {
+                                tooltip: {
+                                  backgroundColor: 'rgba(0,0,0,0.8)',
+                                  titleFont: { size: 14 },
+                                  bodyFont: { size: 12 },
+                                },
+                              },
+                              scales: {
+                                y: {
+                                  beginAtZero: true,
+                                  title: { display: true, text: 'Number of Senders', font: { size: 14 } },
+                                  grid: { color: '#e0e0e0' },
+                                },
+                                x: { grid: { display: false } },
+                              },
+                              animation: {
+                                duration: 1000,
+                                easing: 'easeOutQuart',
+                              },
+                            }}
+                            height={300}
+                          />
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                </>
+              )}
+            </Grid>
+          </Box>
+        </Box>
+      </Box>
+    </ThemeProvider>
   );
 };
 
@@ -428,14 +639,13 @@ class ChartsErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <CCard className="mb-5 shadow-sm border-0">
-          <CCardBody>
-            <CAlert color="danger" className="d-flex align-items-center">
-              <CIcon icon={cilXCircle} size="lg" className="me-2 animate__animated animate__pulse" />
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Alert severity="error" icon={<Cancel />}>
               An error occurred while rendering the charts. Please try again later.
-            </CAlert>
-          </CCardBody>
-        </CCard>
+            </Alert>
+          </CardContent>
+        </Card>
       );
     }
     return this.props.children;
