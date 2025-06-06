@@ -4,17 +4,16 @@ import CIcon from '@coreui/icons-react';
 import { cilBell } from '@coreui/icons';
 import { getUnreadNotifications, markNotificationAsRead } from '../file/upload_download';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../views/pages/AuthProvider'; // Import useAuth
-import './AppHeader.css'; // Import CSS for notification badge
+import { useAuth } from '../views/pages/AuthProvider';
+import './AppHeader.css';
 
 const NotificationDropdown = () => {
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
-    const { roles = [] } = useAuth(); // Get roles from AuthProvider
+    const { roles = [] } = useAuth();
 
-    // Role checking functions
     const hasRole = (role) => Array.isArray(roles) && roles.includes(role);
     const isArchiver = hasRole('ARCHIVER');
     const isSeniorAuditor = hasRole('SENIOR_AUDITOR');
@@ -39,8 +38,8 @@ const NotificationDropdown = () => {
     }, []);
 
     useEffect(() => {
-        fetchNotifications(); // Initial fetch
-        const interval = setInterval(fetchNotifications, 5000); // Poll every 5 seconds
+        fetchNotifications();
+        const interval = setInterval(fetchNotifications, 5000);
         return () => clearInterval(interval);
     }, [fetchNotifications]);
 
@@ -50,36 +49,35 @@ const NotificationDropdown = () => {
             await markNotificationAsRead(notification.id);
             console.log('Processing notification:', JSON.stringify(notification, null, 2));
 
-            // Validate notification
             if (!notification.entityType || !notification.entityId || !notification.context) {
                 console.warn('Missing entityType, entityId, or context:', notification);
-                navigate('/dashboard'); // Fallback
+                navigate('/dashboard');
                 return;
             }
 
-            // Redirect based on role and context
+            const taskId = notification.entityId;
             if (notification.entityType === 'MasterTransaction') {
                 if (isArchiver) {
                     if (notification.context === 'report_uploaded') {
-                        const fileDownloadRoute = '/buttons/file-download';
-                        console.log('Redirecting ARCHIVER to file download:', fileDownloadRoute);
-                        navigate(fileDownloadRoute);
+                        const route = `/buttons/file-download?taskId=${taskId}`;
+                        console.log('Redirecting ARCHIVER to:', route);
+                        navigate(route);
                     } else if (notification.context === 'task_approved') {
-                        const approvedReportsRoute = '/transactions/approved-reports';
-                        console.log('Redirecting ARCHIVER to approved reports:', approvedReportsRoute);
-                        navigate(approvedReportsRoute);
+                        const route = `/transactions/approved-reports?taskId=${taskId}`;
+                        console.log('Redirecting ARCHIVER to:', route);
+                        navigate(route);
                     } else {
                         console.warn('Unknown context for ARCHIVER:', notification.context);
                         navigate('/dashboard');
                     }
                 } else if (isSeniorAuditor && notification.context === 'task_assigned') {
-                    const auditorTasksRoute = '/transactions/auditor-tasks';
-                    console.log('Redirecting SENIOR_AUDITOR to auditor tasks:', auditorTasksRoute);
-                    navigate(auditorTasksRoute);
+                    const route = `/transactions/auditor-tasks?taskId=${taskId}`;
+                    console.log('Redirecting SENIOR_AUDITOR to:', route);
+                    navigate(route);
                 } else if (isApprover && notification.context === 'task_evaluated') {
-                    const auditorTasksRoute = '/transactions/auditor-tasks';
-                    console.log('Redirecting APPROVER to auditor tasks:', auditorTasksRoute);
-                    navigate(auditorTasksRoute);
+                    const route = `/transactions/auditor-tasks?taskId=${taskId}`;
+                    console.log('Redirecting APPROVER to:', route);
+                    navigate(route);
                 } else {
                     console.warn('No matching role or context:', { roles, context: notification.context });
                     navigate('/dashboard');
@@ -89,10 +87,10 @@ const NotificationDropdown = () => {
                 navigate('/dashboard');
             }
 
-            fetchNotifications(); // Refresh notifications
+            fetchNotifications();
         } catch (err) {
             console.error('Failed to mark notification as read:', err.message);
-            navigate('/dashboard'); // Fallback on error
+            navigate('/dashboard');
         }
     };
 
