@@ -24,7 +24,7 @@ public class Notification {
 
     private String entityType; // e.g., "MasterTransaction"
     private Long entityId;    // e.g., transaction ID
-
+    private String context;
     // Getter and Setter for id
     public Long getId() {
         return id;
@@ -95,5 +95,12 @@ public class Notification {
 
     public void setEntityId(Long entityId) {
         this.entityId = entityId;
+    }
+     public String getContext() {
+        return context;
+    }
+
+    public void setContext(String context) {
+        this.context = context;
     }
 }

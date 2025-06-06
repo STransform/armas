@@ -66,13 +66,14 @@ public class MasterTransactionService {
     @Autowired
     private NotificationRepository notificationRepository;
     
-    private void createNotification(User user, String title, String message, String entityType, Long entityId) {
+    private void createNotification(User user, String title, String message, String entityType, Long entityId, String context) {
         Notification notification = new Notification();
         notification.setUser(user);
         notification.setTitle(title);
         notification.setMessage(message);
         notification.setEntityType(entityType);
         notification.setEntityId(entityId);
+        notification.setContext(context);
         notificationRepository.save(notification);
     }
 
@@ -135,12 +136,13 @@ public class MasterTransactionService {
         List<User> archivers = userRepository.findByRoleName("ARCHIVER");
         for (User archiver : archivers) {
             createNotification(
-                    archiver,
-                    "New Report Uploaded",
-                    "A new report '" + savedTransaction.getDocname() + "' has been uploaded by " + principal.getName(),
-                    "MasterTransaction",
-                    savedTransaction.getId().longValue()
-            );
+                        archiver,
+                        "New Report Uploaded",
+                        "A new report '" + savedTransaction.getDocname() + "' has been uploaded by " + principal.getName(),
+                        "MasterTransaction",
+                        savedTransaction.getId().longValue(),
+                        "report_uploaded"
+                    );
         }
 
         return savedTransaction;
@@ -243,8 +245,9 @@ public class MasterTransactionService {
                 "Task Assigned",
                 "You have been assigned to evaluate report '" + savedTransaction.getDocname() + "'",
                 "MasterTransaction",
-                savedTransaction.getId().longValue()
-        );
+                savedTransaction.getId().longValue(),
+                "task_assigned"
+            );
 
         System.out.println("Assigned task: ID=" + savedTransaction.getId() + ", user2=" + auditor.getUsername());
         return savedTransaction;
@@ -312,8 +315,9 @@ public MasterTransaction submitFindings(Integer transactionId, String findings, 
                 "New Task for Review",
                 "A task '" + savedTransaction.getDocname() + "' has been submitted for your review by " + currentUsername,
                 "MasterTransaction",
-                savedTransaction.getId().longValue()
-        );
+                savedTransaction.getId().longValue(),
+                "task_evaluated"
+            );
 
         System.out.println("Transaction saved: ID=" + savedTransaction.getId());
         return savedTransaction;
@@ -345,13 +349,14 @@ public MasterTransaction submitFindings(Integer transactionId, String findings, 
 
         // Notify the ARCHIVER who assigned the task
         if (savedTransaction.getAssignedBy() != null) {
-            createNotification(
+           createNotification(
                     savedTransaction.getAssignedBy(),
                     "Task Approved",
                     "The task '" + savedTransaction.getDocname() + "' you assigned has been approved",
                     "MasterTransaction",
-                    savedTransaction.getId().longValue()
-            );
+                    savedTransaction.getId().longValue(),
+                    "task_approved"
+                );
         }
 
         System.out.println("Saved transaction: ID=" + savedTransaction.getId() +
