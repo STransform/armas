@@ -1,0 +1,49 @@
+/* AppSidebar.css */
+
+/* Base sidebar color */
+.custom-sidebar {
+  background-color: teal !important;
+  color: white;
+}
+
+/* Text default state */
+.custom-sidebar .nav-link,
+.custom-sidebar .c-sidebar-nav-link {
+  color: white !important;
+}
+
+/* Hover state */
+.custom-sidebar .nav-link:hover,
+.custom-sidebar .c-sidebar-nav-link:hover {
+  background-color: magenta !important;
+  color: black !important;
+}
+.badge.badge-pill.badge-danger {
+    position: absolute !important;
+    top: -5px !important;
+    right: -5px !important;
+    font-size: 9px !important;
+    padding: 2px 5px !important;
+    border-radius: 50% !important;
+    background-color: #dc3545 !important; /* Red background */
+    color: #fff !important; /* White text */
+    min-width: 16px !important;
+    height: 16px !important;
+    line-height: 12px !important;
+    text-align: center !important;
+    z-index: 1000 !important;
+    box-shadow: 0 0 2px rgba(0,0,0,0.2) !important;
+}
+
+/* Adjust badge for smaller screens */
+@media (max-width: 768px) {
+    .badge.badge-pill.badge-danger {
+        top: -4px !important;
+        right: -4px !important;
+        font-size: 8px !important;
+        min-width: 14px !important;
+        height: 14px !important;
+        line-height: 10px !important;
+        padding: 2px 4px !important;
+    }
+}

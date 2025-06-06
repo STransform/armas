@@ -5,6 +5,7 @@ import com.simon.armas_springboot_api.dto.MasterTransactionDTO;
 import com.simon.armas_springboot_api.models.Document;
 import com.simon.armas_springboot_api.models.MasterTransaction;
 import com.simon.armas_springboot_api.models.User;
+import com.simon.armas_springboot_api.models.Notification;
 import com.simon.armas_springboot_api.models.BudgetYear;
 import com.simon.armas_springboot_api.repositories.BudgetYearRepository;
 import com.simon.armas_springboot_api.repositories.DocumentRepository;
@@ -12,6 +13,7 @@ import com.simon.armas_springboot_api.repositories.OrganizationRepository;
 import com.simon.armas_springboot_api.repositories.MasterTransactionRepository;
 import com.simon.armas_springboot_api.repositories.OrganizationRepository;
 import com.simon.armas_springboot_api.repositories.UserRepository;
+import com.simon.armas_springboot_api.repositories.NotificationRepository;
 import com.simon.armas_springboot_api.dto.UserDTO;
 
 import com.simon.armas_springboot_api.security.models.Role;
@@ -61,7 +63,18 @@ public class MasterTransactionService {
     private DocumentRepository documentRepository;
     @Autowired
     private OrganizationRepository organizationRepository;
-
+    @Autowired
+    private NotificationRepository notificationRepository;
+    
+    private void createNotification(User user, String title, String message, String entityType, Long entityId) {
+        Notification notification = new Notification();
+        notification.setUser(user);
+        notification.setTitle(title);
+        notification.setMessage(message);
+        notification.setEntityType(entityType);
+        notification.setEntityId(entityId);
+        notificationRepository.save(notification);
+    }
 
     // Upload file by Uploader
    @Transactional
@@ -116,7 +129,21 @@ public class MasterTransactionService {
             transaction.setResponse_needed("Pending");
         }
 
-        return masterTransactionRepository.save(transaction);
+        MasterTransaction savedTransaction = masterTransactionRepository.save(transaction);
+
+        // Notify all ARCHIVER users
+        List<User> archivers = userRepository.findByRoleName("ARCHIVER");
+        for (User archiver : archivers) {
+            createNotification(
+                    archiver,
+                    "New Report Uploaded",
+                    "A new report '" + savedTransaction.getDocname() + "' has been uploaded by " + principal.getName(),
+                    "MasterTransaction",
+                    savedTransaction.getId().longValue()
+            );
+        }
+
+        return savedTransaction;
     }
     
     @Transactional
@@ -210,6 +237,15 @@ public class MasterTransactionService {
         transaction.setLastModifiedBy(currentUsername);
         MasterTransaction savedTransaction = masterTransactionRepository.save(transaction);
 
+         // Notify the assigned SENIOR_AUDITOR
+        createNotification(
+                auditor,
+                "Task Assigned",
+                "You have been assigned to evaluate report '" + savedTransaction.getDocname() + "'",
+                "MasterTransaction",
+                savedTransaction.getId().longValue()
+        );
+
         System.out.println("Assigned task: ID=" + savedTransaction.getId() + ", user2=" + auditor.getUsername());
         return savedTransaction;
     }
@@ -268,14 +304,19 @@ public MasterTransaction submitFindings(Integer transactionId, String findings, 
     }
 
     transaction.setLastModifiedBy(currentUsername);
-    try {
-        MasterTransaction saved = masterTransactionRepository.save(transaction);
-        System.out.println("Transaction saved: ID=" + saved.getId());
-        return saved;
-    } catch (Exception e) {
-        System.err.println("Database save failed: " + e.getMessage());
-        throw new RuntimeException("Failed to save transaction: " + e.getMessage(), e);
-    }
+   MasterTransaction savedTransaction = masterTransactionRepository.save(transaction);
+
+        // Notify the selected APPROVER
+        createNotification(
+                approver,
+                "New Task for Review",
+                "A task '" + savedTransaction.getDocname() + "' has been submitted for your review by " + currentUsername,
+                "MasterTransaction",
+                savedTransaction.getId().longValue()
+        );
+
+        System.out.println("Transaction saved: ID=" + savedTransaction.getId());
+        return savedTransaction;
 }
     @Transactional
     public MasterTransaction approveReport(Integer transactionId, String currentUsername,
@@ -301,6 +342,18 @@ public MasterTransaction submitFindings(Integer transactionId, String findings, 
         }
 
         MasterTransaction savedTransaction = masterTransactionRepository.save(transaction);
+
+        // Notify the ARCHIVER who assigned the task
+        if (savedTransaction.getAssignedBy() != null) {
+            createNotification(
+                    savedTransaction.getAssignedBy(),
+                    "Task Approved",
+                    "The task '" + savedTransaction.getDocname() + "' you assigned has been approved",
+                    "MasterTransaction",
+                    savedTransaction.getId().longValue()
+            );
+        }
+
         System.out.println("Saved transaction: ID=" + savedTransaction.getId() +
                 ", SupportingDocumentPath=" + savedTransaction.getSupportingDocumentPath() +
                 ", SupportingDocname=" + savedTransaction.getSupportingDocname());

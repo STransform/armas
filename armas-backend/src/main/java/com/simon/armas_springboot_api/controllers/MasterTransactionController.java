@@ -15,6 +15,11 @@ import com.simon.armas_springboot_api.repositories.OrganizationRepository;
 import org.springframework.http.HttpStatus;
 import com.simon.armas_springboot_api.dto.MasterTransactionDTO;
 import com.simon.armas_springboot_api.dto.SentReportResponseDTO;
+import com.simon.armas_springboot_api.models.Notification;
+import com.simon.armas_springboot_api.repositories.NotificationRepository;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestMapping;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -59,6 +64,34 @@ public class MasterTransactionController {
 
     @Autowired
     private BudgetYearRepository budgetYearRepository; // Add this
+    @Autowired
+    private NotificationRepository notificationRepository;
+
+    // New endpoint to fetch unread notifications
+    @GetMapping("/notifications")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<Notification>> getUnreadNotifications(Principal principal) {
+        User user = userRepository.findByUsername(principal.getName());
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
+        }
+        List<Notification> notifications = notificationRepository.findByUserIdAndIsReadFalse(user.getId());
+        return ResponseEntity.ok(notifications);
+    }
+
+    // New endpoint to mark a notification as read
+    @PutMapping("/notifications/{id}/read")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> markAsRead(@PathVariable Long id, Principal principal) {
+        Notification notification = notificationRepository.findById(id).orElse(null);
+        if (notification == null || !notification.getUser().getUsername().equals(principal.getName())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        notification.setIsRead(true);
+        notificationRepository.save(notification);
+        return ResponseEntity.ok().build();
+    }
+
 
     @PostMapping("/upload")
     @PreAuthorize("hasRole('USER')")
