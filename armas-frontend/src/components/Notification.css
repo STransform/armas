@@ -1,0 +1,16 @@
+.notification-badge {
+    position: absolute !important;
+    background-color: #dc3545 !important;
+    color: white !important;
+    font-size: 12px !important;
+    padding: 4px 8px !important;
+    border-radius: 50% !important;
+    min-width: 20px !important;
+    text-align: center !important;
+    z-index: 1000 !important;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+.c-dropdown-toggle {
+    position: relative !important;
+}

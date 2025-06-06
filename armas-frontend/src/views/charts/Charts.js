@@ -447,7 +447,7 @@ const Charts = () => {
                   {/* Charts */}
                   <Grid item xs={12} md={6}>
                     <Card className="animate__animated animate__fadeInUp">
-                      <CardContent sx={{ bgcolor: 'primary.main', color: 'white', p: 2, borderRadius: 1 }}>
+                      <CardContent sx={{ bgcolor: 'white', color: 'black', p: 2, borderRadius: 1 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                           <PieChart sx={{ mr: 1 }} />
                           <Typography variant="h6">Senders vs Non-Senders</Typography>
@@ -505,7 +505,7 @@ const Charts = () => {
                   </Grid>
                   <Grid item xs={12} md={6}>
                     <Card className="animate__animated animate__fadeInUp">
-                      <CardContent sx={{ bgcolor: 'secondary.main', color: 'white', p: 2, borderRadius: 1 }}>
+                      <CardContent sx={{ bgcolor: 'white', color: 'black', p: 2, borderRadius: 1 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                           <PieChart sx={{ mr: 1 }} />
                           <Typography variant="h6">Audit Plan</Typography>
@@ -548,7 +548,7 @@ const Charts = () => {
                   </Grid>
                   <Grid item xs={12} md={6}>
                     <Card className="animate__animated animate__fadeInUp">
-                      <CardContent sx={{ bgcolor: 'primary.main', color: 'white', p: 2, borderRadius: 1 }}>
+                      <CardContent sx={{ bgcolor: 'white', color: 'black', p: 2, borderRadius: 1 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                           <Timeline sx={{ mr: 1 }} />
                           <Typography variant="h6">Sender Statistics</Typography>

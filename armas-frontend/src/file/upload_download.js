@@ -9,7 +9,23 @@ export const getDocuments = async () => {
         throw error;
     }
 };
-
+export const getUnreadNotifications = async () => {
+    try {
+        const response = await axiosInstance.get('/transactions/notifications');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching notifications:', error.message);
+        throw error;
+    }
+};
+export const markNotificationAsRead = async (id) => {
+    try {
+        await axiosInstance.put(`/transactions/notifications/${id}/read`);
+    } catch (error) {
+        console.error('Error marking notification as read:', error.message);
+        throw error;
+    }
+};
 export const uploadFile = async (file, reportcategory, budgetYearId, transactiondocumentid) => {
     const formData = new FormData();
     formData.append('file', file);
