@@ -430,4 +430,15 @@ public ResponseEntity<Map<String, Long>> getDashboardStats(@RequestParam String 
     stats.put("auditPlanNonSenders", masterTransactionService.getNonSendersCountForReportType("Audit Plan", fiscalYear));
     return ResponseEntity.ok(stats);
 }
+@GetMapping("/file-history")
+@PreAuthorize("hasRole('USER')")
+public ResponseEntity<List<MasterTransactionDTO>> getFileHistory(Principal principal) {
+    User user = userRepository.findByUsername(principal.getName());
+    if (user == null) {
+        throw new IllegalStateException("User not found: " + principal.getName());
+    }
+    List<MasterTransactionDTO> history = masterTransactionService.getTransactionHistory(user.getId());
+    System.out.println("Fetched file history for user " + principal.getName() + ": " + history.size());
+    return ResponseEntity.ok(history);
+}
 }
