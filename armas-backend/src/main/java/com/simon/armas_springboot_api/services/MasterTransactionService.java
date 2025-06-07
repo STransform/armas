@@ -583,4 +583,10 @@ public long getSendersCountForReportType(String reportype, String fiscalYear) {
 public long getNonSendersCountForReportType(String reportype, String fiscalYear) {
     return getTotalOrganizations() - getSendersCountForReportType(reportype, fiscalYear);
 }
+public List<MasterTransactionDTO> getTransactionHistory(Long userId) {
+    List<MasterTransaction> transactions = masterTransactionRepository.findTransactionHistoryByUserId(userId);
+    return transactions.stream()
+            .map(MasterTransactionDTO::new)
+            .collect(Collectors.toList());
+}
 }

@@ -52,17 +52,7 @@ const Nav = () => {
       component: CNavTitle,
       name: 'Extras',
     },
-    {
-      component: CNavGroup,
-      name: 'User',
-      icon: <CIcon icon={cilStar} customClassName="nav-icon" />,
-      items: [
-        { component: CNavItem, name: 'Logout', to: '/login' },
-        // { component: CNavItem, name: 'Register', to: '/register' },
-        { component: CNavItem, name: 'Error 404', to: '/404' },
-        { component: CNavItem, name: 'Error 500', to: '/500' },
-      ],
-    },
+
   ];
 
   const userItems = [
@@ -79,7 +69,7 @@ const Nav = () => {
     {
       component: CNavItem,
       name: 'File History',
-      to: '/buttons/file-history',
+      to: '/file-history',
       icon: <CIcon icon={cilCloudUpload} customClassName="nav-icon" />,
     },
     {

@@ -68,7 +68,7 @@ const FileUpload = ({ onUploadSuccess }) => {
                 transactiondocumentid: documents.length > 0 ? documents[0].id : '',
             });
             e.target.reset();
-            if (onUploadSuccess) onUploadSuccess();
+            if (onUploadSuccess) onUploadSuccess(); // Trigger refresh
         } catch (err) {
             const errorMessage = err.message || 'File upload failed';
             setError(errorMessage);
@@ -76,7 +76,6 @@ const FileUpload = ({ onUploadSuccess }) => {
             console.log('Upload error:', errorMessage);
         }
     };
-
     return (
         <div className="container mt-5">
             <h2>Upload File</h2>

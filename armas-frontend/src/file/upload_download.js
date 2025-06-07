@@ -433,3 +433,13 @@ export const hasOrganizationSentReport = async (organizationId, reportTypeId, bu
         throw error;
     }
 };
+export const getFileHistory = async () => {
+    try {
+        const response = await axiosInstance.get('/transactions/file-history');
+        console.log('File history response:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching file history:', error.message, error.response?.status, error.response?.data);
+        throw error;
+    }
+};

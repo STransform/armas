@@ -1,0 +1,45 @@
+/* Dropdown menu background and default text color */
+.custom-dropdown-menu {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+/* Dropdown header styling */
+.custom-dropdown-header {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+/* Dropdown item default styling */
+.custom-dropdown-item {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+/* Icon styling */
+.custom-dropdown-item .custom-icon {
+  color: #ffffff !important;
+}
+
+/* Hover effect for dropdown items (except logout) */
+.custom-dropdown-item:hover {
+  background-color: #ff0000 !important; /* Red background on hover */
+  color: #ffffff !important; /* White text on hover */
+}
+
+/* Specific styling for logout item */
+.custom-logout-item {
+  background-color: #000000 !important; /* Black background for logout */
+  color: #ffffff !important; /* White text for logout */
+}
+
+/* Hover effect for logout item */
+.custom-logout-item:hover {
+  background-color: #ff0000 !important; /* Red background on hover */
+  color: #ffffff !important; /* White text on hover */
+}
+
+/* Divider styling */
+.custom-dropdown-divider {
+  border-color: #ffffff !important; /* White divider */
+}

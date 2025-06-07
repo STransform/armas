@@ -228,5 +228,12 @@ long countSendersByFiscalYear(@Param("fiscalYear") String fiscalYear);
 @Query("SELECT COUNT(DISTINCT m.organization) FROM MasterTransaction m WHERE m.reportcategory = 'Report' AND m.transactiondocument.reportype = :reportype AND m.budgetYear.fiscalYear = :fiscalYear")
 long countSendersByReportTypeAndFiscalYear(@Param("reportype") String reportype, @Param("fiscalYear") String fiscalYear);
 
+@Query("SELECT m FROM MasterTransaction m " +
+       "LEFT JOIN FETCH m.organization " +
+       "LEFT JOIN FETCH m.budgetYear " +
+       "LEFT JOIN FETCH m.transactiondocument " +
+       "LEFT JOIN FETCH m.user " +
+       "WHERE m.user.id = :userId ORDER BY m.createdDate DESC")
+List<MasterTransaction> findTransactionHistoryByUserId(@Param("userId") Long userId);
 
 }

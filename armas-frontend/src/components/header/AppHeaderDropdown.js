@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react';
 import {
   CAvatar,
   CBadge,
@@ -8,7 +8,7 @@ import {
   CDropdownItem,
   CDropdownMenu,
   CDropdownToggle,
-} from '@coreui/react'
+} from '@coreui/react';
 import {
   cilBell,
   cilCreditCard,
@@ -19,89 +19,51 @@ import {
   cilSettings,
   cilTask,
   cilUser,
-} from '@coreui/icons'
-import CIcon from '@coreui/icons-react'
-
-import avatar8 from './../../assets/images/avatars/8.jpg'
-import { NavLink, useNavigate } from 'react-router-dom'
-import { useAuth } from '../../views/pages/AuthProvider'
+} from '@coreui/icons';
+import CIcon from '@coreui/icons-react';
+import avatar8 from './../../assets/images/avatars/8.jpg';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../views/pages/AuthProvider';
+import './AppHeaderDropdown.css'; // Import the custom CSS
 
 const AppHeaderDropdown = () => {
+  const navigate = useNavigate();
+  const { logOut } = useAuth();
 
-  const navigate = useNavigate()
-  const {logOut} = useAuth()
-  
   const logoutUser = () => {
-    logOut()
-    navigate('/login')
-  }
+    logOut();
+    navigate('/login');
+  };
 
   return (
     <CDropdown variant="nav-item">
       <CDropdownToggle placement="bottom-end" className="py-0 pe-0" caret={false}>
         <CAvatar src={avatar8} size="md" />
       </CDropdownToggle>
-      <CDropdownMenu className="pt-0" placement="bottom-end">
-        <CDropdownHeader className="bg-body-secondary fw-semibold mb-2">Account</CDropdownHeader>
-        <CDropdownItem href="#">
-          <CIcon icon={cilBell} className="me-2" />
-          Dashboard
-          {/* <CBadge color="info" className="ms-2">
-            42
-          </CBadge> */}
-        </CDropdownItem>
-        {/* <CDropdownItem href="#">
-          <CIcon icon={cilEnvelopeOpen} className="me-2" />
-          Messages
-          <CBadge color="success" className="ms-2">
-            42
-          </CBadge>
-        </CDropdownItem> */}
-        <CDropdownItem href="#">
-          <CIcon icon={cilTask} className="me-2" />
-          Tasks
-          <CBadge color="danger" className="ms-2">
-            4
-          </CBadge>
-        </CDropdownItem>
-        {/* <CDropdownItem href="#">
-          <CIcon icon={cilCommentSquare} className="me-2" />
-          Comments
-          <CBadge color="warning" className="ms-2">
-            42
-          </CBadge>
-        </CDropdownItem> */}
-        <CDropdownHeader className="bg-body-secondary fw-semibold my-2">Settings</CDropdownHeader>
-        <CDropdownItem href="#">
-          <CIcon icon={cilUser} className="me-2" />
-          Profile
-        </CDropdownItem>
-        <CDropdownItem href="#">
-          <CIcon icon={cilSettings} className="me-2" />
+      <CDropdownMenu className="pt-0 custom-dropdown-menu" placement="bottom-end">
+        <CDropdownHeader className="fw-semibold my-2 custom-dropdown-header">
           Settings
+        </CDropdownHeader>
+        <CDropdownItem href="#" className="custom-dropdown-item">
+          <CIcon icon={cilUser} className="me-2 custom-icon" />
+          User Profile
         </CDropdownItem>
-        {/* <CDropdownItem href="#">
-          <CIcon icon={cilCreditCard} className="me-2" />
-          Payments
-          <CBadge color="secondary" className="ms-2">
-            42
-          </CBadge>
-        </CDropdownItem> */}
-        {/* <CDropdownItem href="#">
-          <CIcon icon={cilFile} className="me-2" />
-          Projects
-          <CBadge color="primary" className="ms-2">
-            42
-          </CBadge>
-        </CDropdownItem> */}
-        <CDropdownDivider />
-        <CDropdownItem onClick={logoutUser} as={NavLink} >
-          <CIcon icon={cilLockLocked} className="me-2" />
+        <CDropdownItem href="#" className="custom-dropdown-item">
+          <CIcon icon={cilSettings} className="me-2 custom-icon" />
+          Password change
+        </CDropdownItem>
+        <CDropdownDivider className="custom-dropdown-divider" />
+        <CDropdownItem
+          onClick={logoutUser}
+          as={NavLink}
+          className="custom-dropdown-item custom-logout-item"
+        >
+          <CIcon icon={cilLockLocked} className="me-2 custom-icon" />
           LogOut
         </CDropdownItem>
       </CDropdownMenu>
     </CDropdown>
-  )
-}
+  );
+};
 
-export default AppHeaderDropdown
+export default AppHeaderDropdown;

@@ -254,7 +254,7 @@ const Charts = () => {
 
         {/* Main Content */}
         <Box sx={{ flexGrow: 1, p: 3 }}>
-          <AppBar position="static" color="transparent" elevation={0}>
+          {/* <AppBar position="static" color="transparent" elevation={0}>
             <Toolbar>
               <IconButton edge="start" color="inherit" onClick={toggleDrawer}>
                 <MenuIcon />
@@ -263,7 +263,7 @@ const Charts = () => {
                 Dashboard
               </Typography>
             </Toolbar>
-          </AppBar>
+          </AppBar> */}
 
           <Box className="dashboard-container">
             <Grid container spacing={3}>

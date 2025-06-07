@@ -147,21 +147,9 @@ const AdvancedFilters = () => {
     setPage(0);
   };
 
-  const filteredResults = results.filter(item => {
-    if (filterType === 'reports-by-org' || filterType === 'feedback-senders') {
-      return (
-        (item.orgname || '').toLowerCase().includes(filterText.toLowerCase()) ||
-        (item.fiscalYear || '').toString().toLowerCase().includes(filterText.toLowerCase()) ||
-        (item.reportype || '').toLowerCase().includes(filterText.toLowerCase()) ||
-        (item.reportstatus || '').toLowerCase().includes(filterText.toLowerCase())
-      );
-    } else {
-      return (
-        (item.orgname || '').toLowerCase().includes(filterText.toLowerCase()) ||
-        (item.id || '').toLowerCase().includes(filterText.toLowerCase())
-      );
-    }
-  });
+  const filteredResults = results.filter(item =>
+    (item.orgname || '').toLowerCase().includes(filterText.toLowerCase())
+  );
 
   return (
     <div className="container mt-5">
@@ -273,67 +261,24 @@ const AdvancedFilters = () => {
             }}>
               <TableHead>
                 <TableRow>
-                  {filterType === 'reports-by-org' || filterType === 'feedback-senders' ? (
-                    <>
-                      <TableCell>ID</TableCell>
-                      <TableCell>Organization</TableCell>
-                      <TableCell>Budget Year</TableCell>
-                      <TableCell>Report Type</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Created Date</TableCell>
-                      <TableCell>Action</TableCell>
-                    </>
-                  ) : (
-                    <>
-                      <TableCell>ID</TableCell>
-                      <TableCell>Organization Name</TableCell>
-                      <TableCell>Organization Type</TableCell>
-                      <TableCell>Action</TableCell>
-                    </>
-                  )}
+                  <TableCell>Organization Name</TableCell>
+                  <TableCell>Action</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {filteredResults.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((item) => (
                   <TableRow key={item.id || Math.random()}>
-                    {filterType === 'reports-by-org' || filterType === 'feedback-senders' ? (
-                      <>
-                        <TableCell>{item.id || 'N/A'}</TableCell>
-                        <TableCell>{item.orgname || 'N/A'}</TableCell>
-                        <TableCell>{item.fiscalYear || 'N/A'}</TableCell>
-                        <TableCell>{item.reportype || 'N/A'}</TableCell>
-                        <TableCell>{item.reportstatus || 'N/A'}</TableCell>
-                        <TableCell>
-                          {item.createdDate ? new Date(item.createdDate).toLocaleDateString() : 'N/A'}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="contained"
-                            color="success"
-                            size="small"
-                            onClick={() => handleDetails(item)}
-                          >
-                            Details
-                          </Button>
-                        </TableCell>
-                      </>
-                    ) : (
-                      <>
-                        <TableCell>{item.id || 'N/A'}</TableCell>
-                        <TableCell>{item.orgname || 'N/A'}</TableCell>
-                        <TableCell>{item.orgtype || 'N/A'}</TableCell>
-                        <TableCell>
-                          <Button
-                            variant="contained"
-                            color="success"
-                            size="small"
-                            onClick={() => handleDetails(item)}
-                          >
-                            Details
-                          </Button>
-                        </TableCell>
-                      </>
-                    )}
+                    <TableCell>{item.orgname || 'N/A'}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="contained"
+                        color="success"
+                        size="small"
+                        onClick={() => handleDetails(item)}
+                      >
+                        Details
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
