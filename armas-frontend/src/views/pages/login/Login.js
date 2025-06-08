@@ -45,8 +45,12 @@ const Login = () => {
         navigate('/charts/');
       } else if (roles.includes('ARCHIVER')) {
         navigate('/charts/');
-      } else {
-        navigate('/dashboard');
+      } 
+      else if (roles.includes('APPROVER')) {
+        navigate('/charts/');
+      } 
+      else {
+        navigate('/#');
       }
     } catch (error) {
       const errorMessage = error.message || 'Login failed. Please try again.';

@@ -90,17 +90,22 @@ const FileHistory = () => {
   );
 
   return (
-    <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: '1200px', mx: 'auto', mt: 4 }}>
+    <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: '1200px', mx: 'auto', mt: 1 }}>
       <Typography
-        variant="h4"
+        variant="h5"
         component="h2"
         gutterBottom
-        sx={{ fontWeight: 'bold', color: '#1976d2', textAlign: { xs: 'center', md: 'left' } }}
+        sx={{
+          fontWeight: 'bold',
+          color: '#1976d2',
+          textAlign: { xs: 'center', md: 'left' },
+          mb: 2,
+        }}
       >
         File History
       </Typography>
       {loading && (
-        <Box display="flex" justifyContent="center" my={4}>
+        <Box display="flex" justifyContent="center" my={2}>
           <CircularProgress />
         </Box>
       )}
@@ -162,7 +167,7 @@ const FileHistory = () => {
         >
           <Box
             sx={{
-              p: 2,
+              p: { xs: 1.5, md: 2 },
               display: 'flex',
               justifyContent: { xs: 'center', md: 'flex-end' },
             }}
@@ -185,10 +190,10 @@ const FileHistory = () => {
               <Table
                 stickyHeader
                 sx={{
-                  minWidth: 800, // Ensures horizontal scroll on small screens
+                  minWidth: 800,
                   '& .MuiTableCell-root': {
                     fontSize: { xs: '0.85rem', sm: '0.95rem', md: '1rem' },
-                    padding: { xs: '8px', sm: '12px' },
+                    padding: { xs: '6px', sm: '8px', md: '12px' },
                   },
                   '& .MuiTableRow-root:hover': {
                     bgcolor: '#e3f2fd',
@@ -354,7 +359,7 @@ const FileHistory = () => {
             sx={{
               '.MuiTablePagination-toolbar': {
                 fontSize: { xs: '0.85rem', sm: '0.95rem' },
-                padding: { xs: '8px', sm: '16px' },
+                padding: { xs: '8px', sm: '12px' },
               },
             }}
           />

@@ -149,17 +149,21 @@ const FileDownload = () => {
   );
 
   return (
-    <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: '1200px', mx: 'auto', mt: 4 }}>
+    <Box sx={{ p: { xs: 1, md: 2 }, maxWidth: '1200px', mx: 'auto', mt: 1 }}>
       <Typography
         variant="h4"
         component="h2"
-        gutterBottom
-        sx={{ fontWeight: 'bold', color: '#1976d2', textAlign: { xs: 'center', md: 'left' } }}
+        sx={{
+          fontWeight: 'bold',
+          color: '#1976d2',
+          textAlign: { xs: 'center', md: 'left' },
+          mb: 1,
+        }}
       >
         Archiver View
       </Typography>
       {loading && (
-        <Box display="flex" justifyContent="center" my={4}>
+        <Box display="flex" justifyContent="center" my={2}>
           <CircularProgress />
         </Box>
       )}
@@ -167,7 +171,7 @@ const FileDownload = () => {
         <Alert
           severity="error"
           sx={{
-            mb: 2,
+            mb: 1,
             borderRadius: '8px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
             maxWidth: { xs: '100%', md: '600px' },
@@ -193,7 +197,7 @@ const FileDownload = () => {
         <Alert
           severity="success"
           sx={{
-            mb: 2,
+            mb: 1,
             borderRadius: '8px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
             maxWidth: { xs: '100%', md: '600px' },
@@ -203,19 +207,11 @@ const FileDownload = () => {
           {success}
         </Alert>
       )}
-      <Typography
-        variant="h5"
-        component="h3"
-        gutterBottom
-        sx={{ fontWeight: 'medium', color: '#333', mt: 3, textAlign: { xs: 'center', md: 'left' } }}
-      >
-        Reports
-      </Typography>
       {!loading && submittedReports.length === 0 && !error && (
         <Alert
           severity="info"
           sx={{
-            mb: 2,
+            mb: 1,
             borderRadius: '8px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
             maxWidth: { xs: '100%', md: '600px' },
@@ -236,7 +232,7 @@ const FileDownload = () => {
         >
           <Box
             sx={{
-              p: 2,
+              p: 1,
               display: 'flex',
               justifyContent: { xs: 'center', md: 'flex-end' },
             }}
@@ -425,7 +421,7 @@ const FileDownload = () => {
             <Alert
               severity="info"
               sx={{
-                m: 2,
+                m: 1,
                 borderRadius: '8px',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
               }}
@@ -450,7 +446,6 @@ const FileDownload = () => {
           />
         </Paper>
       )}
-
       {/* Assign Auditor Modal */}
       {showAssignModal && (
         <Dialog
@@ -514,7 +509,6 @@ const FileDownload = () => {
           </DialogActions>
         </Dialog>
       )}
-
       {/* Details Modal */}
       {showDetailsModal && selectedReport && (
         <Dialog

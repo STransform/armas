@@ -283,14 +283,6 @@ const AuditorTasks = () => {
           {success}
         </Alert>
       )}
-      <Typography
-        variant="h5"
-        component="h3"
-        gutterBottom
-        sx={{ fontWeight: 'medium', color: '#333', mt: 3, textAlign: { xs: 'center', md: 'left' } }}
-      >
-        Tasks
-      </Typography>
       {!loading && tasks.length === 0 && !error && (
         <Alert
           severity="info"
@@ -726,7 +718,7 @@ const AuditorTasks = () => {
           <DialogContent sx={{ p: 3 }}>
             <CForm className="row g-3">
               <CCol xs={12}>
-                <CFormLabel htmlFor="approvalDocument">Attach Approval Document (Optional)</CFormLabel>
+                <CFormLabel htmlFor="approvalDocument">Attach document</CFormLabel>
                 <input
                   type="file"
                   className="form-control"
