@@ -22,12 +22,12 @@ import {
     cilMoon,
     cilSun,
 } from '@coreui/icons';
-import { AppBreadcrumb } from './index';
+// import { AppBreadcrumb } from './index';
 import { AppHeaderDropdown } from './header/index';
 import NotificationDropdown from './NotificationDropdown';
-import './AppHeader.css'; // Keep CSS import for potential future use
+import './AppHeader.css';
 
-// Fallback theme management if useColorModes is unavailable
+// Fallback theme management
 const useFallbackColorMode = () => {
     const [colorMode, setColorMode] = useState(localStorage.getItem('theme') || 'light');
 
@@ -67,7 +67,7 @@ const AppHeader = () => {
     }, []);
 
     return (
-        <CHeader position="sticky" className="mb-4 p-0" ref={headerRef}>
+        <CHeader position="sticky" className="p-0" ref={headerRef}>
             <CContainer className="border-bottom px-4" fluid>
                 <CHeaderToggler
                     onClick={() => dispatch({ type: 'set', sidebarShow: !sidebarShow })}
@@ -81,27 +81,11 @@ const AppHeader = () => {
                             Dashboard
                         </CNavLink>
                     </CNavItem>
-                    {/* <CNavItem>
-                        <CNavLink href="#">Users</CNavLink>
-                    </CNavItem>
-                    <CNavItem>
-                        <CNavLink href="#">Settings</CNavLink>
-                    </CNavItem> */}
                 </CHeaderNav>
                 <CHeaderNav className="ms-auto">
                     <CNavItem>
                         <NotificationDropdown />
                     </CNavItem>
-                    {/* <CNavItem>
-                        <CNavLink href="#">
-                            <CIcon icon={cilList} size="lg" />
-                        </CNavLink>
-                    </CNavItem>
-                    <CNavItem>
-                        <CNavLink href="#">
-                            <CIcon icon={cilEnvelopeOpen} size="lg" />
-                        </CNavLink>
-                    </CNavItem> */}
                 </CHeaderNav>
                 <CHeaderNav>
                     <li className="nav-item py-1">
@@ -153,9 +137,10 @@ const AppHeader = () => {
                     <AppHeaderDropdown />
                 </CHeaderNav>
             </CContainer>
-            <CContainer className="px-4" fluid>
+            {/* for app breadcrum */}
+            {/* <CContainer className="px-4" fluid>
                 <AppBreadcrumb />
-            </CContainer>
+            </CContainer> */}
         </CHeader>
     );
 };
