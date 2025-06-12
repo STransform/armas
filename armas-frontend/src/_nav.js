@@ -48,10 +48,10 @@ const Nav = () => {
       to: '/charts',
       icon: <CIcon icon={cilChartPie} customClassName="nav-icon" />,
     },
-    {
-      component: CNavTitle,
-      name: 'Extras',
-    },
+    // {
+    //   component: CNavTitle,
+    //   name: 'Extras',
+    // },
 
   ];
 

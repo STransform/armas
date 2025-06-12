@@ -1,43 +1,100 @@
 import React, { useState, useEffect } from 'react';
 import {
+  CCard,
+  CCardBody,
+  CCardHeader,
+  CCol,
+  CRow,
+} from '@coreui/react';
+import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
-  Alert,
-  TableContainer,
-  TablePagination,
   TextField,
+  TablePagination,
+  TableContainer,
   Box,
   IconButton,
   CircularProgress,
   Paper,
   Typography,
+  Snackbar,
+  Alert,
+  InputAdornment,
 } from '@mui/material';
-import DownloadIcon from '@mui/icons-material/Download';
+import {
+  Download as DownloadIcon,
+  Search as SearchIcon,
+} from '@mui/icons-material';
+import { styled } from '@mui/material/styles';
 import { getFileHistory, downloadFile } from '../file/upload_download';
 
-const FileHistory = () => {
+// Styled components for enhanced UI
+const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
+  borderRadius: '8px',
+  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+  backgroundColor: theme.palette.background.paper,
+}));
+
+const StyledButton = styled(IconButton)(({ theme }) => ({
+  borderRadius: '6px',
+  padding: '8px',
+  transition: 'all 0.3s ease',
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+  },
+}));
+
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  fontSize: '0.9rem',
+  padding: theme.spacing(1.5),
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '0.8rem',
+    padding: theme.spacing(1),
+  },
+}));
+
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  '&:hover': {
+    backgroundColor: theme.palette.action.hover,
+    transition: 'background-color 0.3s ease',
+  },
+}));
+
+export default function FileHistory() {
   const [history, setHistory] = useState([]);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [filterText, setFilterText] = useState('');
-  const [loading, setLoading] = useState(true);
 
   const fetchHistory = async () => {
     setLoading(true);
+    setError(null);
     try {
       const data = await getFileHistory();
-      console.log('Raw file history data:', JSON.stringify(data, null, 2));
-      setHistory(data);
-      if (data.length === 0) {
+      const validHistory = Array.isArray(data) ? data.filter((item) => item && item.id) : [];
+      setHistory(validHistory);
+      if (validHistory.length === 0) {
         setError('No file history available.');
       }
-    } catch (err) {
-      setError('Failed to load file history: ' + (err.response?.data?.message || err.message));
+    } catch (error) {
+      const errorMessage = error.response
+        ? `Error ${error.response.status}: ${
+            error.response.data?.message || error.response.data || error.response.statusText
+          }`
+        : error.message;
+      setError(errorMessage);
+      setSnackbarMessage(errorMessage);
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
     } finally {
       setLoading(false);
     }
@@ -50,18 +107,30 @@ const FileHistory = () => {
   const handleDownload = async (id, docname, type = 'original') => {
     try {
       const response = await downloadFile(id, type);
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const blob = new Blob([response.data]);
+      if (blob.size === 0) {
+        throw new Error('Empty file received');
+      }
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', docname || 'file');
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      setSuccess(`Successfully downloaded ${type} document`);
-      setTimeout(() => setSuccess(''), 3000);
-    } catch (err) {
-      setError('Failed to download file: ' + (err.response?.data?.message || err.message));
-      setTimeout(() => setError(''), 3000);
+      window.URL.revokeObjectURL(url);
+      setSnackbarMessage(`Successfully downloaded ${type} document`);
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+    } catch (error) {
+      const errorMessage = error.response
+        ? `Error ${error.response.status}: ${
+            error.response.data?.message || error.response.data || error.response.statusText
+          }`
+        : error.message;
+      setSnackbarMessage(errorMessage);
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
     }
   };
 
@@ -79,294 +148,166 @@ const FileHistory = () => {
     setPage(0);
   };
 
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
+
   const filteredHistory = history.filter((report) =>
     report
       ? (report.orgname || '').toLowerCase().includes(filterText.toLowerCase()) ||
         (report.reportype || '').toLowerCase().includes(filterText.toLowerCase()) ||
-        (report.fiscal_year || '').toString().toLowerCase().includes(filterText.toLowerCase()) ||
+        (report.fiscal_year || report.fiscalYear || '').toString().toLowerCase().includes(filterText.toLowerCase()) ||
         (report.createdBy || '').toLowerCase().includes(filterText.toLowerCase()) ||
         (report.reportstatus || '').toLowerCase().includes(filterText.toLowerCase())
       : false
   );
 
   return (
-    <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: '1200px', mx: 'auto', mt: 1 }}>
-      <Typography
-        variant="h5"
-        component="h2"
-        gutterBottom
-        sx={{
-          fontWeight: 'bold',
-          color: '#1976d2',
-          textAlign: { xs: 'center', md: 'left' },
-          mb: 2,
-        }}
+    <Box sx={{ padding: { xs: 2, md: 4 } }}>
+      <CRow>
+        <CCol xs={12}>
+          <CCard className="mb-4" style={{ borderRadius: '12px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}>
+            <CCardHeader>
+              <Typography variant="h6" fontWeight="bold">
+                File History
+              </Typography>
+            </CCardHeader>
+            <CCardBody>
+              {loading ? (
+                <Box display="flex" justifyContent="center" my={2}>
+                  <CircularProgress />
+                </Box>
+              ) : error && !filteredHistory.length ? (
+                <Box sx={{ textAlign: 'center', my: 2 }}>
+                  <Typography color="error" sx={{ mb: 2 }}>
+                    {error}
+                  </Typography>
+                  <StyledButton
+                    color="primary"
+                    onClick={fetchHistory}
+                    aria-label="Retry fetching file history"
+                  >
+                    <DownloadIcon />
+                  </StyledButton>
+                </Box>
+              ) : (
+                <StyledTableContainer component={Paper}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2 }}>
+                    <TextField
+                      label="Search History"
+                      variant="outlined"
+                      value={filterText}
+                      onChange={handleFilterChange}
+                      size="small"
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <SearchIcon />
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{ width: { xs: '100%', sm: '40%' } }}
+                    />
+                  </Box>
+                  {filteredHistory.length > 0 ? (
+                    <Table stickyHeader>
+                      <TableHead>
+                        <StyledTableRow>
+                          <StyledTableCell>Upload Date</StyledTableCell>
+                          <StyledTableCell>Organization Name</StyledTableCell>
+                          <StyledTableCell>Uploader</StyledTableCell>
+                          <StyledTableCell>Report Type</StyledTableCell>
+                          <StyledTableCell>Status</StyledTableCell>
+                          <StyledTableCell>Budget Year</StyledTableCell>
+                          <StyledTableCell align="right">Action</StyledTableCell>
+                        </StyledTableRow>
+                      </TableHead>
+                      <TableBody>
+                        {filteredHistory
+                          .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                          .map((report) => (
+                            <StyledTableRow key={report.id}>
+                              <StyledTableCell>
+                                {report.createdDate
+                                  ? new Date(report.createdDate).toLocaleString()
+                                  : 'N/A'}
+                              </StyledTableCell>
+                              <StyledTableCell>{report.orgname || 'N/A'}</StyledTableCell>
+                              <StyledTableCell>{report.createdBy || 'N/A'}</StyledTableCell>
+                              <StyledTableCell>{report.reportype || 'N/A'}</StyledTableCell>
+                              <StyledTableCell>
+                                <Box
+                                  sx={{
+                                    display: 'inline-block',
+                                    px: 1,
+                                    py: 0.5,
+                                    borderRadius: '12px',
+                                    bgcolor:
+                                      report.reportstatus === 'Submitted'
+                                        ? '#e8f5e9'
+                                        : '#fff3e0',
+                                    color:
+                                      report.reportstatus === 'Submitted'
+                                        ? '#2e7d32'
+                                        : '#f57c00',
+                                    fontSize: '0.85rem',
+                                    fontWeight: 'medium',
+                                  }}
+                                >
+                                  {report.reportstatus || 'N/A'}
+                                </Box>
+                              </StyledTableCell>
+                              <StyledTableCell>{report.fiscal_year || report.fiscalYear || 'N/A'}</StyledTableCell>
+                              <StyledTableCell align="right">
+                                {report.docname && (
+                                  <StyledButton
+                                    color="primary"
+                                    onClick={() => handleDownload(report.id, report.docname, 'original')}
+                                    aria-label={`Download ${report.docname}`}
+                                  >
+                                    <DownloadIcon />
+                                  </StyledButton>
+                                )}
+                              </StyledTableCell>
+                            </StyledTableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <Typography sx={{ p: 2, textAlign: 'center' }}>
+                      No history found.
+                    </Typography>
+                  )}
+                  <TablePagination
+                    component="div"
+                    count={filteredHistory.length}
+                    page={page}
+                    onPageChange={handleChangePage}
+                    onRowsPerPageChange={handleChangeRowsPerPage}
+                    rowsPerPage={rowsPerPage}
+                    rowsPerPageOptions={[5, 10, 25]}
+                  />
+                </StyledTableContainer>
+              )}
+            </CCardBody>
+          </CCard>
+        </CCol>
+      </CRow>
+
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        File History
-      </Typography>
-      {loading && (
-        <Box display="flex" justifyContent="center" my={2}>
-          <CircularProgress />
-        </Box>
-      )}
-      {error && !loading && (
         <Alert
-          severity="error"
-          sx={{
-            mb: 2,
-            borderRadius: '8px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            maxWidth: { xs: '100%', md: '600px' },
-            mx: 'auto',
-          }}
-          action={
-            <IconButton color="inherit" size="small" onClick={fetchHistory}>
-              <DownloadIcon />
-            </IconButton>
-          }
+          onClose={handleSnackbarClose}
+          severity={snackbarSeverity}
+          sx={{ minWidth: '250px', boxShadow: '4px 4px 6px rgba(0, 0, 0, 0.1)', borderRadius: '8px' }}
         >
-          {error}
+          {snackbarMessage}
         </Alert>
-      )}
-      {success && (
-        <Alert
-          severity="success"
-          sx={{
-            mb: 2,
-            borderRadius: '8px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            maxWidth: { xs: '100%', md: '600px' },
-            mx: 'auto',
-          }}
-        >
-          {success}
-        </Alert>
-      )}
-      {!loading && history.length === 0 && !error && (
-        <Alert
-          severity="info"
-          sx={{
-            mb: 2,
-            borderRadius: '8px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            maxWidth: { xs: '100%', md: '600px' },
-            mx: 'auto',
-          }}
-        >
-          No file history available.
-        </Alert>
-      )}
-      {!loading && history.length > 0 && (
-        <Paper
-          elevation={3}
-          sx={{
-            borderRadius: '12px',
-            overflow: 'hidden',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          }}
-        >
-          <Box
-            sx={{
-              p: { xs: 1.5, md: 2 },
-              display: 'flex',
-              justifyContent: { xs: 'center', md: 'flex-end' },
-            }}
-          >
-            <TextField
-              label="Search History"
-              variant="outlined"
-              value={filterText}
-              onChange={handleFilterChange}
-              size="small"
-              sx={{
-                width: { xs: '100%', sm: '300px' },
-                bgcolor: '#fff',
-                borderRadius: '8px',
-              }}
-            />
-          </Box>
-          {filteredHistory.length > 0 ? (
-            <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
-              <Table
-                stickyHeader
-                sx={{
-                  minWidth: 800,
-                  '& .MuiTableCell-root': {
-                    fontSize: { xs: '0.85rem', sm: '0.95rem', md: '1rem' },
-                    padding: { xs: '6px', sm: '8px', md: '12px' },
-                  },
-                  '& .MuiTableRow-root:hover': {
-                    bgcolor: '#e3f2fd',
-                    transition: 'background-color 0.3s',
-                  },
-                }}
-              >
-                <TableHead>
-                  <TableRow>
-                    <TableCell
-                      sx={{
-                        bgcolor: '#1976d2',
-                        color: '#fff',
-                        fontWeight: 'bold',
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      Upload Date
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        bgcolor: '#1976d2',
-                        color: '#fff',
-                        fontWeight: 'bold',
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      Organization Name
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        bgcolor: '#1976d2',
-                        color: '#fff',
-                        fontWeight: 'bold',
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      Uploader
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        bgcolor: '#1976d2',
-                        color: '#fff',
-                        fontWeight: 'bold',
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      Report Type
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        bgcolor: '#1976d2',
-                        color: '#fff',
-                        fontWeight: 'bold',
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      Status
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        bgcolor: '#1976d2',
-                        color: '#fff',
-                        fontWeight: 'bold',
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      Budget Year
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        bgcolor: '#1976d2',
-                        color: '#fff',
-                        fontWeight: 'bold',
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      Action
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredHistory
-                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((report) => (
-                      <TableRow key={report.id}>
-                        <TableCell>
-                          {report.createdDate
-                            ? new Date(report.createdDate).toLocaleString()
-                            : 'N/A'}
-                        </TableCell>
-                        <TableCell>{report.orgname || 'N/A'}</TableCell>
-                        <TableCell>{report.createdBy || 'N/A'}</TableCell>
-                        <TableCell>{report.reportype || 'N/A'}</TableCell>
-                        <TableCell>
-                          <Box
-                            sx={{
-                              display: 'inline-block',
-                              px: 1,
-                              py: 0.5,
-                              borderRadius: '12px',
-                              bgcolor:
-                                report.reportstatus === 'Submitted'
-                                  ? '#e8f5e9'
-                                  : '#fff3e0',
-                              color:
-                                report.reportstatus === 'Submitted'
-                                  ? '#2e7d32'
-                                  : '#f57c00',
-                              fontSize: '0.85rem',
-                              fontWeight: 'medium',
-                            }}
-                          >
-                            {report.reportstatus || 'N/A'}
-                          </Box>
-                        </TableCell>
-                        <TableCell>{report.fiscal_year || 'N/A'}</TableCell>
-                        <TableCell>
-                          {report.docname && (
-                            <IconButton
-                              color="primary"
-                              onClick={() =>
-                                handleDownload(report.id, report.docname, 'original')
-                              }
-                              aria-label={`Download ${report.docname}`}
-                              sx={{
-                                '&:hover': {
-                                  bgcolor: '#e3f2fd',
-                                  transform: 'scale(1.1)',
-                                  transition: 'all 0.2s',
-                                },
-                              }}
-                            >
-                              <DownloadIcon />
-                            </IconButton>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          ) : (
-            <Alert
-              severity="info"
-              sx={{
-                m: 2,
-                borderRadius: '8px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              }}
-            >
-              No history found for the current filter.
-            </Alert>
-          )}
-          <TablePagination
-            component="div"
-            count={filteredHistory.length}
-            page={page}
-            onPageChange={handleChangePage}
-            rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            rowsPerPageOptions={[5, 10, 25]}
-            sx={{
-              '.MuiTablePagination-toolbar': {
-                fontSize: { xs: '0.85rem', sm: '0.95rem' },
-                padding: { xs: '8px', sm: '12px' },
-              },
-            }}
-          />
-        </Paper>
-      )}
+      </Snackbar>
     </Box>
   );
-};
-
-export default FileHistory;
+}

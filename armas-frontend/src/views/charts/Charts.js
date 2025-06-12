@@ -276,9 +276,9 @@ const Charts = () => {
                       <CardContent sx={{ p: 2 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                           <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}>
-                            <Timeline sx={{ fontSize: 18 }} />
+                            <Timeline sx={{ fontSize: 14 }} />
                           </Avatar>
-                          <Typography variant="h5" color="primary">
+                          <Typography variant="h6" color="primary">
                             Fiscal Year
                           </Typography>
                         </Box>
