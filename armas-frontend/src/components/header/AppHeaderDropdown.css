@@ -1,18 +1,18 @@
 /* Dropdown menu background and default text color */
 .custom-dropdown-menu {
-  background-color: #1976d2 !important;
+  background-color: #1e3a8a !important;
   color: #ffffff !important;
 }
 
 /* Dropdown header styling */
 .custom-dropdown-header {
-  background-color: #1976d2 !important;
+  background-color: #1e3a8a !important;
   color: #ffffff !important;
 }
 
 /* Dropdown item default styling */
 .custom-dropdown-item {
-  background-color: #1976d2 !important;
+  background-color: #1e3a8a !important;
   color: #ffffff !important;
 }
 
@@ -29,7 +29,7 @@
 
 /* Specific styling for logout item */
 .custom-logout-item {
-  background-color: #1976d2!important; /* Black background for logout */
+  background-color: #1e3a8a !important; /* Black background for logout */
   color: #ffffff !important; /* White text for logout */
 }
 

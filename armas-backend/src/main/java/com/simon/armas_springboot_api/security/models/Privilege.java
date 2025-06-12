@@ -1,3 +1,4 @@
+
 package com.simon.armas_springboot_api.security.models;
 
 import com.fasterxml.jackson.annotation.*;
