@@ -330,7 +330,7 @@ export default function Organization() {
                       startIcon={<AddIcon />}
                       onClick={() => handleOpenAddEdit('new')}
                     >
-                      New Organization
+                      {/* New Organization */}
                     </StyledButton>
                     <TextField
                       label="Search Organizations"
