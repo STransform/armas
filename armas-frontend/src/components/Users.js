@@ -388,7 +388,7 @@ export default function User() {
                       startIcon={<AddIcon />}
                       onClick={() => handleOpenAddEdit('new')}
                     >
-                      Add New User
+                      {/* Add New User */}
                     </StyledButton>
                     <StyledTextField
                       label="Search Users"

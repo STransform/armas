@@ -308,7 +308,7 @@ export default function Directorate() {
                       startIcon={<AddIcon />}
                       onClick={() => handleOpenAddEdit('new')}
                     >
-                      New Directorate
+                      {/* New Directorate */}
                     </StyledButton>
                     <TextField
                       label="Search Directorates"

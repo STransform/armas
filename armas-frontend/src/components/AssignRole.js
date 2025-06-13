@@ -290,7 +290,7 @@ export default function AssignRole() {
                                   onClick={() => handleOpenAssign(user)}
                                   aria-label="Assign Role"
                                 >
-                                  Assign Role
+                                  {/* Assign Role */}
                                 </StyledButton>
                               </StyledTableCell>
                             </StyledTableRow>

@@ -338,7 +338,8 @@ export default function Document() {
                       onClick={() => handleOpenAddEdit('new')}
                       disabled={directorates.length === 0}
                     >
-                      {directorates.length === 0 ? 'Add Directorates First' : 'New Document'}
+                      {directorates.length === 0 ? 'Add Directorates First' : ''}
+                      {/* '' for add new document button */}
                     </StyledButton>
                     <TextField
                       label="Search Documents"
