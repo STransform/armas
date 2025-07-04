@@ -357,7 +357,7 @@ export default function Organization() {
                           <StyledTableCell>Email</StyledTableCell>
                           <StyledTableCell>Telephone</StyledTableCell>
                           <StyledTableCell>Head</StyledTableCell>
-                          <StyledTableCell>Type</StyledTableCell>
+                          {/* <StyledTableCell>Type</StyledTableCell> */}
                           <StyledTableCell align="right">Actions</StyledTableCell>
                         </StyledTableRow>
                       </TableHead>
@@ -371,7 +371,7 @@ export default function Organization() {
                               <StyledTableCell>{org.email || 'N/A'}</StyledTableCell>
                               <StyledTableCell>{org.telephone || 'N/A'}</StyledTableCell>
                               <StyledTableCell>{org.organizationhead || 'N/A'}</StyledTableCell>
-                              <StyledTableCell>{org.orgtype || 'N/A'}</StyledTableCell>
+                              {/* <StyledTableCell>{org.orgtype || 'N/A'}</StyledTableCell> */}
                               <StyledTableCell align="right">
                                 <IconButton
                                   color="primary"
@@ -475,7 +475,7 @@ export default function Organization() {
                 id="orgname"
                 value={currentOrganization.orgname || ''}
                 onChange={handleChangeAdd}
-                placeholder="Enter organization name (e.g., Acme Corp)"
+                placeholder="Enter organization name (e.g., MOF,AAU)"
               />
             </CCol>
             <CCol xs={12}>
@@ -495,7 +495,7 @@ export default function Organization() {
                 type="tel"
                 value={currentOrganization.telephone || ''}
                 onChange={handleChangeAdd}
-                placeholder="Enter phone number (e.g., +1234567890)"
+                placeholder="Enter phone number (e.g., 0912345678)"
               />
             </CCol>
             <CCol xs={12}>
@@ -504,18 +504,18 @@ export default function Organization() {
                 id="organizationhead"
                 value={currentOrganization.organizationhead || ''}
                 onChange={handleChangeAdd}
-                placeholder="Enter head's name (e.g., John Doe)"
+                placeholder="Enter head's name (e.g., Simon Temesgen)"
               />
             </CCol>
-            <CCol xs={12}>
+            {/* <CCol xs={12}>
               <CFormLabel htmlFor="orgtype">Organization Type</CFormLabel>
               <CFormInput
                 id="orgtype"
                 value={currentOrganization.orgtype || ''}
                 onChange={handleChangeAdd}
-                placeholder="Enter type (e.g., Non-Profit)"
+                placeholder="Enter type (e.g., Social)"
               />
-            </CCol>
+            </CCol> */}
           </CForm>
         </DialogContent>
         <DialogActions>
@@ -564,10 +564,10 @@ export default function Organization() {
               <CFormLabel>Organization Head</CFormLabel>
               <CFormInput value={currentOrganization.organizationhead || ''} readOnly />
             </CCol>
-            <CCol md={6}>
+            {/* <CCol md={6}>
               <CFormLabel>Organization Type</CFormLabel>
               <CFormInput value={currentOrganization.orgtype || ''} readOnly />
-            </CCol>
+            </CCol> */}
           </CForm>
         </DialogContent>
         <DialogActions>

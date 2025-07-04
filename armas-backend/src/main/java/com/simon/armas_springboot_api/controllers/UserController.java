@@ -59,55 +59,58 @@ public class UserController {
         return user != null ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
     }
 
-    @PostMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<?> createUser(@RequestBody UserRequest userRequest) {
-        logger.info("Creating user: {}, password: {}", userRequest.getUsername(), userRequest.getPassword());
-        if ("admin".equals(userRequest.getPassword())) {
-            logger.warn("Attempt to use restricted password for user: {}", userRequest.getUsername());
-            return ResponseEntity.badRequest().body("Invalid password");
-        }
-        try {
-            User user = new User();
-            user.setFirstName(userRequest.getFirstName());
-            user.setLastName(userRequest.getLastName());
-            user.setUsername(userRequest.getUsername());
-            user.setPassword(userRequest.getPassword());
-            user.setConfirmPassword(userRequest.getConfirmPassword());
-
-            // Handle organization
-            if (userRequest.getOrganizationId() != null && !userRequest.getOrganizationId().isBlank()) {
-                Organization org = organizationRepository.findById(userRequest.getOrganizationId())
-                        .orElseThrow(() -> new IllegalArgumentException("Organization not found: " + userRequest.getOrganizationId()));
-                user.setOrganization(org);
-            }
-
-            // Handle directorate
-            if (userRequest.getDirectorateId() != null && !userRequest.getDirectorateId().isBlank()) {
-                Directorate dir = directorateRepository.findById(userRequest.getDirectorateId())
-                    .orElseThrow(() -> new IllegalArgumentException("Directorate not found: " + userRequest.getDirectorateId()));
-                user.setDirectorate(dir);
-            }
-
-            String role = userRequest.getRole();
-            if (role == null || (!role.equals("ADMIN") && !role.equals("USER"))) {
-                role = "USER";
-            }
-            User registeredUser = userService.register(user, role);
-            logger.info("User registered successfully: {}", registeredUser.getUsername());
-            return ResponseEntity.status(201).body(userService.convertToDTO(registeredUser));
-        } catch (UserAlreadyExistException e) {
-            logger.warn("User registration failed: {}", e.getMessage());
-            return ResponseEntity.status(409).body("User already exists: " + e.getMessage());
-        } catch (IllegalArgumentException e) {
-            logger.warn("Invalid request: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (Exception e) {
-            logger.error("Unexpected error during user registration", e);
-            return ResponseEntity.status(500).body("Failed to register user: " + e.getMessage());
-        }
+@PostMapping
+@PreAuthorize("hasAuthority('ADMIN')")
+public ResponseEntity<?> createUser(@RequestBody UserRequest userRequest) {
+    logger.info("Creating user: {}, password: {}", userRequest.getUsername(), userRequest.getPassword());
+    if ("admin".equals(userRequest.getPassword())) {
+        logger.warn("Attempt to use restricted password for user: {}", userRequest.getUsername());
+        return ResponseEntity.badRequest().body("Invalid password");
     }
+    if (!userRequest.getPassword().equals(userRequest.getConfirmPassword())) {
+        logger.warn("Password and confirm password do not match for user: {}", userRequest.getUsername());
+        return ResponseEntity.badRequest().body("Password and confirm password do not match");
+    }
+    try {
+        User user = new User();
+        user.setFirstName(userRequest.getFirstName());
+        user.setLastName(userRequest.getLastName());
+        user.setUsername(userRequest.getUsername());
+        user.setPassword(userRequest.getPassword());
+        user.setConfirmPassword(userRequest.getConfirmPassword());
 
+        // Handle organization
+        if (userRequest.getOrganizationId() != null && !userRequest.getOrganizationId().isBlank()) {
+            Organization org = organizationRepository.findById(userRequest.getOrganizationId())
+                    .orElseThrow(() -> new IllegalArgumentException("Organization not found: " + userRequest.getOrganizationId()));
+            user.setOrganization(org);
+        }
+
+        // Handle directorate
+        if (userRequest.getDirectorateId() != null && !userRequest.getDirectorateId().isBlank()) {
+            Directorate dir = directorateRepository.findById(userRequest.getDirectorateId())
+                    .orElseThrow(() -> new IllegalArgumentException("Directorate not found: " + userRequest.getDirectorateId()));
+            user.setDirectorate(dir);
+        }
+
+        String role = userRequest.getRole();
+        if (role == null || (!role.equals("ADMIN") && !role.equals("USER"))) {
+            role = "USER";
+        }
+        User registeredUser = userService.register(user, role);
+        logger.info("User registered successfully: {}", registeredUser.getUsername());
+        return ResponseEntity.status(201).body(userService.convertToDTO(registeredUser));
+    } catch (UserAlreadyExistException e) {
+        logger.warn("User registration failed: {}", e.getMessage());
+        return ResponseEntity.status(409).body("User already exists: " + e.getMessage());
+    } catch (IllegalArgumentException e) {
+        logger.warn("Invalid request: {}", e.getMessage());
+        return ResponseEntity.badRequest().body(e.getMessage());
+    } catch (Exception e) {
+        logger.error("Unexpected error during user registration", e);
+        return ResponseEntity.status(500).body("Failed to register user: " + e.getMessage());
+    }
+}
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<UserDTO> updateUser(@PathVariable Long id, @RequestBody User user) {

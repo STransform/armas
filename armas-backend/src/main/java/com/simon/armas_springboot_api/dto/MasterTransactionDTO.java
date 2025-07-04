@@ -26,6 +26,7 @@ public class MasterTransactionDTO {
     private String reason_of_rejection;
     private String responseNeeded;
 
+
     // Constructor to map from MasterTransaction
     public MasterTransactionDTO(MasterTransaction mt) {
         this.id = mt.getId();
