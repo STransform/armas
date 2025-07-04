@@ -145,6 +145,7 @@ export default function User() {
     lastName: '',
     username: '',
     password: '',
+    confirmPassword: '',
     organizationId: '',
     directorateId: '',
   });
@@ -221,6 +222,7 @@ export default function User() {
       lastName: '',
       username: '',
       password: '',
+      confirmPassword: '',
       organizationId: '',
       directorateId: '',
     });
@@ -235,8 +237,9 @@ export default function User() {
         lastName: user.lastName || '',
         username: user.username || '',
         password: '',
-        organizationId: user.organization?.id || '',
-        directorateId: user.directorate?.id || '',
+        confirmPassword: '',
+        organizationId: user.organization ? user.organization.id : '', // Safely extract organization ID
+        directorateId: user.directorate ? user.directorate.id : '', // Safely extract directorate ID
       });
     } else {
       clearForm();
@@ -255,8 +258,8 @@ export default function User() {
       firstName: user.firstName || '',
       lastName: user.lastName || '',
       username: user.username || '',
-      organizationId: user.organization?.id || '',
-      directorateId: user.directorate?.id || '',
+      organizationId: user.organization ? user.organization.id : '', // Safely extract organization ID
+      directorateId: user.directorate ? user.directorate.id : '', // Safely extract directorate ID
     });
     setOpenDetails(true);
   };
@@ -285,7 +288,7 @@ export default function User() {
         lastName: currentUser.lastName.trim(),
         username: currentUser.username.trim(),
         password: currentUser.password.trim(),
-        confirmPassword: currentUser.password.trim(),
+        confirmPassword: currentUser.confirmPassword.trim(),
         organizationId: currentUser.organizationId || null,
         directorateId: currentUser.directorateId || null,
         role: 'USER',
@@ -300,7 +303,7 @@ export default function User() {
     } catch (error) {
       const msg =
         error.response?.status === 409
-          ? 'Username or ID already exists'
+          ? 'Username already exists'
           : error.response?.data?.message || 'Error adding user';
       setSnackbarMessage(msg);
       setSnackbarSeverity('error');
@@ -314,11 +317,18 @@ export default function User() {
         firstName: currentUser.firstName.trim(),
         lastName: currentUser.lastName.trim(),
         username: currentUser.username.trim(),
-        organization: currentUser.organizationId ? { id: currentUser.organizationId } : null,
-        directorate: currentUser.directorateId ? { id: currentUser.directorateId } : null,
+        organizationId: currentUser.organizationId || null,
+        directorateId: currentUser.directorateId || null,
+        role: 'USER',
       };
-      if (currentUser.password.trim()) payload.password = currentUser.password.trim();
-      const response = await axiosInstance.put(`/users/${currentUser.id}`, payload);
+      if (currentUser.password.trim()) {
+        if (!currentUser.confirmPassword.trim() || currentUser.password !== currentUser.confirmPassword) {
+          throw new Error('Password and Confirm Password must match');
+        }
+        payload.password = currentUser.password.trim();
+        payload.confirmPassword = currentUser.confirmPassword.trim();
+      }
+      await axiosInstance.put(`/users/${currentUser.id}`, payload);
       const updatedUser = await axiosInstance.get(`/users/${currentUser.id}`);
       setUsers(users.map((user) => (user.id === currentUser.id ? updatedUser.data : user)));
       setSnackbarMessage('User updated successfully!');
@@ -326,7 +336,14 @@ export default function User() {
       setSnackbarOpen(true);
       handleCloseAddEdit();
     } catch (error) {
-      const msg = error.response?.data?.message || 'Error updating user';
+      const msg =
+        error.message === 'Password and Confirm Password must match'
+          ? error.message
+          : error.response?.status === 400
+          ? error.response?.data?.message || 'Validation error: Please check your inputs'
+          : error.response?.status === 409
+          ? 'Username already exists'
+          : error.response?.data?.message || 'Error updating user';
       setSnackbarMessage(msg);
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
@@ -360,7 +377,8 @@ export default function User() {
     !currentUser.firstName.trim() ||
     !currentUser.lastName.trim() ||
     !currentUser.username.trim() ||
-    (formMode === 'new' && !currentUser.password.trim());
+    (formMode === 'new' && (!currentUser.password.trim() || !currentUser.confirmPassword.trim() || currentUser.password !== currentUser.confirmPassword)) ||
+    (formMode === 'edit' && currentUser.password.trim() && (!currentUser.confirmPassword.trim() || currentUser.password !== currentUser.confirmPassword));
 
   return (
     <Box sx={{ padding: { xs: 2, md: 4 } }}>
@@ -524,17 +542,6 @@ export default function User() {
         <DialogContent>
           <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: '1fr' }, mt: 2 }}>
             <StyledTextField
-              id="id"
-              label="User ID"
-              value={currentUser.id || ''}
-              onChange={handleChangeAdd}
-              placeholder="Enter user ID (e.g., USER123)"
-              disabled={formMode === 'edit'}
-              fullWidth
-              variant="outlined"
-              size="small"
-            />
-            <StyledTextField
               id="firstName"
               label="First Name"
               value={currentUser.firstName || ''}
@@ -564,32 +571,28 @@ export default function User() {
               variant="outlined"
               size="small"
             />
-            {formMode === 'new' && (
-              <StyledTextField
-                id="password"
-                label="Password"
-                type="password"
-                value={currentUser.password || ''}
-                onChange={handleChangeAdd}
-                placeholder="Enter password"
-                fullWidth
-                variant="outlined"
-                size="small"
-              />
-            )}
-            {formMode === 'edit' && (
-              <StyledTextField
-                id="password"
-                label="New Password (optional)"
-                type="password"
-                value={currentUser.password || ''}
-                onChange={handleChangeAdd}
-                placeholder="Enter new password (leave blank to keep unchanged)"
-                fullWidth
-                variant="outlined"
-                size="small"
-              />
-            )}
+            <StyledTextField
+              id="password"
+              label={formMode === 'new' ? 'Password' : 'New Password (optional)'}
+              type="password"
+              value={currentUser.password || ''}
+              onChange={handleChangeAdd}
+              placeholder={formMode === 'new' ? 'Enter password' : 'Enter new password (leave blank to keep unchanged)'}
+              fullWidth
+              variant="outlined"
+              size="small"
+            />
+            <StyledTextField
+              id="confirmPassword"
+              label={formMode === 'new' ? 'Confirm Password' : 'Confirm New Password (optional)'}
+              type="password"
+              value={currentUser.confirmPassword || ''}
+              onChange={handleChangeAdd}
+              placeholder={formMode === 'new' ? 'Confirm password' : 'Confirm new password'}
+              fullWidth
+              variant="outlined"
+              size="small"
+            />
             <StyledFormControl fullWidth variant="outlined" size="small">
               <InputLabel id="organization-label">Organization</InputLabel>
               <Select

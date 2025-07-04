@@ -53,6 +53,7 @@ public class UserPrincipal implements UserDetails {
             }
         });
 
+        // Add user-specific privileges
         List<Privilege> userPrivileges = userPrivilegeAssignmentService.getUserPrivileges(user.getId());
         if (userPrivileges != null) {
             userPrivileges.forEach(privilege -> {
@@ -60,6 +61,13 @@ public class UserPrincipal implements UserDetails {
                     authorities.add(new SimpleGrantedAuthority(privilege.getDescription()));
                 }
             });
+        }
+
+        // Dynamically add VIEW_ORG_REPORTS if the user is the organization head
+        if (user.getOrganization() != null && 
+            user.getUsername().equals(user.getOrganization().getOrganizationhead())) {
+            authorities.add(new SimpleGrantedAuthority("VIEW_ORG_REPORTS"));
+            log.debug("Granted VIEW_ORG_REPORTS to organization head: {}", user.getUsername());
         }
 
         log.debug("Authorities for user {}: {}", user.getUsername(), authorities);

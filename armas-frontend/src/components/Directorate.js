@@ -450,7 +450,7 @@ export default function Directorate() {
                 type="tel"
                 value={currentDirectorate.telephone || ''}
                 onChange={handleChangeAdd}
-                placeholder="Enter phone number (e.g., +1234567890)"
+                placeholder="Enter phone number (e.g., 0911....)"
               />
             </CCol>
             <CCol xs={12}>
