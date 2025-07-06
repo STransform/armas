@@ -18,6 +18,10 @@ import com.simon.armas_springboot_api.security.services.RoleService;
 import com.simon.armas_springboot_api.security.services.SecureTokenService;
 import jakarta.mail.MessagingException;
 import jakarta.transaction.Transactional;
+import com.simon.armas_springboot_api.dto.PasswordChangeRequest;
+import com.simon.armas_springboot_api.dto.OrganizationDTO;
+import com.simon.armas_springboot_api.dto.DirectorateDTO;
+
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -189,39 +193,50 @@ public class UserService {
         return register(user, "USER");
     }
 
-    public List<UserDTO> getAllUsers() {
-        return userRepository.findAll().stream()
-            .map(this::convertToDTO)
-            .collect(Collectors.toList());
-    }
+    // public List<UserDTO> getAllUsers() {
+    //     return userRepository.findAll().stream()
+    //         .map(this::convertToDTO)
+    //         .collect(Collectors.toList());
+    // }
 
-    public UserDTO getUserById(Long id) {
-        User user = userRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("User not found: " + id));
-        return convertToDTO(user);
-    }
+    // public UserDTO getUserById(Long id) {
+    //     User user = userRepository.findById(id)
+    //         .orElseThrow(() -> new IllegalArgumentException("User not found: " + id));
+    //     return convertToDTO(user);
+    // }
     public UserDTO convertToDTO(User user) {
-        UserDTO dto = new UserDTO();
-        dto.setId(user.getId());
-        dto.setUsername(user.getUsername());
-        dto.setFirstName(user.getFirstName());
-        dto.setLastName(user.getLastName());
-        // Adjust based on actual Organization and Directorate fields
-        dto.setOrgname(user.getOrganization() != null ? user.getOrganization().getOrgname() : null);
-        dto.setDirectoratename(user.getDirectorate() != null ? user.getDirectorate().getDirectoratename() : null);
-        dto.setEnabled(user.isEnabled());
-        Set<RoleDTO> roleDTOs = user.getRoles().stream()
-            .map(role -> {
-                RoleDTO roleDTO = new RoleDTO();
-                roleDTO.setId(role.getId());
-                roleDTO.setDescription(role.getDescription());
-                roleDTO.setDetails(role.getDetails());
-                return roleDTO;
-            })
-            .collect(Collectors.toSet());
-        dto.setRoles(roleDTOs);
-        return dto;
+    UserDTO dto = new UserDTO();
+    dto.setId(user.getId());
+    dto.setUsername(user.getUsername());
+    dto.setFirstName(user.getFirstName());
+    dto.setLastName(user.getLastName());
+    dto.setOrgname(user.getOrganization() != null ? user.getOrganization().getOrgname() : null);
+    dto.setDirectoratename(user.getDirectorate() != null ? user.getDirectorate().getDirectoratename() : null);
+    dto.setEnabled(user.isEnabled());
+    if (user.getOrganization() != null) {
+        OrganizationDTO orgDTO = new OrganizationDTO();
+        orgDTO.setId(user.getOrganization().getId());
+        orgDTO.setOrgname(user.getOrganization().getOrgname());
+        dto.setOrganization(orgDTO);
     }
+    if (user.getDirectorate() != null) {
+        DirectorateDTO dirDTO = new DirectorateDTO();
+        dirDTO.setId(user.getDirectorate().getId());
+        dirDTO.setDirectoratename(user.getDirectorate().getDirectoratename());
+        dto.setDirectorate(dirDTO);
+    }
+    Set<RoleDTO> roleDTOs = user.getRoles().stream()
+        .map(role -> {
+            RoleDTO roleDTO = new RoleDTO();
+            roleDTO.setId(role.getId());
+            roleDTO.setDescription(role.getDescription());
+            roleDTO.setDetails(role.getDetails());
+            return roleDTO;
+        })
+        .collect(Collectors.toSet());
+    dto.setRoles(roleDTOs);
+    return dto;
+}
 
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
@@ -276,4 +291,45 @@ public class UserService {
         secureTokenService.removeToken(secureToken);
         return true;
     }
+
+    @Transactional
+    public void changePassword(PasswordChangeRequest request) {
+        // Find user by username
+        User user = userRepository.findByUsername(request.getUsername());
+        if (user == null) {
+            throw new IllegalArgumentException("User not found with username: " + request.getUsername());
+        }
+
+        // Verify previous password
+        if (!bCryptPasswordEncoder.matches(request.getPreviousPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("Previous password is incorrect");
+        }
+
+        // Verify new password and confirm password match
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new IllegalArgumentException("New password and confirm password do not match");
+        }
+
+        // Validate new password (e.g., not "admin")
+        if ("admin".equals(request.getNewPassword())) {
+            throw new IllegalArgumentException("Invalid new password");
+        }
+
+        // Update password
+        user.setPassword(bCryptPasswordEncoder.encode(request.getNewPassword()));
+        user.setConfirmPassword(null); // Clear confirmPassword
+        userRepository.save(user);
+    }
+     public List<UserDTO> getAllUsers() {
+        return userRepository.findAllWithOrganizationsAndDirectorates().stream()
+            .map(this::convertToDTO)
+            .collect(Collectors.toList());
+    }
+
+    public UserDTO getUserById(Long id) {
+        User user = userRepository.findByIdWithRelations(id)
+            .orElseThrow(() -> new IllegalArgumentException("User not found: " + id));
+        return convertToDTO(user);
+    }
+
 }

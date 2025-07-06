@@ -20,6 +20,8 @@ import com.simon.armas_springboot_api.dto.RoleDTO;
 import java.io.Serializable;
 import java.util.Set;
 import com.simon.armas_springboot_api.dto.RoleDTO;
+import com.simon.armas_springboot_api.dto.OrganizationDTO;
+import com.simon.armas_springboot_api.dto.DirectorateDTO;
 
 public class UserDTO implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -32,6 +34,8 @@ public class UserDTO implements Serializable {
     private String directoratename;
     private boolean enabled;
     private Set<RoleDTO> roles;
+     private OrganizationDTO organization; 
+    private DirectorateDTO directorate;   
 // Constructors
 public UserDTO() {}
 
@@ -62,4 +66,8 @@ public UserDTO(Long id, String username, String firstName, String lastName) {
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
     public Set<RoleDTO> getRoles() { return roles; }
     public void setRoles(Set<RoleDTO> roles) { this.roles = roles; }
+    public OrganizationDTO getOrganization() { return organization; }
+    public void setOrganization(OrganizationDTO organization) { this.organization = organization; }
+    public DirectorateDTO getDirectorate() { return directorate; }
+    public void setDirectorate(DirectorateDTO directorate) { this.directorate = directorate; }
 }
