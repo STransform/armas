@@ -88,7 +88,8 @@ public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws
             .requestMatchers("/transactions/tasks").permitAll()
             .requestMatchers("/transactions/approved-reports").hasAnyRole("APPROVER", "ARCHIVER", "SENIOR_AUDITOR")
             .requestMatchers("/transactions/download/**").hasAnyRole("ARCHIVER", "SENIOR_AUDITOR", "APPROVER", "USER")
-            .requestMatchers("/transactions/dashboard-stats").hasAnyRole("USER", "ADMIN", "SENIOR_AUDITOR", "APPROVER", "ARCHIVER") // Added
+            .requestMatchers("/transactions/dashboard-stats").hasAnyRole("USER", "ADMIN", "SENIOR_AUDITOR", "APPROVER", "ARCHIVER") 
+            .requestMatchers("/users/change-password").hasAnyRole("USER", "ADMIN", "SENIOR_AUDITOR", "APPROVER", "ARCHIVER")
             .anyRequest().authenticated()
         )
         .oauth2ResourceServer(oauth2 -> oauth2
