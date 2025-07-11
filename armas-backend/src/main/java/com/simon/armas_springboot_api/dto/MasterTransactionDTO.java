@@ -7,6 +7,7 @@ import java.util.Date;
 public class MasterTransactionDTO {
     private Integer id;
     private Date createdDate;
+    private Date lastModifiedDate; // Optional, if you want to include last modified date
     private String orgname;
     @JsonProperty("fiscal_year") // Serialize as fiscal_year in JSON
     private String fiscalYear;
@@ -32,6 +33,7 @@ public class MasterTransactionDTO {
     public MasterTransactionDTO(MasterTransaction mt) {
         this.id = mt.getId();
         this.createdDate = mt.getCreatedDate();
+        this.lastModifiedDate = mt.getLastModifiedDate(); 
         this.orgname = mt.getOrganization() != null ? mt.getOrganization().getOrgname() : null;
         this.fiscalYear = mt.getBudgetYear() != null ? mt.getBudgetYear().getFiscalYear() : null;
         System.out.println("Mapping MasterTransaction id=" + mt.getId() + ", budgetYear=" + (mt.getBudgetYear() != null ? mt.getBudgetYear().getFiscalYear() : "null")); // Debug log
@@ -63,6 +65,8 @@ public class MasterTransactionDTO {
     public void setId(Integer id) { this.id = id; }
     public Date getCreatedDate() { return createdDate; }
     public void setCreatedDate(Date createdDate) { this.createdDate = createdDate; }
+    public Date getLastModifiedDate() { return lastModifiedDate; }
+    public void setLastModifiedDate(Date lastModifiedDate) { this.lastModifiedDate = lastModifiedDate; }
     public String getOrgname() { return orgname; }
     public void setOrgname(String orgname) { this.orgname = orgname; }
     public String getFiscalYear() { return fiscalYear; }
