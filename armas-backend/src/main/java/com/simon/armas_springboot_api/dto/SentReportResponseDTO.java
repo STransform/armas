@@ -14,6 +14,7 @@ public class SentReportResponseDTO {
     private String user; // Add uploader's username
     private String submittedByAuditorUsername; // Add auditor's username
      private String responseNeeded; 
+     
 
     public SentReportResponseDTO(Integer id, String orgname, String reportype, String fiscal_year, Date createdDate,
                                  String docname, String reportstatus, 

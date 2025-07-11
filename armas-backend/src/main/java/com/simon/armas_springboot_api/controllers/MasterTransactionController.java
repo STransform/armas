@@ -353,7 +353,7 @@ public ResponseEntity<List<MasterTransaction>> getRejectedReports() {
     }
 
     @GetMapping("/budget-years")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SENIOR_AUDITOR', 'APPROVER', 'ARCHIVER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SENIOR_AUDITOR', 'APPROVER', 'ARCHIVER','MANAGER')")
     public ResponseEntity<List<BudgetYear>> getBudgetYears() {
         List<BudgetYear> budgetYears = budgetYearRepository.findAll();
         return ResponseEntity.ok(budgetYears);
@@ -433,7 +433,7 @@ public ResponseEntity<List<Organization>> getFeedbackNonSenders(
     }
 
 @GetMapping("/dashboard-stats")
-@PreAuthorize("hasAnyRole('SENIOR_AUDITOR', 'APPROVER', 'ARCHIVER', 'ADMIN','USER')")
+@PreAuthorize("hasAnyRole('SENIOR_AUDITOR', 'APPROVER', 'ARCHIVER', 'ADMIN','USER', 'MANAGER')")
 public ResponseEntity<Map<String, Long>> getDashboardStats(@RequestParam String fiscalYear) {
     Map<String, Long> stats = new HashMap<>();
     stats.put("totalOrganizations", masterTransactionService.getTotalOrganizations());
