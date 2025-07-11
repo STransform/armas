@@ -81,7 +81,7 @@ const ViewLetters = () => {
       try {
         const response = await axiosInstance.get('/transactions/letters');
         const validLetters = Array.isArray(response.data)
-          ? response.data.filter(letter => letter && letter.id && letter.user && letter.letterDocname)
+          ? response.data.filter(letter => letter && letter.id && letter.lastModifiedBy && letter.letterDocname)
           : [];
         setLetters(validLetters);
         if (validLetters.length === 0) {
@@ -155,8 +155,9 @@ const ViewLetters = () => {
 
   const filteredLetters = letters.filter(
     (letter) =>
-      (letter.user || '').toLowerCase().includes(filterText.toLowerCase()) ||
-      (letter.letterDocname || '').toLowerCase().includes(filterText.toLowerCase())
+      (letter.lastModifiedBy || '').toLowerCase().includes(filterText.toLowerCase()) ||
+      (letter.letterDocname || '').toLowerCase().includes(filterText.toLowerCase()) ||
+      (letter.lastModifiedDate ? new Date(letter.lastModifiedDate).toLocaleString() : '').toLowerCase().includes(filterText.toLowerCase())
   );
 
   return (
@@ -166,7 +167,7 @@ const ViewLetters = () => {
           <CCard className="mb-4" style={{ borderRadius: '12px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}>
             <CCardHeader>
               <Typography variant="h6" fontWeight="bold">
-                Letters Sent to Users
+                Letters Sent to Organization
               </Typography>
             </CCardHeader>
             <CCardBody>
@@ -199,8 +200,10 @@ const ViewLetters = () => {
                     <Table stickyHeader>
                       <TableHead>
                         <StyledTableRow>
-                          <StyledTableCell>User</StyledTableCell>
-                          <StyledTableCell>Letter Name</StyledTableCell>
+                          <StyledTableCell>Date</StyledTableCell>
+                          <StyledTableCell>Sender</StyledTableCell>
+                          {/* <StyledTableCell>Letter Name</StyledTableCell> */}
+                         
                           <StyledTableCell align="right">Action</StyledTableCell>
                         </StyledTableRow>
                       </TableHead>
@@ -209,8 +212,12 @@ const ViewLetters = () => {
                           .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                           .map((letter) => (
                             <StyledTableRow key={letter.id}>
-                              <StyledTableCell>{letter.user || 'N/A'}</StyledTableCell>
-                              <StyledTableCell>{letter.letterDocname || 'N/A'}</StyledTableCell>
+                              <StyledTableCell>
+                                {letter.lastModifiedDate ? new Date(letter.lastModifiedDate).toLocaleString() : 'N/A'}
+                              </StyledTableCell>
+                              <StyledTableCell>{letter.lastModifiedBy || 'N/A'}</StyledTableCell>
+                              {/* <StyledTableCell>{letter.letterDocname || 'N/A'}</StyledTableCell> */}
+                              
                               <StyledTableCell align="right">
                                 <Tooltip title="Download Letter">
                                   <StyledButton

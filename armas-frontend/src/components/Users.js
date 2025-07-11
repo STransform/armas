@@ -41,11 +41,12 @@ import {
   Delete as DeleteIcon,
   Search as SearchIcon,
   Add as AddIcon,
+  LockReset as LockResetIcon, // New icon for reset password
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import axiosInstance from '../../axiosConfig';
 
-// Styled components for enhanced UI
+// Styled components (unchanged)
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   borderRadius: '8px',
   boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
@@ -139,6 +140,8 @@ export default function User() {
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [openAddEdit, setOpenAddEdit] = useState(false);
   const [openDetails, setOpenDetails] = useState(false);
+  const [openResetPassword, setOpenResetPassword] = useState(false); // New state for reset password dialog
+  const [resetUserId, setResetUserId] = useState(null); // New state for user ID to reset
   const [currentUser, setCurrentUser] = useState({
     id: '',
     firstName: '',
@@ -149,9 +152,13 @@ export default function User() {
     organizationId: '',
     directorateId: '',
   });
+  const [resetPassword, setResetPassword] = useState({
+    newPassword: '',
+    confirmPassword: '',
+  });
   const [formMode, setFormMode] = useState('');
 
-  // Fetch data
+  // Fetch data (unchanged)
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -182,7 +189,7 @@ export default function User() {
     fetchData();
   }, []);
 
-  // Handlers
+  // Handlers (existing ones unchanged, new ones added)
   const handleConfirmDeleteOpen = (id) => {
     setDeleteId(id);
     setConfirmDeleteOpen(true);
@@ -238,8 +245,8 @@ export default function User() {
         username: user.username || '',
         password: '',
         confirmPassword: '',
-        organizationId: user.organization ? user.organization.id : '', // Safely extract organization ID
-        directorateId: user.directorate ? user.directorate.id : '', // Safely extract directorate ID
+        organizationId: user.organization ? user.organization.id : '',
+        directorateId: user.directorate ? user.directorate.id : '',
       });
     } else {
       clearForm();
@@ -258,8 +265,8 @@ export default function User() {
       firstName: user.firstName || '',
       lastName: user.lastName || '',
       username: user.username || '',
-      organizationId: user.organization ? user.organization.id : '', // Safely extract organization ID
-      directorateId: user.directorate ? user.directorate.id : '', // Safely extract directorate ID
+      organizationId: user.organization ? user.organization.id : '',
+      directorateId: user.directorate ? user.directorate.id : '',
     });
     setOpenDetails(true);
   };
@@ -267,6 +274,18 @@ export default function User() {
   const handleCloseDetails = () => {
     setOpenDetails(false);
     clearForm();
+  };
+
+  const handleOpenResetPassword = (userId) => {
+    setResetUserId(userId);
+    setResetPassword({ newPassword: '', confirmPassword: '' });
+    setOpenResetPassword(true);
+  };
+
+  const handleCloseResetPassword = () => {
+    setResetUserId(null);
+    setResetPassword({ newPassword: '', confirmPassword: '' });
+    setOpenResetPassword(false);
   };
 
   const handleChangeAdd = (e) => {
@@ -279,6 +298,32 @@ export default function User() {
 
   const handleDirectorateChange = (e) => {
     setCurrentUser({ ...currentUser, directorateId: e.target.value });
+  };
+
+  const handleResetPasswordChange = (e) => {
+    setResetPassword({ ...resetPassword, [e.target.id]: e.target.value });
+  };
+
+  const handleResetPassword = async () => {
+    try {
+      const payload = {
+        newPassword: resetPassword.newPassword.trim(),
+        confirmPassword: resetPassword.confirmPassword.trim(),
+      };
+      await axiosInstance.post(`/users/${resetUserId}/reset-password`, payload);
+      setSnackbarMessage('Password reset successfully!');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+      handleCloseResetPassword();
+    } catch (error) {
+      const msg =
+        error.response?.status === 400
+          ? error.response?.data?.error || 'Validation error: Please check your inputs'
+          : error.response?.data?.error || 'Error resetting password';
+      setSnackbarMessage(msg);
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    }
   };
 
   const handleAddUser = async () => {
@@ -380,6 +425,11 @@ export default function User() {
     (formMode === 'new' && (!currentUser.password.trim() || !currentUser.confirmPassword.trim() || currentUser.password !== currentUser.confirmPassword)) ||
     (formMode === 'edit' && currentUser.password.trim() && (!currentUser.confirmPassword.trim() || currentUser.password !== currentUser.confirmPassword));
 
+  const isResetPasswordButtonDisabled =
+    !resetPassword.newPassword.trim() ||
+    !resetPassword.confirmPassword.trim() ||
+    resetPassword.newPassword !== resetPassword.confirmPassword;
+
   return (
     <Box sx={{ padding: { xs: 2, md: 4 } }}>
       <CRow>
@@ -406,7 +456,7 @@ export default function User() {
                       startIcon={<AddIcon />}
                       onClick={() => handleOpenAddEdit('new')}
                     >
-                      {/* Add New User */}
+                      Add New User
                     </StyledButton>
                     <StyledTextField
                       label="Search Users"
@@ -469,6 +519,16 @@ export default function User() {
                                     <EditIcon />
                                   </IconButton>
                                 </Tooltip>
+                                <Tooltip title="Reset Password">
+                                  <IconButton
+                                    color="warning"
+                                    onClick={() => handleOpenResetPassword(user.id)}
+                                    size="small"
+                                    sx={{ mr: 1 }}
+                                  >
+                                    <LockResetIcon />
+                                  </IconButton>
+                                </Tooltip>
                                 <Tooltip title="Delete User">
                                   <IconButton
                                     color="error"
@@ -504,6 +564,7 @@ export default function User() {
         </CCol>
       </CRow>
 
+      {/* Existing Dialogs (Add/Edit and Delete Confirmation) */}
       <StyledDialog
         maxWidth="sm"
         fullWidth
@@ -708,6 +769,60 @@ export default function User() {
         <DialogActions>
           <StyledButton onClick={handleCloseDetails} color="primary">
             Close
+          </StyledButton>
+        </DialogActions>
+      </StyledDialog>
+
+      {/* New Reset Password Dialog */}
+      <StyledDialog
+        maxWidth="sm"
+        fullWidth
+        open={openResetPassword}
+        onClose={handleCloseResetPassword}
+        TransitionComponent={Fade}
+        TransitionProps={{ timeout: 800 }}
+      >
+        <DialogTitle>Reset Password</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mb: 2 }}>
+            Enter a new password for the user. This action cannot be undone.
+          </Typography>
+          <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: '1fr' }, mt: 2 }}>
+            <StyledTextField
+              id="newPassword"
+              label="New Password"
+              type="password"
+              value={resetPassword.newPassword || ''}
+              onChange={handleResetPasswordChange}
+              placeholder="Enter new password"
+              fullWidth
+              variant="outlined"
+              size="small"
+            />
+            <StyledTextField
+              id="confirmPassword"
+              label="Confirm New Password"
+              type="password"
+              value={resetPassword.confirmPassword || ''}
+              onChange={handleResetPasswordChange}
+              placeholder="Confirm new password"
+              fullWidth
+              variant="outlined"
+              size="small"
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <StyledButton onClick={handleCloseResetPassword} color="primary">
+            Cancel
+          </StyledButton>
+          <StyledButton
+            onClick={handleResetPassword}
+            color="primary"
+            variant="contained"
+            disabled={isResetPasswordButtonDisabled}
+          >
+            Reset Password
           </StyledButton>
         </DialogActions>
       </StyledDialog>

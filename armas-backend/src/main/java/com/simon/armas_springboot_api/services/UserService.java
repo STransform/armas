@@ -193,17 +193,6 @@ public class UserService {
         return register(user, "USER");
     }
 
-    // public List<UserDTO> getAllUsers() {
-    //     return userRepository.findAll().stream()
-    //         .map(this::convertToDTO)
-    //         .collect(Collectors.toList());
-    // }
-
-    // public UserDTO getUserById(Long id) {
-    //     User user = userRepository.findById(id)
-    //         .orElseThrow(() -> new IllegalArgumentException("User not found: " + id));
-    //     return convertToDTO(user);
-    // }
     public UserDTO convertToDTO(User user) {
     UserDTO dto = new UserDTO();
     dto.setId(user.getId());
@@ -331,5 +320,24 @@ public class UserService {
             .orElseThrow(() -> new IllegalArgumentException("User not found: " + id));
         return convertToDTO(user);
     }
+public void resetUserPassword(Long userId, String newPassword, String confirmPassword) {
+        if (StringUtils.isBlank(newPassword) || StringUtils.isBlank(confirmPassword)) {
+            throw new IllegalArgumentException("New password and confirm password are required");
+        }
 
+        if (!newPassword.equals(confirmPassword)) {
+            throw new IllegalArgumentException("New password and confirm password do not match");
+        }
+
+        if ("admin".equals(newPassword)) {
+            throw new IllegalArgumentException("Invalid new password: 'admin' is not allowed");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
+
+        user.setPassword(bCryptPasswordEncoder.encode(newPassword));
+        user.setConfirmPassword(null); // Clear confirmPassword
+        userRepository.save(user);
+    }
 }
