@@ -148,6 +148,7 @@ public class MasterTransactionService {
         return savedTransaction;
     }
     
+// src/main/java/com/yourpackage/service/MasterTransactionService.java
 @Transactional
 public MasterTransaction uploadLetter(Integer transactionId, MultipartFile letter, String currentUsername) throws IOException {
     User archiver = userRepository.findByUsername(currentUsername);
@@ -188,6 +189,27 @@ public MasterTransaction uploadLetter(Integer transactionId, MultipartFile lette
         );
     } else {
         System.err.println("No uploader found for transaction ID: " + transactionId);
+    }
+
+    // Notify all MANAGER users in the same organization
+    if (transaction.getOrganization() != null && transaction.getOrganization().getId() != null) {
+        List<User> managers = userRepository.findByRoleNameAndOrganizationId("MANAGER", transaction.getOrganization().getId());
+        if (managers.isEmpty()) {
+            System.err.println("No MANAGER users found for organization ID: " + transaction.getOrganization().getId());
+        } else {
+            for (User manager : managers) {
+                createNotification(
+                        manager,
+                        "Letter Uploaded",
+                        "A letter '" + savedTransaction.getLetterDocname() + "' has been uploaded for report '" + savedTransaction.getDocname() + "' by " + currentUsername,
+                        "MasterTransaction",
+                        savedTransaction.getId().longValue(),
+                        "letter_uploaded"
+                );
+            }
+        }
+    } else {
+        System.err.println("No organization found for transaction ID: " + transactionId);
     }
 
     return savedTransaction;
