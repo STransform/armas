@@ -9,7 +9,7 @@ import MasterTransaction from './components/MasterTransaction';
 const User = React.lazy(() => import('./components/Users'));
 import Role from './components/Role';
 import AssignRole from './components/AssignRole';
-
+import AssignPrivilegeToRole from './components/AssignPrivilegeToRole';
 import RegistrationSuccessful from './views/pages/register/RegistrationSuccessful'
 import VerificationSuccessful from './views/pages/register/VerificationSuccessful'
 
@@ -25,6 +25,7 @@ const UnderReviewReports = React.lazy(() => import('./components/UnderReviewRepo
 const CorrectedReports = React.lazy(() => import('./components/CorrectedReports'));
 const FileHistory = React.lazy(() => import('./components/FileHistory'));
 const LetterDownload = React.lazy(() => import('./components/LetterDownload'));
+const ViewLetters = React.lazy(() => import('./components/ViewLetters'));
 const AdvancedFilters = React.lazy(() => import('./components/AdvancedFilters'));
 // Base
 const Accordion = React.lazy(() => import('./views/base/accordion/Accordion'))
@@ -59,6 +60,7 @@ const routes = [
   { path: '/buttons/users', name: 'Users', element: User },
   { path:'/buttons/roles' , name:'Role', element:Role},
   { path:'/buttons/assign' , name:'AssignRole', element:AssignRole},
+  { path: '/buttons/assign-privileges', name: 'Assign Privileges to Role', element: AssignPrivilegeToRole },
   { path: '/buttons/file-upload', name: 'File Upload', element: FileUpload },
   { path: '/buttons/file-download', name: 'File Download', element: FileDownload },
   { path: '/transactions/auditor-tasks', name: 'Auditor tasks', element: AuditorTasks },
@@ -67,8 +69,9 @@ const routes = [
   { path: '/transactions/under-review-reports', name: 'Under Review Reports', element: UnderReviewReports },
   { path: '/transactions/corrected-reports', name: 'Corrected Reports', element: CorrectedReports },
   { path: '/file-history', name: 'File History', element: FileHistory },
-   { path: '/buttons/letter-download', name: 'File Download', element: LetterDownload },
-   { path: '/transactions/advanced-filters', name: 'Advanced Filters', element: AdvancedFilters },
+  { path: '/buttons/letter-download', name: 'File Download', element: LetterDownload },
+  { path: '/transactions/advanced-filters', name: 'Advanced Filters', element: AdvancedFilters },
+  { path: '/transactions/letters', name: 'View Letters', element: ViewLetters },
   { path: '/dashboard', name: 'Dashboard', element: Dashboard },
   { path: '/theme', name: 'Theme', element: Colors, exact: true },
   { path: '/theme/colors', name: 'Colors', element: Colors },

@@ -36,15 +36,18 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.HashMap;
 import org.springframework.web.bind.annotation.GetMapping;
-
+import org.springframework.security.core.Authentication;
 import java.security.Principal;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
+
 //import collection here
 import java.util.Collections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 @RestController
@@ -66,7 +69,7 @@ public class MasterTransactionController {
     private BudgetYearRepository budgetYearRepository; // Add this
     @Autowired
     private NotificationRepository notificationRepository;
-
+    private static final Logger logger = LoggerFactory.getLogger(MasterTransactionController.class);
     // New endpoint to fetch unread notifications
     @GetMapping("/notifications")
     @PreAuthorize("isAuthenticated()")
@@ -107,53 +110,64 @@ public class MasterTransactionController {
     }
 
     // In MasterTransactionController.java
-@GetMapping("/download/{id}/{type}")
-@PreAuthorize("hasAnyRole('APPROVER', 'SENIOR_AUDITOR', 'ARCHIVER', 'USER')")
-public ResponseEntity<Resource> downloadFile(
-        @PathVariable Integer id,
-        @PathVariable String type,
-        Principal principal) throws IOException {
-    MasterTransaction transaction = masterTransactionRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + id));
-
-    // Restrict letter download to the original uploader (USER)
-    if ("letter".equals(type)) {
+  @GetMapping("/download/{id}/{type}")
+    @PreAuthorize("hasAnyRole('APPROVER', 'SENIOR_AUDITOR', 'ARCHIVER', 'USER', 'MANAGER')")
+    public ResponseEntity<Resource> downloadFile(
+            @PathVariable Integer id,
+            @PathVariable String type,
+            Principal principal) throws IOException {
+        MasterTransaction transaction = masterTransactionRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + id));
         User currentUser = userRepository.findByUsername(principal.getName());
-        if (currentUser == null || !currentUser.getId().equals(transaction.getUser().getId())) {
+        if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-    }
 
-    String filePath;
-    String fileName;
-    if ("original".equals(type)) {
-        filePath = transaction.getFilepath();
-        fileName = transaction.getDocname();
-    } else if ("supporting".equals(type)) {
-        filePath = transaction.getSupportingDocumentPath();
-        fileName = transaction.getSupportingDocname();
-    } else if ("letter".equals(type)) {
-        filePath = transaction.getLetterPath();
-        fileName = transaction.getLetterDocname();
-    } else {
-        return ResponseEntity.badRequest().build();
-    }
+        if ("letter".equals(type)) {
+            // Allow the original uploader (USER)
+            if (currentUser.getId().equals(transaction.getUser().getId())) {
+                // Allowed
+            }
+            // Allow MANAGER of the same organization
+            else if (currentUser.getRoles().stream().anyMatch(r -> "MANAGER".equals(r.getDescription())) &&
+                     currentUser.getOrganization() != null &&
+                     currentUser.getOrganization().getId().equals(transaction.getOrganization().getId())) {
+                // Allowed
+            } else {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
 
-    if (filePath == null || fileName == null || !Files.exists(Paths.get(filePath))) {
-        return ResponseEntity.notFound().build();
-    }
+        String filePath;
+        String fileName;
+        if ("original".equals(type)) {
+            filePath = transaction.getFilepath();
+            fileName = transaction.getDocname();
+        } else if ("supporting".equals(type)) {
+            filePath = transaction.getSupportingDocumentPath();
+            fileName = transaction.getSupportingDocname();
+        } else if ("letter".equals(type)) {
+            filePath = transaction.getLetterPath();
+            fileName = transaction.getLetterDocname();
+        } else {
+            return ResponseEntity.badRequest().build();
+        }
 
-    Resource resource = new UrlResource(Paths.get(filePath).toUri());
-    String contentType = Files.probeContentType(Paths.get(filePath));
-    if (contentType == null) {
-        contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
-    }
+        if (filePath == null || fileName == null || !Files.exists(Paths.get(filePath))) {
+            return ResponseEntity.notFound().build();
+        }
 
-    return ResponseEntity.ok()
-            .contentType(MediaType.parseMediaType(contentType))
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
-            .body(resource);
-}
+        Resource resource = new UrlResource(Paths.get(filePath).toUri());
+        String contentType = Files.probeContentType(Paths.get(filePath));
+        if (contentType == null) {
+            contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+        }
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                .body(resource);
+    }
  @GetMapping("/my-reports")
 @PreAuthorize("hasRole('USER')")
 public ResponseEntity<List<MasterTransaction>> getMyReports(Principal principal) {
@@ -441,4 +455,30 @@ public ResponseEntity<List<MasterTransactionDTO>> getFileHistory(Principal princ
     System.out.println("Fetched file history for user " + principal.getName() + ": " + history.size());
     return ResponseEntity.ok(history);
 }
+
+ @GetMapping("/letters")
+    @PreAuthorize("hasAuthority('VIEW_LETTERS')")
+    public ResponseEntity<List<MasterTransactionDTO>> getLettersForOrganization(Principal principal) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        logger.info("User {} authorities: {}", principal.getName(), auth.getAuthorities());
+
+        logger.info("Fetching letters for user: {}", principal.getName());
+        User user = userRepository.findByUsername(principal.getName());
+        if (user == null) {
+            logger.error("User not found: {}", principal.getName());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        if (user.getOrganization() == null) {
+            logger.error("User {} has no organization assigned", principal.getName());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        String orgId = user.getOrganization().getId();
+        logger.info("Fetching letters for organization: {}", orgId);
+        List<MasterTransaction> transactions = masterTransactionService.getLettersForOrganization(orgId);
+        List<MasterTransactionDTO> dtos = transactions.stream()
+            .map(MasterTransactionDTO::new)
+            .collect(Collectors.toList());
+        logger.info("Found {} letters for organization {}", dtos.size(), orgId);
+        return ResponseEntity.ok(dtos);
+    }
 }

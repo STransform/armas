@@ -236,4 +236,9 @@ long countSendersByReportTypeAndFiscalYear(@Param("reportype") String reportype,
        "WHERE m.user.id = :userId ORDER BY m.createdDate DESC")
 List<MasterTransaction> findTransactionHistoryByUserId(@Param("userId") Long userId);
 
+@Query("SELECT m FROM MasterTransaction m " +
+           "LEFT JOIN FETCH m.user " +
+           "LEFT JOIN FETCH m.organization " +
+           "WHERE m.organization.id = :orgId AND m.letterPath IS NOT NULL")
+    List<MasterTransaction> findTransactionsWithLettersByOrganization(@Param("orgId") String orgId);
 }

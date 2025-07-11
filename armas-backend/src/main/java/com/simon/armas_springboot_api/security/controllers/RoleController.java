@@ -36,28 +36,28 @@ public class RoleController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')") // Changed from hasAuthority
     public ResponseEntity<Role> getRoleById(@PathVariable Long id) {
         Role role = roleService.findById(id);
         return role != null ? ResponseEntity.ok(role) : ResponseEntity.notFound().build();
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')") // Changed from hasAuthority
     public ResponseEntity<Role> createRole(@RequestBody Role role) {
         Role savedRole = roleService.save(role);
         return ResponseEntity.status(201).body(savedRole);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')") // Changed from hasAuthority
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         roleService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/assign/user/{userId}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')") // Changed from hasAuthority
     public ResponseEntity<UserDTO> assignUserRoles(@PathVariable("userId") Long userId, @RequestBody List<Long> roleIds) {
         roleService.assignUserRoles(userId, roleIds);
         UserDTO updatedUser = userService.getUserById(userId);
@@ -65,7 +65,7 @@ public class RoleController {
     }
 
     @DeleteMapping("/{roleId}/unassign/user/{userId}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')") // Changed from hasAuthority
     public ResponseEntity<UserDTO> unAssignUserRole(@PathVariable("roleId") Long roleId, @PathVariable("userId") Long userId) {
         roleService.unAssignUserRole(userId, roleId);
         UserDTO updatedUser = userService.getUserById(userId);
@@ -73,8 +73,16 @@ public class RoleController {
     }
 
     @GetMapping("/{roleId}/privileges")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')") // Changed from hasAuthority
     public List<Privilege> getPrivilegesInRole(@PathVariable("roleId") Long roleId) {
         return roleService.getPrivilegesInRole(roleId);
+    }
+
+ @PostMapping("/{roleId}/assign-privileges")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Role> assignPrivilegesToRole(@PathVariable("roleId") Long roleId, @RequestBody List<Long> privilegeIds) {
+        roleService.assignPrivilegesToRole(roleId, privilegeIds);
+        Role updatedRole = roleService.findById(roleId);
+        return ResponseEntity.ok(updatedRole);
     }
 }

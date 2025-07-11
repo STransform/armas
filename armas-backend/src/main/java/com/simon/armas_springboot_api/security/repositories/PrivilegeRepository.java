@@ -10,6 +10,6 @@ import java.util.List;
 
 @Repository
 public interface PrivilegeRepository extends JpaRepository<Privilege, Long> {
-    public List<Privilege> findByRoleid(Long roleid);
+     List<Privilege> findByRoleId(Long roleId); // Queries role.id
     Privilege findByDescription(String description);
 }

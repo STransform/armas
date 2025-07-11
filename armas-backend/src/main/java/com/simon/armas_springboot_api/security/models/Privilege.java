@@ -7,9 +7,12 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.util.List;
+import lombok.ToString;
+import com.simon.armas_springboot_api.security.models.Auditable;
 
 @Entity
 @Data
+@ToString(exclude = {"role", "users"}) // Exclude role and users to prevent recursion
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Privilege extends Auditable<String> {
 
@@ -19,12 +22,10 @@ public class Privilege extends Auditable<String> {
 
     private String description;
 
-    @ManyToOne
-    @JoinColumn(name = "roleid", insertable = false, updatable = false)
+    @ManyToOne(cascade = CascadeType.ALL) 
+    @JoinColumn(name = "roleid") // Maps to roleid column in the database
     @JsonBackReference
     private Role role;
-
-    private Long roleid;
 
     @OneToMany(mappedBy = "privilege")
     @JsonIgnore
@@ -58,13 +59,13 @@ public class Privilege extends Auditable<String> {
     }
 
     // Getter and Setter for roleid
-    public Long getRoleid() {
-        return roleid;
-    }
+    // public Long getRoleid() {
+    //     return roleid;
+    // }
 
-    public void setRoleid(Long roleid) {
-        this.roleid = roleid;
-    }
+    // public void setRoleid(Long roleid) {
+    //     this.roleid = roleid;
+    // }
 
     // Getter and Setter for users
     public List<UserPrivilegeAssignment> getUsers() {
