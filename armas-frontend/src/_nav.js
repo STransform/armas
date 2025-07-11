@@ -36,6 +36,7 @@ const Nav = () => {
   const isSeniorAuditor = hasRole('SENIOR_AUDITOR');
   const isArchiver = hasRole('ARCHIVER');
   const isApprover = hasRole('APPROVER');
+  const isManager = hasRole('MANAGER');
 
   const commonItems = [
     {
@@ -78,6 +79,10 @@ const Nav = () => {
       to: '/buttons/letter-download',
       icon: <CIcon icon={cilCloudUpload} customClassName="nav-icon" />,
     },
+  ];
+const managerItems = [
+    { component: CNavTitle, name: 'Manager Actions' },
+    { component: CNavItem, name: 'View Letters', to: '/transactions/letters', icon: <CIcon icon={cilFile} customClassName="nav-icon" /> },
   ];
 
   const adminItems = [
@@ -131,6 +136,12 @@ const Nav = () => {
         },
         {
           component: CNavItem,
+          name: 'Assign Privileges to Role',
+          to: '/buttons/assign-privileges',
+          icon: <CIcon icon={cilLockLocked} customClassName="nav-icon" />,
+        },
+        {
+          component: CNavItem,
           name: 'File Upload',
           to: '/buttons/file-upload',
           icon: <CIcon icon={cilCloudUpload} customClassName="nav-icon" />,
@@ -141,6 +152,7 @@ const Nav = () => {
           to: '/buttons/letter-download',
           icon: <CIcon icon={cilCloudDownload} customClassName="nav-icon" />,
         },
+        
       ],
     },
   ];
@@ -214,6 +226,7 @@ const Nav = () => {
   const navItems = [
     ...commonItems,
     ...(isUser ? userItems : []),
+    ...(isManager ? managerItems : []),
     ...(isAdmin ? adminItems : []),
     ...((isArchiver || isSeniorAuditor || isApprover) ? transactionItems : []),
   ];

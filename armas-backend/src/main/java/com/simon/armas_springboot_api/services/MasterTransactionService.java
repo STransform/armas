@@ -606,4 +606,8 @@ public List<MasterTransactionDTO> getTransactionHistory(Long userId) {
             .map(MasterTransactionDTO::new)
             .collect(Collectors.toList());
 }
+
+public List<MasterTransaction> getLettersForOrganization(String orgId) {
+        return masterTransactionRepository.findTransactionsWithLettersByOrganization(orgId);
+    }
 }

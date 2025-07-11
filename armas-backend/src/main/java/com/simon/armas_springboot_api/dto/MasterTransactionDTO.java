@@ -25,7 +25,8 @@ public class MasterTransactionDTO {
     private String remarks;
     private String reason_of_rejection;
     private String responseNeeded;
-
+    private String letterPath;
+    private String letterDocname;
 
     // Constructor to map from MasterTransaction
     public MasterTransactionDTO(MasterTransaction mt) {
@@ -53,6 +54,8 @@ public class MasterTransactionDTO {
         this.remarks = mt.getRemarks() != null ? mt.getRemarks() : null;
         this.reason_of_rejection = mt.getReason_of_rejection() != null ? mt.getReason_of_rejection() : null;
         this.responseNeeded = mt.getResponse_needed();
+        this.letterPath = mt.getLetterPath();
+        this.letterDocname = mt.getLetterDocname();
     }
 
     // Getters and setters
@@ -94,4 +97,8 @@ public class MasterTransactionDTO {
     public void setReason_of_rejection(String reason_of_rejection) { this.reason_of_rejection = reason_of_rejection; }
     public String getResponseNeeded() { return responseNeeded; }
     public void setResponseNeeded(String responseNeeded) { this.responseNeeded = responseNeeded; }
+    public String getLetterPath() { return letterPath; }
+    public void setLetterPath(String letterPath) { this.letterPath = letterPath; }
+    public String getLetterDocname() { return letterDocname; }
+    public void setLetterDocname(String letterDocname) { this.letterDocname = letterDocname; }
 }
