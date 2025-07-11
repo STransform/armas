@@ -89,7 +89,7 @@ public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws
             .requestMatchers("/transactions/letters").hasAuthority("VIEW_LETTERS")
             .requestMatchers("/transactions/approved-reports").hasAnyRole("APPROVER", "ARCHIVER", "SENIOR_AUDITOR")
             .requestMatchers("/transactions/download/**").hasAnyRole("ARCHIVER", "SENIOR_AUDITOR", "APPROVER", "USER", "MANAGER")
-            .requestMatchers("/transactions/dashboard-stats").hasAnyRole("USER", "ADMIN", "SENIOR_AUDITOR", "APPROVER", "ARCHIVER") 
+            .requestMatchers("/transactions/dashboard-stats").hasAnyRole("USER", "ADMIN", "SENIOR_AUDITOR", "APPROVER", "ARCHIVER","MANAGER") 
             .requestMatchers("/users/change-password").hasAnyRole("USER", "ADMIN", "SENIOR_AUDITOR", "APPROVER", "ARCHIVER")
             .anyRequest().authenticated()
         )

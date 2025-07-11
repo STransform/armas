@@ -49,6 +49,9 @@ const Login = () => {
       else if (roles.includes('APPROVER')) {
         navigate('/charts/');
       } 
+      else if (roles.includes('MANAGER')) {
+        navigate('/charts/');
+      } 
       else {
         navigate('/#');
       }
