@@ -100,9 +100,9 @@ public class User implements Serializable {
     private String orgname;
 
     @ManyToOne
-    @JoinColumn(name = "directorate")
-    @JsonBackReference(value = "user-directorate")
-    private Directorate directorate;
+@JoinColumn(name = "directorate_id")  // Changed from "directorate"
+@JsonBackReference(value = "user-directorate")
+private Directorate directorate;
 
     @Transient
     private String directoratename;

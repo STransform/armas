@@ -44,7 +44,7 @@ import {
 import { styled } from '@mui/material/styles';
 import axiosInstance from '../../axiosConfig';
 
-// Styled components for enhanced UI
+// Styled components
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   borderRadius: '8px',
   boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
@@ -106,11 +106,10 @@ export default function Document() {
   const [currentDocument, setCurrentDocument] = useState({
     id: '',
     reportype: '',
-    directoratename: '',
+    directorateId: '',
   });
   const [formMode, setFormMode] = useState('');
 
-  // Fetch data
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -119,10 +118,18 @@ export default function Document() {
           axiosInstance.get('/directorates'),
           axiosInstance.get('/documents'),
         ]);
+        console.log('Directorates:', directoratesResponse.data);
+        console.log('Documents:', documentsResponse.data);
         setDirectorates(Array.isArray(directoratesResponse.data) ? directoratesResponse.data : []);
         setDocuments(Array.isArray(documentsResponse.data) ? documentsResponse.data : []);
         if (documentsResponse.data.length === 0) {
           setError('No documents available.');
+        }
+        if (directoratesResponse.data.length === 0) {
+          setError('No directorates available. Please add a directorate first.');
+          setSnackbarMessage('No directorates available. Please add a directorate first.');
+          setSnackbarSeverity('error');
+          setSnackbarOpen(true);
         }
       } catch (error) {
         const errorMessage = error.response
@@ -141,7 +148,6 @@ export default function Document() {
     fetchData();
   }, []);
 
-  // Handlers
   const handleConfirmDeleteOpen = (id) => {
     setDeleteId(id);
     setConfirmDeleteOpen(true);
@@ -167,6 +173,7 @@ export default function Document() {
       setSnackbarOpen(true);
       handleConfirmDeleteClose();
     } catch (error) {
+      console.error('Error deleting document:', error.response || error);
       const status = error.response?.status;
       const msg =
         status === 403
@@ -181,19 +188,23 @@ export default function Document() {
   };
 
   const clearForm = () => {
-    setCurrentDocument({ id: '', reportype: '', directoratename: '' });
+    setCurrentDocument({ id: '', reportype: '', directorateId: '' });
+    console.log('Form cleared, currentDocument:', { id: '', reportype: '', directorateId: '' });
   };
 
   const handleOpenAddEdit = (mode = 'new', doc = null) => {
     setFormMode(mode);
     if (mode === 'edit' && doc) {
-      setCurrentDocument({
+      const newDocument = {
         id: doc.id || '',
         reportype: doc.reportype || '',
-        directoratename: doc.directoratename || '',
-      });
+        directorateId: doc.directorate?.id || doc.directoratename || '',
+      };
+      setCurrentDocument(newDocument);
+      console.log('Opening edit mode, currentDocument:', newDocument);
     } else {
       clearForm();
+      console.log('Opening add mode');
     }
     setOpenAddEdit(true);
   };
@@ -213,43 +224,61 @@ export default function Document() {
   };
 
   const handleOpenDetails = (doc) => {
-    setCurrentDocument({
+    const newDocument = {
       id: doc.id || '',
       reportype: doc.reportype || '',
-      directoratename: doc.directoratename || '',
-    });
+      directorateId: doc.directorate?.id || doc.directoratename || '',
+    };
+    setCurrentDocument(newDocument);
+    console.log('Opening details, currentDocument:', newDocument);
     setOpenDetails(true);
   };
 
   const handleChangeAdd = (e) => {
-    setCurrentDocument({ ...currentDocument, [e.target.id]: e.target.value });
+    const { id, value } = e.target;
+    console.log(`Updating field: ${id} with value: ${value}`);
+    setCurrentDocument((prev) => {
+      const newState = { ...prev, [id]: value };
+      console.log('Updated currentDocument:', newState);
+      return newState;
+    });
   };
 
   const handleAddDocument = async () => {
+    console.log('Current document state:', currentDocument);
+    if (!currentDocument.id.trim() || !currentDocument.reportype.trim() || !currentDocument.directorateId.trim()) {
+      setSnackbarMessage('Document ID, report type, and directorate are required');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return;
+    }
     try {
       const payload = {
         id: currentDocument.id.trim(),
         reportype: currentDocument.reportype.trim(),
-        directoratename: currentDocument.directoratename.trim(),
+        directorateId: currentDocument.directorateId.trim(),
       };
+      console.log('Sending POST /documents payload:', payload);
       const response = await axiosInstance.post('/documents', payload);
+      console.log('POST /documents response:', response.data);
       setDocuments([...documents, response.data]);
       setSnackbarMessage('Document added successfully!');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
       handleCloseAddEdit();
     } catch (error) {
+      console.error('Error adding document:', error.response || error);
       const status = error.response?.status;
       const msg =
         status === 403
           ? 'You need admin privileges to add a document'
           : status === 404
-          ? 'Directorate not found'
+          ? `Directorate with ID "${currentDocument.directorateId}" not found. Ensure the selected directorate exists.`
           : status === 409
-          ? 'Document ID already exists'
+          ? `Document ID "${currentDocument.id}" already exists`
           : status === 400
-          ? error.response?.data?.message
-          : error.response?.data?.message || 'Error adding document';
+          ? error.response?.data?.message || 'Invalid document data. Ensure all fields are valid.'
+          : error.response?.data?.message || `Error adding document: ${error.response?.statusText || error.message}`;
       setSnackbarMessage(msg);
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
@@ -257,28 +286,38 @@ export default function Document() {
   };
 
   const handleEditDocument = async () => {
+    console.log('Current document state:', currentDocument);
+    if (!currentDocument.id.trim() || !currentDocument.reportype.trim() || !currentDocument.directorateId.trim()) {
+      setSnackbarMessage('Document ID, report type, and directorate are required');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return;
+    }
     try {
       const payload = {
         id: currentDocument.id.trim(),
         reportype: currentDocument.reportype.trim(),
-        directoratename: currentDocument.directoratename.trim(),
+        directorateId: currentDocument.directorateId.trim(),
       };
+      console.log('Sending PUT /documents payload:', payload);
       const response = await axiosInstance.put(`/documents/${currentDocument.id}`, payload);
+      console.log('PUT /documents response:', response.data);
       setDocuments(documents.map((doc) => (doc.id === currentDocument.id ? response.data : doc)));
       setSnackbarMessage('Document updated successfully!');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
       handleCloseAddEdit();
     } catch (error) {
+      console.error('Error updating document:', error.response || error);
       const status = error.response?.status;
       const msg =
         status === 403
           ? 'You need admin privileges to update a document'
           : status === 404
-          ? 'Directorate not found'
+          ? `Directorate with ID "${currentDocument.directorateId}" not found. Ensure the selected directorate exists.`
           : status === 400
-          ? error.response?.data?.message
-          : error.response?.data?.message || 'Error updating document';
+          ? error.response?.data?.message || 'Invalid document data. Ensure all fields are valid.'
+          : error.response?.data?.message || `Error updating document: ${error.response?.statusText || error.message}`;
       setSnackbarMessage(msg);
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
@@ -305,11 +344,6 @@ export default function Document() {
       (doc.reportype || '').toLowerCase().includes(filterText.toLowerCase()) ||
       (doc.directoratename || '').toLowerCase().includes(filterText.toLowerCase())
   );
-
-  const isAddButtonDisabled =
-    !currentDocument.id.trim() ||
-    !currentDocument.reportype.trim() ||
-    !currentDocument.directoratename.trim();
 
   return (
     <Box sx={{ padding: { xs: 2, md: 4 } }}>
@@ -338,8 +372,7 @@ export default function Document() {
                       onClick={() => handleOpenAddEdit('new')}
                       disabled={directorates.length === 0}
                     >
-                      {directorates.length === 0 ? 'Add Directorates First' : ''}
-                      {/* '' for add new document button */}
+                      {directorates.length === 0 ? 'Add Directorates First' : 'Add New Document'}
                     </StyledButton>
                     <TextField
                       label="Search Documents"
@@ -484,15 +517,15 @@ export default function Document() {
               />
             </CCol>
             <CCol xs={12}>
-              <CFormLabel htmlFor="directoratename">Directorate</CFormLabel>
+              <CFormLabel htmlFor="directorateId">Directorate</CFormLabel>
               <CFormSelect
-                id="directoratename"
-                value={currentDocument.directoratename}
+                id="directorateId"
+                value={currentDocument.directorateId || ''}
                 onChange={handleChangeAdd}
               >
                 <option value="">Select a Directorate</option>
                 {directorates.map((dir) => (
-                  <option key={dir.directoratename} value={dir.directoratename}>
+                  <option key={dir.id} value={dir.id}>
                     {dir.directoratename}
                   </option>
                 ))}
@@ -508,7 +541,6 @@ export default function Document() {
             onClick={formMode === 'new' ? handleAddDocument : handleEditDocument}
             color="primary"
             variant="contained"
-            disabled={isAddButtonDisabled}
           >
             {formMode === 'new' ? 'Add Document' : 'Update Document'}
           </StyledButton>
@@ -536,7 +568,12 @@ export default function Document() {
             </CCol>
             <CCol md={6}>
               <CFormLabel>Directorate</CFormLabel>
-              <CFormInput value={currentDocument.directoratename || 'N/A'} readOnly />
+              <CFormInput
+                value={
+                  directorates.find((dir) => dir.id === currentDocument.directorateId)?.directoratename || 'N/A'
+                }
+                readOnly
+              />
             </CCol>
           </CForm>
         </DialogContent>

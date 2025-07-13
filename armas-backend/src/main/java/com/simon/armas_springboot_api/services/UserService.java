@@ -72,51 +72,50 @@ public class UserService {
         this.roleService = roleService;
     }
 
-    public User register(User user, String roleDescription) throws UserAlreadyExistException {
-        if (StringUtils.isBlank(user.getUsername()) || StringUtils.isBlank(user.getPassword())) {
-            throw new IllegalArgumentException("Username and password are required");
-        }
-
-        if (!Objects.equals(user.getPassword(), user.getConfirmPassword())) {
-            throw new IllegalArgumentException("Passwords do not match");
-        }
-
-        if (checkIfUserExist(user.getUsername())) {
-            throw new UserAlreadyExistException("User already exists: " + user.getUsername());
-        }
-
-        if (user.getOrganization() != null && StringUtils.isNotBlank(user.getOrganization().getId())) {
-            Organization org = organizationRepository.findById(user.getOrganization().getId())
-                    .orElseThrow(() -> new IllegalArgumentException(
-                            "Organization not found with id: " + user.getOrganization().getId()));
-            user.setOrganization(org);
-        } else {
-            user.setOrganization(null);
-        }
-
-        if (user.getDirectorate() != null && StringUtils.isNotBlank(user.getDirectorate().getId())) {
-            Directorate dir = directorateRepository.findById(user.getDirectorate().getId())
-                    .orElseThrow(() -> new IllegalArgumentException(
-                            "Directorate not found with id: " + user.getDirectorate().getId()));
-            user.setDirectorate(dir);
-        } else {
-            user.setDirectorate(null);
-        }
-
-        Role role = roleService.findByDescription(roleDescription);
-        if (role == null) {
-            throw new IllegalArgumentException("Role not found: " + roleDescription);
-        }
-        user.getRoles().add(role);
-
-        user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
-        user.setConfirmPassword(null); // Clear confirmPassword
-        user.setEnabled(true); // Require no email verification
-
-        User newUser = userRepository.save(user);
-        // sendRegistrationConfirmationEmail(newUser); // Disabled due to email config
-        return newUser;
+   public User register(User user, String roleDescription) throws UserAlreadyExistException {
+    if (StringUtils.isBlank(user.getUsername()) || StringUtils.isBlank(user.getPassword())) {
+        throw new IllegalArgumentException("Username and password are required");
     }
+
+    if (!Objects.equals(user.getPassword(), user.getConfirmPassword())) {
+        throw new IllegalArgumentException("Passwords do not match");
+    }
+
+    if (checkIfUserExist(user.getUsername())) {
+        throw new UserAlreadyExistException("User already exists: " + user.getUsername());
+    }
+
+    if (user.getOrganization() != null && StringUtils.isNotBlank(user.getOrganization().getId())) {
+        Organization org = organizationRepository.findById(user.getOrganization().getId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Organization not found with id: " + user.getOrganization().getId()));
+        user.setOrganization(org);
+    } else {
+        user.setOrganization(null);
+    }
+
+    if (user.getDirectorate() != null && StringUtils.isNotBlank(user.getDirectorate().getId())) {
+        Directorate dir = directorateRepository.findById(user.getDirectorate().getId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Directorate not found with id: " + user.getDirectorate().getId()));
+        user.setDirectorate(dir);
+    } else {
+        user.setDirectorate(null);
+    }
+
+    Role role = roleService.findByDescription(roleDescription);
+    if (role == null) {
+        throw new IllegalArgumentException("Role not found: " + roleDescription);
+    }
+    user.getRoles().add(role);
+
+    user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+    user.setConfirmPassword(null); // Clear confirmPassword
+    user.setEnabled(true); // Require no email verification
+
+    User newUser = userRepository.save(user);
+    return newUser;
+}
 
     @Transactional
     public User registerNewUser(String username, String password, List<String> roleDescriptions) {

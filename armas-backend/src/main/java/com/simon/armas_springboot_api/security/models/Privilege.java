@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.*;
 import com.simon.armas_springboot_api.models.User;
 import jakarta.persistence.*;
 import lombok.Data;
-
+import java.util.Objects;
 import java.util.List;
 import lombok.ToString;
 import com.simon.armas_springboot_api.security.models.Auditable;
@@ -74,5 +74,18 @@ public class Privilege extends Auditable<String> {
 
     public void setUsers(List<UserPrivilegeAssignment> users) {
         this.users = users;
+    }
+     @Override
+    public int hashCode() {
+        return Objects.hash(id, description); // Exclude role and users
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Privilege privilege = (Privilege) o;
+        return Objects.equals(id, privilege.id) &&
+               Objects.equals(description, privilege.description); // Exclude role and users
     }
 }

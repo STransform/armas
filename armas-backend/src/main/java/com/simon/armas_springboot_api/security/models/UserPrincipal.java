@@ -99,8 +99,8 @@ public class UserPrincipal implements UserDetails {
         return true;
     }
 
-    @Override
-    public boolean isEnabled() {
-        return user.isEnabled();
-    }
+    // @Override
+    // public boolean isEnabled() {
+    //     return user.isEnabled();
+    // }
 }
