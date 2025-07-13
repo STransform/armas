@@ -507,7 +507,7 @@ export default function Organization() {
                 placeholder="Enter head's name (e.g., Simon Temesgen)"
               />
             </CCol>
-            {/* <CCol xs={12}>
+           <CCol xs={12}>
               <CFormLabel htmlFor="orgtype">Organization Type</CFormLabel>
               <CFormInput
                 id="orgtype"
@@ -515,7 +515,7 @@ export default function Organization() {
                 onChange={handleChangeAdd}
                 placeholder="Enter type (e.g., Social)"
               />
-            </CCol> */}
+            </CCol>
           </CForm>
         </DialogContent>
         <DialogActions>

@@ -34,7 +34,7 @@ public class OrganizationController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Organization> getOrganizationById(@PathVariable String id) {
         logger.info("Fetching organization with ID: {}", id);
         Organization organization = organizationService.getOrganizationById(id);
@@ -46,14 +46,14 @@ public class OrganizationController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public Organization createOrganization(@RequestBody Organization organization) {
         logger.info("Creating organization: {}", organization.getOrgname());
         return organizationService.save(organization);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Organization> updateOrganization(@PathVariable String id, @RequestBody Organization organization) {
         logger.info("Updating organization with ID: {}", id);
         Organization existingOrganization = organizationService.getOrganizationById(id);
@@ -66,7 +66,7 @@ public class OrganizationController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteOrganization(@PathVariable String id) {
         logger.info("Deleting organization with ID: {}", id);
         Organization existingOrganization = organizationService.getOrganizationById(id);

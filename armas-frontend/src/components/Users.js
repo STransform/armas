@@ -158,36 +158,33 @@ export default function User() {
   });
   const [formMode, setFormMode] = useState('');
 
-  // Fetch data (unchanged)
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true);
-      try {
-        const [usersResponse, orgsResponse, dirsResponse] = await Promise.all([
-          axiosInstance.get('/users'),
-          axiosInstance.get('/organizations'),
-          axiosInstance.get('/directorates'),
-        ]);
-        setUsers(Array.isArray(usersResponse.data) ? usersResponse.data : []);
-        setOrganizations(Array.isArray(orgsResponse.data) ? orgsResponse.data : []);
-        setDirectorates(Array.isArray(dirsResponse.data) ? dirsResponse.data : []);
-        if (usersResponse.data.length === 0) {
-          setError('No users found.');
+        setLoading(true);
+        try {
+            const [usersResponse, orgsResponse, dirsResponse] = await Promise.all([
+                axiosInstance.get('/users'),
+                axiosInstance.get('/organizations'),
+                axiosInstance.get('/directorates'),
+            ]);
+            console.log('Users response:', usersResponse.data);
+            setUsers(Array.isArray(usersResponse.data) ? usersResponse.data : []);
+            setOrganizations(Array.isArray(orgsResponse.data) ? orgsResponse.data : []);
+            setDirectorates(Array.isArray(dirsResponse.data) ? dirsResponse.data : []);
+        } catch (error) {
+            const errorMessage = error.response
+                ? `Error ${error.response.status}: ${error.response.data?.message || error.response.statusText}`
+                : error.message;
+            setError(errorMessage);
+            setSnackbarMessage(errorMessage);
+            setSnackbarSeverity('error');
+            setSnackbarOpen(true);
+        } finally {
+            setLoading(false);
         }
-      } catch (error) {
-        const errorMessage = error.response
-          ? `Error ${error.response.status}: ${error.response.data?.message || error.response.statusText}`
-          : error.message;
-        setError(errorMessage);
-        setSnackbarMessage(errorMessage);
-        setSnackbarSeverity('error');
-        setSnackbarOpen(true);
-      } finally {
-        setLoading(false);
-      }
     };
     fetchData();
-  }, []);
+}, []);
 
   // Handlers (existing ones unchanged, new ones added)
   const handleConfirmDeleteOpen = (id) => {
@@ -328,33 +325,43 @@ export default function User() {
 
   const handleAddUser = async () => {
     try {
-      const payload = {
-        firstName: currentUser.firstName.trim(),
-        lastName: currentUser.lastName.trim(),
-        username: currentUser.username.trim(),
-        password: currentUser.password.trim(),
-        confirmPassword: currentUser.confirmPassword.trim(),
-        organizationId: currentUser.organizationId || null,
-        directorateId: currentUser.directorateId || null,
-        role: 'USER',
-      };
-      const response = await axiosInstance.post('/users', payload);
-      const fullUser = await axiosInstance.get(`/users/${response.data.id}`);
-      setUsers([...users, fullUser.data]);
-      setSnackbarMessage('User added successfully!');
-      setSnackbarSeverity('success');
-      setSnackbarOpen(true);
-      handleCloseAddEdit();
+        const payload = {
+            firstName: currentUser.firstName.trim(),
+            lastName: currentUser.lastName.trim(),
+            username: currentUser.username.trim(),
+            password: currentUser.password.trim(),
+            confirmPassword: currentUser.confirmPassword.trim(),
+            organizationId: currentUser.organizationId || null,
+            directorateId: currentUser.directorateId || null,
+            role: 'USER',
+        };
+        console.log('Payload sent to /users:', payload);
+        const response = await axiosInstance.post('/users', payload);
+        console.log('POST /users response:', response.data);
+        const fullUser = await axiosInstance.get(`/users/${response.data.id}`);
+        console.log('GET /users/{id} response:', fullUser.data);
+        setUsers([...users, fullUser.data]);
+        setSnackbarMessage('User added successfully!');
+        setSnackbarSeverity('success');
+        setSnackbarOpen(true);
+        handleCloseAddEdit();
     } catch (error) {
-      const msg =
-        error.response?.status === 409
-          ? 'Username already exists'
-          : error.response?.data?.message || 'Error adding user';
-      setSnackbarMessage(msg);
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
+        const msg =
+            error.response?.status === 409
+                ? 'Username already exists'
+                : error.response?.status === 400
+                ? error.response?.data?.message || 'Validation error: Please check your inputs'
+                : error.response?.status === 401
+                ? 'Unauthorized: Please log in as an admin'
+                : error.response?.status === 403
+                ? 'Forbidden: Admin access required'
+                : error.response?.data?.message || 'Error adding user';
+        console.error('Error adding user:', error.response || error);
+        setSnackbarMessage(msg);
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
     }
-  };
+};
 
   const handleEditUser = async () => {
     try {
@@ -575,7 +582,7 @@ export default function User() {
       >
         <DialogTitle>Confirm Deletion</DialogTitle>
         <DialogContent>
-          <Typography>Are you sure you want to delete this user? This action cannot be undone.</Typography>
+          <Typography>Are you sure you want to delete this user?</Typography>
         </DialogContent>
         <DialogActions>
           <StyledButton onClick={handleConfirmDeleteClose} color="primary">
@@ -607,7 +614,7 @@ export default function User() {
               label="First Name"
               value={currentUser.firstName || ''}
               onChange={handleChangeAdd}
-              placeholder="Enter first name (e.g., John)"
+              placeholder="Enter first name (e.g., Simon)"
               fullWidth
               variant="outlined"
               size="small"
@@ -617,7 +624,7 @@ export default function User() {
               label="Last Name"
               value={currentUser.lastName || ''}
               onChange={handleChangeAdd}
-              placeholder="Enter last name (e.g., Doe)"
+              placeholder="Enter last name (e.g., Temesgen)"
               fullWidth
               variant="outlined"
               size="small"
@@ -627,29 +634,29 @@ export default function User() {
               label="Username"
               value={currentUser.username || ''}
               onChange={handleChangeAdd}
-              placeholder="Enter username (e.g., johndoe)"
+              placeholder="Enter username (e.g., Simon)"
               fullWidth
               variant="outlined"
               size="small"
             />
             <StyledTextField
               id="password"
-              label={formMode === 'new' ? 'Password' : 'New Password (optional)'}
+              label={formMode === 'new' ? 'Password' : 'New Password'}
               type="password"
               value={currentUser.password || ''}
               onChange={handleChangeAdd}
-              placeholder={formMode === 'new' ? 'Enter password' : 'Enter new password (leave blank to keep unchanged)'}
+              placeholder={formMode === 'new' ? 'Enter password' : 'Enter new password'}
               fullWidth
               variant="outlined"
               size="small"
             />
             <StyledTextField
               id="confirmPassword"
-              label={formMode === 'new' ? 'Confirm Password' : 'Confirm New Password (optional)'}
+              label={formMode === 'new' ? 'Confirm Password' : 'Confirm Password'}
               type="password"
               value={currentUser.confirmPassword || ''}
               onChange={handleChangeAdd}
-              placeholder={formMode === 'new' ? 'Confirm password' : 'Confirm new password'}
+              placeholder={formMode === 'new' ? 'Confirm password' : 'Confirm password'}
               fullWidth
               variant="outlined"
               size="small"
@@ -785,7 +792,7 @@ export default function User() {
         <DialogTitle>Reset Password</DialogTitle>
         <DialogContent>
           <Typography sx={{ mb: 2 }}>
-            Enter a new password for the user. This action cannot be undone.
+            {/* Enter a new password */}
           </Typography>
           <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: '1fr' }, mt: 2 }}>
             <StyledTextField
@@ -801,11 +808,11 @@ export default function User() {
             />
             <StyledTextField
               id="confirmPassword"
-              label="Confirm New Password"
+              label="Confirm Password"
               type="password"
               value={resetPassword.confirmPassword || ''}
               onChange={handleResetPasswordChange}
-              placeholder="Confirm new password"
+              placeholder="Confirm password"
               fullWidth
               variant="outlined"
               size="small"

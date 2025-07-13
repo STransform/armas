@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.util.Objects;
 
 import java.util.List;
 import lombok.ToString;
@@ -66,4 +67,19 @@ public class Role extends Auditable<String> {
     public void setPrivileges(List<Privilege> privileges) {
         this.privileges = privileges;
     }
+        @Override
+    public int hashCode() {
+        return Objects.hash(id, description, details); // Exclude privileges
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Role role = (Role) o;
+        return Objects.equals(id, role.id) &&
+               Objects.equals(description, role.description) &&
+               Objects.equals(details, role.details); // Exclude privileges
+    }
+
 }

@@ -43,7 +43,7 @@ import {
 import { styled } from '@mui/material/styles';
 import axiosInstance from '../../axiosConfig';
 
-// Styled components for enhanced UI
+// Styled components
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   borderRadius: '8px',
   boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
@@ -102,6 +102,7 @@ export default function Directorate() {
   const [openAddEdit, setOpenAddEdit] = useState(false);
   const [openDetails, setOpenDetails] = useState(false);
   const [currentDirectorate, setCurrentDirectorate] = useState({
+    id: '',
     directoratename: '',
     telephone: '',
     email: '',
@@ -114,6 +115,7 @@ export default function Directorate() {
       setLoading(true);
       try {
         const response = await axiosInstance.get('/directorates');
+        console.log('Fetched directorates:', response.data); // Debug log
         setDirectorates(Array.isArray(response.data) ? response.data : []);
         if (response.data.length === 0) {
           setError('No directorates available.');
@@ -136,8 +138,8 @@ export default function Directorate() {
   }, []);
 
   // Handlers
-  const handleConfirmDeleteOpen = (directoratename) => {
-    setDeleteId(directoratename);
+  const handleConfirmDeleteOpen = (id) => {
+    setDeleteId(id);
     setConfirmDeleteOpen(true);
   };
 
@@ -152,10 +154,10 @@ export default function Directorate() {
     setSuccess('');
   };
 
-  const handleDeleteDirectorate = async (directoratename) => {
+  const handleDeleteDirectorate = async (id) => {
     try {
-      await axiosInstance.delete(`/directorates/${directoratename}`);
-      setDirectorates(directorates.filter((dir) => dir.directoratename !== directoratename));
+      await axiosInstance.delete(`/directorates/${id}`);
+      setDirectorates(directorates.filter((dir) => dir.id !== id));
       setSnackbarMessage('Directorate deleted successfully!');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
@@ -169,13 +171,14 @@ export default function Directorate() {
   };
 
   const clearForm = () => {
-    setCurrentDirectorate({ directoratename: '', telephone: '', email: '' });
+    setCurrentDirectorate({ id: '', directoratename: '', telephone: '', email: '' });
   };
 
   const handleOpenAddEdit = (mode = 'new', directorate = null) => {
     setFormMode(mode);
     if (mode === 'edit' && directorate) {
       setCurrentDirectorate({
+        id: directorate.id || '',
         directoratename: directorate.directoratename || '',
         telephone: directorate.telephone || '',
         email: directorate.email || '',
@@ -202,6 +205,7 @@ export default function Directorate() {
 
   const handleOpenDetails = (directorate) => {
     setCurrentDirectorate({
+      id: directorate.id || '',
       directoratename: directorate.directoratename || '',
       telephone: directorate.telephone || '',
       email: directorate.email || '',
@@ -214,22 +218,31 @@ export default function Directorate() {
   };
 
   const handleAddDirectorate = async () => {
+    if (!currentDirectorate.directoratename.trim()) {
+      setSnackbarMessage('Directorate name is required');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return;
+    }
     try {
       const payload = {
         directoratename: currentDirectorate.directoratename.trim(),
-        telephone: currentDirectorate.telephone.trim(),
-        email: currentDirectorate.email.trim(),
+        telephone: currentDirectorate.telephone.trim() || null,
+        email: currentDirectorate.email.trim() || null,
       };
+      console.log('Sending POST /directorates payload:', payload); // Enhanced logging
       const response = await axiosInstance.post('/directorates', payload);
+      console.log('POST /directorates response:', response.data); // Log response
       setDirectorates([...directorates, response.data]);
       setSnackbarMessage('Directorate added successfully!');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
       handleCloseAddEdit();
     } catch (error) {
+      console.error('Error adding directorate:', error.response || error); // Detailed error logging
       const msg =
         error.response?.status === 409
-          ? 'Directorate name already exists'
+          ? `Directorate name "${currentDirectorate.directoratename.trim()}" already exists`
           : error.response?.data?.message || 'Error adding directorate';
       setSnackbarMessage(msg);
       setSnackbarSeverity('error');
@@ -241,18 +254,21 @@ export default function Directorate() {
     try {
       const payload = {
         directoratename: currentDirectorate.directoratename.trim(),
-        telephone: currentDirectorate.telephone.trim(),
-        email: currentDirectorate.email.trim(),
+        telephone: currentDirectorate.telephone.trim() || null,
+        email: currentDirectorate.email.trim() || null,
       };
-      const response = await axiosInstance.put(`/directorates/${currentDirectorate.directoratename}`, payload);
+      console.log('Sending PUT /directorates payload:', payload); // Enhanced logging
+      const response = await axiosInstance.put(`/directorates/${currentDirectorate.id}`, payload);
+      console.log('PUT /directorates response:', response.data); // Log response
       setDirectorates(
-        directorates.map((dir) => (dir.directoratename === currentDirectorate.directoratename ? response.data : dir))
+        directorates.map((dir) => (dir.id === currentDirectorate.id ? response.data : dir))
       );
       setSnackbarMessage('Directorate updated successfully!');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
       handleCloseAddEdit();
     } catch (error) {
+      console.error('Error updating directorate:', error.response || error); // Detailed error logging
       const msg = error.response?.data?.message || 'Error updating directorate';
       setSnackbarMessage(msg);
       setSnackbarSeverity('error');
@@ -308,7 +324,7 @@ export default function Directorate() {
                       startIcon={<AddIcon />}
                       onClick={() => handleOpenAddEdit('new')}
                     >
-                      {/* New Directorate */}
+                      Add Directorate
                     </StyledButton>
                     <TextField
                       label="Search Directorates"
@@ -330,7 +346,8 @@ export default function Directorate() {
                     <Table stickyHeader>
                       <TableHead>
                         <StyledTableRow>
-                          <StyledTableCell>#</StyledTableCell>
+                          {/* <StyledTableCell>#</StyledTableCell>
+                          <StyledTableCell>ID</StyledTableCell> */}
                           <StyledTableCell>Name</StyledTableCell>
                           <StyledTableCell>Telephone</StyledTableCell>
                           <StyledTableCell>Email</StyledTableCell>
@@ -341,8 +358,9 @@ export default function Directorate() {
                         {filteredDirectorates
                           .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                           .map((dir, index) => (
-                            <StyledTableRow key={dir.directoratename}>
-                              <StyledTableCell>{page * rowsPerPage + index + 1}</StyledTableCell>
+                            <StyledTableRow key={dir.id}>
+                              {/* <StyledTableCell>{page * rowsPerPage + index + 1}</StyledTableCell>
+                              <StyledTableCell>{dir.id || 'N/A'}</StyledTableCell> */}
                               <StyledTableCell>{dir.directoratename || 'N/A'}</StyledTableCell>
                               <StyledTableCell>{dir.telephone || ''}</StyledTableCell>
                               <StyledTableCell>{dir.email || ''}</StyledTableCell>
@@ -365,7 +383,7 @@ export default function Directorate() {
                                 </IconButton>
                                 <IconButton
                                   color="error"
-                                  onClick={() => handleConfirmDeleteOpen(dir.directoratename)}
+                                  onClick={() => handleConfirmDeleteOpen(dir.id)}
                                   size="small"
                                 >
                                   <DeleteIcon />
@@ -491,6 +509,10 @@ export default function Directorate() {
         <DialogTitle>Directorate Details</DialogTitle>
         <DialogContent>
           <CForm className="row g-3">
+            <CCol md={6}>
+              <CFormLabel>ID</CFormLabel>
+              <CFormInput value={currentDirectorate.id || ''} readOnly />
+            </CCol>
             <CCol md={6}>
               <CFormLabel>Directorate Name</CFormLabel>
               <CFormInput value={currentDirectorate.directoratename || ''} readOnly />

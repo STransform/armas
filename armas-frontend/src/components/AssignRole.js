@@ -114,40 +114,68 @@ export default function AssignRole() {
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
   useEffect(() => {
-    console.log('AssignRole: Component mounted');
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const [usersResponse, rolesResponse] = await Promise.all([
-          axiosInstance.get('/users'),
-          axiosInstance.get('/roles'),
-        ]);
-        console.log('AssignRole: Users response:', usersResponse.data);
-        console.log('AssignRole: Roles response:', rolesResponse.data);
-        const validUsers = Array.isArray(usersResponse.data)
-          ? usersResponse.data.filter(user => user && user.id && user.username)
-          : [];
-        setUsers(validUsers);
-        setRoles(Array.isArray(rolesResponse.data) ? rolesResponse.data : []);
-        if (validUsers.length === 0) {
-          setError('No valid users found.');
-        }
-      } catch (error) {
-        const errorMessage = error.response
-          ? `Error ${error.response.status}: ${error.response.data?.message || error.response.statusText}`
-          : error.message;
-        console.error('AssignRole: Fetch error:', errorMessage);
-        setError(errorMessage);
-        setSnackbarMessage(errorMessage);
-        setSnackbarSeverity('error');
-        setSnackbarOpen(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+  console.log('AssignRole: Component mounted');
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [usersResponse, rolesResponse] = await Promise.all([
+        axiosInstance.get('/users'),
+        axiosInstance.get('/roles'),
+      ]);
+      console.log('AssignRole: Users response:', usersResponse.data);
+      console.log('AssignRole: Roles response:', rolesResponse.data);
 
+      // Validate users response
+      if (!Array.isArray(usersResponse.data)) {
+        console.error('AssignRole: Users response is not an array:', usersResponse.data);
+        setError('Invalid users data format. Expected an array.');
+        setUsers([]);
+        setLoading(false);
+        return;
+      }
+
+      // Log each user to check for missing fields
+      usersResponse.data.forEach((user, index) => {
+        console.log(`AssignRole: User ${index}:`, {
+          id: user?.id,
+          username: user?.username,
+          hasId: !!user?.id,
+          hasUsername: !!user?.username,
+        });
+        if (!user || !user.id || !user.username) {
+          console.warn(`AssignRole: Invalid user at index ${index}:`, user);
+        }
+      });
+
+      const validUsers = usersResponse.data.filter(user => {
+        const isValid = user && user.id && user.username;
+        if (!isValid) {
+          console.warn('AssignRole: Filtering out user:', user);
+        }
+        return isValid;
+      });
+
+      setUsers(validUsers);
+      setRoles(Array.isArray(rolesResponse.data) ? rolesResponse.data : []);
+
+      if (validUsers.length === 0) {
+        setError('No valid users found. Ensure users have valid id and username fields.');
+      }
+    } catch (error) {
+      const errorMessage = error.response
+        ? `Error ${error.response.status}: ${error.response.data?.message || error.response.statusText}`
+        : error.message;
+      console.error('AssignRole: Fetch error:', errorMessage, error);
+      setError(errorMessage);
+      setSnackbarMessage(errorMessage);
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchData();
+}, []);
   const handleOpenAssign = useCallback((user) => {
     console.log('AssignRole: handleOpenAssign called with user:', user);
     setSelectedUser(user);

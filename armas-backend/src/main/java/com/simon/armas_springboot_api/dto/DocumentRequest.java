@@ -1,19 +1,24 @@
 package com.simon.armas_springboot_api.dto;
 
-public class DocumentRequest {
-    private String id;
-    private String reportype;
-    private String directoratename;
+import jakarta.validation.constraints.NotBlank;
 
+public class DocumentRequest {
+    @NotBlank(message = "Document ID is required")
+    private String id;
+    
+    @NotBlank(message = "Report type is required")
+    private String reportype;
+    
+    @NotBlank(message = "Directorate ID is required")
+    private String directorateId;
+
+    // Getters and setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
+    
     public String getReportype() { return reportype; }
     public void setReportype(String reportype) { this.reportype = reportype; }
-    public String getDirectoratename() { return directoratename; }
-    public void setDirectoratename(String directoratename) { this.directoratename = directoratename; }
-
-    @Override
-    public String toString() {
-        return "DocumentRequest{id='" + id + "', reportype='" + reportype + "', directoratename='" + directoratename + "'}";
-    }
+    
+    public String getDirectorateId() { return directorateId; }
+    public void setDirectorateId(String directorateId) { this.directorateId = directorateId; }
 }

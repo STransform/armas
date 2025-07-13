@@ -1,6 +1,9 @@
 package com.simon.armas_springboot_api.models;
 
 import java.util.List;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -16,6 +19,8 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 public class Directorate {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID) // Use UUID for string-based ID
+    private String id;
     private String directoratename;
     private String telephone;
     private String email;
@@ -24,9 +29,8 @@ public class Directorate {
     @JsonManagedReference // Prevents infinite recursion in JSON
     private List<Document> documents;
 
-    // Add getId() and setId() for consistency with Organization
-    public String getId() { return directoratename; }
-    public void setId(String id) { this.directoratename = id; }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
     public String getDirectoratename() { return directoratename; }
     public void setDirectoratename(String directoratename) { this.directoratename = directoratename; }
