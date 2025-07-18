@@ -31,6 +31,7 @@ import {
   InputAdornment,
   Typography,
   Paper,
+  Tooltip,
 } from '@mui/material';
 import {
   Visibility as VisibilityIcon,
@@ -325,39 +326,50 @@ export default function CorrectedReports() {
                               <StyledTableCell>{report.createdBy || 'N/A'}</StyledTableCell>
                               <StyledTableCell>{report.responseNeeded || 'N/A'}</StyledTableCell>
                               <StyledTableCell align="right">
-                                <IconButton
-                                  color="success"
-                                  onClick={() => handleOpenDetails(report)}
-                                  size="small"
-                                  sx={{ mr: 1 }}
-                                >
-                                  <VisibilityIcon />
-                                </IconButton>
-                                {isApprover && (
-                                  <>
-                                    <IconButton
-                                      color="success"
-                                      onClick={() => handleApprove(report)}
-                                      size="small"
-                                      sx={{ mr: 1 }}
-                                    >
-                                      <CheckCircleIcon />
-                                    </IconButton>
-                                    <IconButton
-                                      color="error"
-                                      onClick={() => handleReject(report)}
-                                      size="small"
-                                    >
-                                      <CancelIcon />
-                                    </IconButton>
-                                  </>
-                                )}
-                                {isSeniorAuditor && !isApprover && (
-                                  <Typography variant="body2" color="textSecondary">
-                                    Awaiting Approval
-                                  </Typography>
-                                )}
-                              </StyledTableCell>
+  <Tooltip title="View Details" arrow>
+    <IconButton
+      color="success"
+      onClick={() => handleOpenDetails(report)}
+      size="small"
+      sx={{ mr: 1 }}
+    >
+      <VisibilityIcon />
+    </IconButton>
+  </Tooltip>
+
+  {isApprover && (
+    <>
+      <Tooltip title="Approve Report" arrow>
+        <IconButton
+          color="success"
+          onClick={() => handleApprove(report)}
+          size="small"
+          sx={{ mr: 1 }}
+        >
+          <CheckCircleIcon />
+        </IconButton>
+      </Tooltip>
+
+      <Tooltip title="Reject Report" arrow>
+        <IconButton
+          color="error"
+          onClick={() => handleReject(report)}
+          size="small"
+        >
+          <CancelIcon />
+        </IconButton>
+      </Tooltip>
+    </>
+  )}
+
+  {isSeniorAuditor && !isApprover && (
+    <Tooltip title="Pending Approval" arrow>
+      <Typography variant="body2" color="textSecondary">
+        Awaiting Approval
+      </Typography>
+    </Tooltip>
+  )}
+</StyledTableCell>
                             </StyledTableRow>
                           ))}
                       </TableBody>
@@ -394,7 +406,7 @@ export default function CorrectedReports() {
         <DialogContent>
           <CForm className="row g-3">
             <CCol xs={12}>
-              <CFormLabel htmlFor="approvalDocument">Attach Approval Document (Optional)</CFormLabel>
+              <CFormLabel htmlFor="approvalDocument">Attach Approval Document</CFormLabel>
               <input
                 type="file"
                 className="form-control"

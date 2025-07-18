@@ -23,6 +23,7 @@ import {
   Snackbar,
   Alert,
   InputAdornment,
+  Tooltip,
 } from '@mui/material';
 import {
   Download as DownloadIcon,
@@ -32,7 +33,6 @@ import { styled } from '@mui/material/styles';
 import { downloadFile } from '../file/upload_download';
 import axiosInstance from '../axiosConfig';
 
-// Styled components for enhanced UI
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   borderRadius: '8px',
   boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
@@ -260,13 +260,15 @@ export default function LetterDownload() {
                               </StyledTableCell>
                               <StyledTableCell align="right">
                                 {report.letterDocname && (
-                                  <StyledButton
-                                    color="primary"
-                                    onClick={() => handleDownload(report.id, report.letterDocname)}
-                                    aria-label={`Download ${report.letterDocname}`}
-                                  >
-                                    <DownloadIcon />
-                                  </StyledButton>
+                                  <Tooltip title="Download Letter" arrow>
+                                    <StyledButton
+                                      color="primary"
+                                      onClick={() => handleDownload(report.id, report.letterDocname)}
+                                      aria-label={`Download ${report.letterDocname}`}
+                                    >
+                                      <DownloadIcon />
+                                    </StyledButton>
+                                  </Tooltip>
                                 )}
                               </StyledTableCell>
                             </StyledTableRow>
