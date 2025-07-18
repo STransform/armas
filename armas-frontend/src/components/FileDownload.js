@@ -31,6 +31,7 @@ import {
   InputAdornment,
   Typography,
   Paper,
+  Tooltip, // Ensure Tooltip is imported
 } from '@mui/material';
 import {
   Visibility as VisibilityIcon,
@@ -258,7 +259,9 @@ export default function FileDownload() {
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
-                            <SearchIcon />
+                            <Tooltip title="Search reports by organization, report type, year, submitter, or status" placement="top">
+                              <SearchIcon />
+                            </Tooltip>
                           </InputAdornment>
                         ),
                       }}
@@ -315,29 +318,35 @@ export default function FileDownload() {
                                 </Box>
                               </StyledTableCell>
                               <StyledTableCell align="right">
-                                <IconButton
-                                  color="success"
-                                  onClick={() => handleOpenDetails(report)}
-                                  size="small"
-                                  sx={{ mr: 1 }}
-                                >
-                                  <VisibilityIcon />
-                                </IconButton>
-                                <IconButton
-                                  color="primary"
-                                  onClick={() => handleAssignAuditor(report)}
-                                  size="small"
-                                  sx={{ mr: 1 }}
-                                >
-                                  <PersonAddIcon />
-                                </IconButton>
-                                <IconButton
-                                  color="primary"
-                                  onClick={() => handleDownload(report.id, report.docname)}
-                                  size="small"
-                                >
-                                  <DownloadIcon />
-                                </IconButton>
+                                <Tooltip title="View report details" placement="top">
+                                  <IconButton
+                                    color="success"
+                                    onClick={() => handleOpenDetails(report)}
+                                    size="small"
+                                    sx={{ mr: 1 }}
+                                  >
+                                    <VisibilityIcon />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Assign auditor" placement="top">
+                                  <IconButton
+                                    color="primary"
+                                    onClick={() => handleAssignAuditor(report)}
+                                    size="small"
+                                    sx={{ mr: 1 }}
+                                  >
+                                    <PersonAddIcon />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Download report" placement="top">
+                                  <IconButton
+                                    color="primary"
+                                    onClick={() => handleDownload(report.id, report.docname)}
+                                    size="small"
+                                  >
+                                    <DownloadIcon />
+                                  </IconButton>
+                                </Tooltip>
                               </StyledTableCell>
                             </StyledTableRow>
                           ))}
@@ -454,14 +463,16 @@ export default function FileDownload() {
               <CFormLabel>Document</CFormLabel>
               <div>
                 {selectedReport?.docname && (
-                  <StyledButton
-                    variant="contained"
-                    color="primary"
-                    startIcon={<DownloadIcon />}
-                    onClick={() => handleDownload(selectedReport.id, selectedReport.docname)}
-                  >
-                    Download Document
-                  </StyledButton>
+                  <Tooltip title="Download report" placement="top">
+                    <StyledButton
+                      variant="contained"
+                      color="primary"
+                      startIcon={<DownloadIcon />}
+                      onClick={() => handleDownload(selectedReport.id, selectedReport.docname)}
+                    >
+                      Download Document
+                    </StyledButton>
+                  </Tooltip>
                 )}
               </div>
             </CCol>

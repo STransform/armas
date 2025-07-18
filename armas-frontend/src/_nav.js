@@ -106,7 +106,7 @@ const managerItems = [
         },
         {
           component: CNavItem,
-          name: 'Documents',
+          name: 'Report type',
           to: '/buttons/documents',
           icon: <CIcon icon={cilFile} customClassName="nav-icon" />,
         },

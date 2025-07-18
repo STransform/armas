@@ -32,6 +32,7 @@ import {
   Typography,
   Paper,
   CircularProgress,
+  Tooltip, // Added for tooltips
 } from '@mui/material';
 import {
   Visibility as VisibilityIcon,
@@ -43,7 +44,7 @@ import {
 import { styled } from '@mui/material/styles';
 import axiosInstance from '../../axiosConfig';
 
-// Styled components for enhanced UI
+// Styled components
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   borderRadius: '8px',
   boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
@@ -83,6 +84,25 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
   '&:hover': {
     backgroundColor: theme.palette.action.hover,
     transition: 'background-color 0.3s ease',
+  },
+}));
+
+const StyledTextField = styled(TextField)(({ theme }) => ({
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '12px',
+    backgroundColor: '#f9fafb',
+    transition: 'all 0.3s ease',
+    '&:hover': {
+      backgroundColor: '#f1f5f9',
+    },
+    '&.Mui-focused': {
+      backgroundColor: '#fff',
+      boxShadow: '0 0 8px rgba(25, 118, 210, 0.3)',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    fontWeight: 500,
+    color: theme.palette.text.secondary,
   },
 }));
 
@@ -244,7 +264,7 @@ export default function Organization() {
     } catch (error) {
       const msg =
         error.response?.status === 409
-          ? 'Organization ID already exists'
+          ? 'Organization Code already exists'
           : error.response?.data?.message || 'Error adding organization';
       setSnackbarMessage(msg);
       setSnackbarSeverity('error');
@@ -299,10 +319,14 @@ export default function Organization() {
   );
 
   const isAddButtonDisabled =
-    !currentOrganization.id.trim() ||
-    !currentOrganization.orgname.trim() ||
-    !currentOrganization.email.trim() ||
-    !currentOrganization.orgtype.trim();
+    formMode === 'new'
+      ? !currentOrganization.id.trim() ||
+        !currentOrganization.orgname.trim() ||
+        !currentOrganization.email.trim() ||
+        !currentOrganization.orgtype.trim()
+      : !currentOrganization.orgname.trim() ||
+        !currentOrganization.email.trim() ||
+        !currentOrganization.orgtype.trim();
 
   return (
     <Box sx={{ padding: { xs: 2, md: 4 } }}>
@@ -330,9 +354,9 @@ export default function Organization() {
                       startIcon={<AddIcon />}
                       onClick={() => handleOpenAddEdit('new')}
                     >
-                      {/* New Organization */}
+                      Add New Organization
                     </StyledButton>
-                    <TextField
+                    <StyledTextField
                       label="Search Organizations"
                       variant="outlined"
                       value={filterText}
@@ -356,8 +380,8 @@ export default function Organization() {
                           <StyledTableCell>Name</StyledTableCell>
                           <StyledTableCell>Email</StyledTableCell>
                           <StyledTableCell>Telephone</StyledTableCell>
-                          <StyledTableCell>Head</StyledTableCell>
-                          {/* <StyledTableCell>Type</StyledTableCell> */}
+                          <StyledTableCell>Address</StyledTableCell>
+                          <StyledTableCell>Type</StyledTableCell>
                           <StyledTableCell align="right">Actions</StyledTableCell>
                         </StyledTableRow>
                       </TableHead>
@@ -371,31 +395,37 @@ export default function Organization() {
                               <StyledTableCell>{org.email || 'N/A'}</StyledTableCell>
                               <StyledTableCell>{org.telephone || 'N/A'}</StyledTableCell>
                               <StyledTableCell>{org.organizationhead || 'N/A'}</StyledTableCell>
-                              {/* <StyledTableCell>{org.orgtype || 'N/A'}</StyledTableCell> */}
+                              <StyledTableCell>{org.orgtype || 'N/A'}</StyledTableCell>
                               <StyledTableCell align="right">
-                                <IconButton
-                                  color="primary"
-                                  onClick={() => handleOpenDetails(org)}
-                                  size="small"
-                                  sx={{ mr: 1 }}
-                                >
-                                  <VisibilityIcon />
-                                </IconButton>
-                                <IconButton
-                                  color="primary"
-                                  onClick={() => handleOpenAddEdit('edit', org)}
-                                  size="small"
-                                  sx={{ mr: 1 }}
-                                >
-                                  <EditIcon />
-                                </IconButton>
-                                <IconButton
-                                  color="error"
-                                  onClick={() => handleConfirmDeleteOpen(org.id)}
-                                  size="small"
-                                >
-                                  <DeleteIcon />
-                                </IconButton>
+                                <Tooltip title="View Details">
+                                  <IconButton
+                                    color="primary"
+                                    onClick={() => handleOpenDetails(org)}
+                                    size="small"
+                                    sx={{ mr: 1 }}
+                                  >
+                                    <VisibilityIcon />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Edit Organization">
+                                  <IconButton
+                                    color="primary"
+                                    onClick={() => handleOpenAddEdit('edit', org)}
+                                    size="small"
+                                    sx={{ mr: 1 }}
+                                  >
+                                    <EditIcon />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Delete Organization">
+                                  <IconButton
+                                    color="error"
+                                    onClick={() => handleConfirmDeleteOpen(org.id)}
+                                    size="small"
+                                  >
+                                    <DeleteIcon />
+                                  </IconButton>
+                                </Tooltip>
                               </StyledTableCell>
                             </StyledTableRow>
                           ))}
@@ -460,12 +490,12 @@ export default function Organization() {
         <DialogContent>
           <CForm className="row g-3">
             <CCol xs={12}>
-              <CFormLabel htmlFor="id">Organization ID</CFormLabel>
+              <CFormLabel htmlFor="id">Organization Code</CFormLabel>
               <CFormInput
                 id="id"
                 value={currentOrganization.id || ''}
                 onChange={handleChangeAdd}
-                placeholder="Enter organization ID (e.g., ORG123)"
+                placeholder="Enter organization Code (e.g., ORG123)"
                 disabled={formMode === 'edit'}
               />
             </CCol>
@@ -499,15 +529,15 @@ export default function Organization() {
               />
             </CCol>
             <CCol xs={12}>
-              <CFormLabel htmlFor="organizationhead">Organization Head</CFormLabel>
+              <CFormLabel htmlFor="organizationhead">Address</CFormLabel>
               <CFormInput
                 id="organizationhead"
                 value={currentOrganization.organizationhead || ''}
                 onChange={handleChangeAdd}
-                placeholder="Enter head's name (e.g., Simon Temesgen)"
+                placeholder="Enter Address (e.g., Addis Ababa)"
               />
             </CCol>
-           <CCol xs={12}>
+            <CCol xs={12}>
               <CFormLabel htmlFor="orgtype">Organization Type</CFormLabel>
               <CFormInput
                 id="orgtype"
@@ -526,7 +556,7 @@ export default function Organization() {
             onClick={formMode === 'new' ? handleAddOrganization : handleEditOrganization}
             color="primary"
             variant="contained"
-            disabled={formMode === 'new' && isAddButtonDisabled}
+            disabled={isAddButtonDisabled}
           >
             {formMode === 'new' ? 'Add Organization' : 'Update Organization'}
           </StyledButton>
@@ -545,7 +575,7 @@ export default function Organization() {
         <DialogContent>
           <CForm className="row g-3">
             <CCol md={6}>
-              <CFormLabel>Organization ID</CFormLabel>
+              <CFormLabel>Organization Code</CFormLabel>
               <CFormInput value={currentOrganization.id || ''} readOnly />
             </CCol>
             <CCol md={6}>
@@ -561,13 +591,13 @@ export default function Organization() {
               <CFormInput value={currentOrganization.telephone || ''} readOnly />
             </CCol>
             <CCol md={6}>
-              <CFormLabel>Organization Head</CFormLabel>
+              <CFormLabel>Address</CFormLabel>
               <CFormInput value={currentOrganization.organizationhead || ''} readOnly />
             </CCol>
-            {/* <CCol md={6}>
+            <CCol md={6}>
               <CFormLabel>Organization Type</CFormLabel>
               <CFormInput value={currentOrganization.orgtype || ''} readOnly />
-            </CCol> */}
+            </CCol>
           </CForm>
         </DialogContent>
         <DialogActions>

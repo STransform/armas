@@ -372,7 +372,7 @@ export default function Document() {
                       onClick={() => handleOpenAddEdit('new')}
                       disabled={directorates.length === 0}
                     >
-                      {directorates.length === 0 ? 'Add Directorates First' : 'Add New Document'}
+                      {directorates.length === 0 ? 'Add Directorates First' : 'Add Report type'}
                     </StyledButton>
                     <TextField
                       label="Search Documents"
@@ -394,8 +394,8 @@ export default function Document() {
                     <Table stickyHeader>
                       <TableHead>
                         <StyledTableRow>
-                          <StyledTableCell>#</StyledTableCell>
-                          <StyledTableCell>Document ID</StyledTableCell>
+                          {/* <StyledTableCell>#</StyledTableCell>
+                          <StyledTableCell>Document ID</StyledTableCell> */}
                           <StyledTableCell>Report Type</StyledTableCell>
                           <StyledTableCell>Directorate</StyledTableCell>
                           <StyledTableCell align="right">Actions</StyledTableCell>
@@ -406,8 +406,8 @@ export default function Document() {
                           .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                           .map((doc, index) => (
                             <StyledTableRow key={doc.id}>
-                              <StyledTableCell>{page * rowsPerPage + index + 1}</StyledTableCell>
-                              <StyledTableCell>{doc.id || 'N/A'}</StyledTableCell>
+                              {/* <StyledTableCell>{page * rowsPerPage + index + 1}</StyledTableCell>
+                              <StyledTableCell>{doc.id || 'N/A'}</StyledTableCell> */}
                               <StyledTableCell>{doc.reportype || 'N/A'}</StyledTableCell>
                               <StyledTableCell>{doc.directoratename || 'N/A'}</StyledTableCell>
                               <StyledTableCell align="right">

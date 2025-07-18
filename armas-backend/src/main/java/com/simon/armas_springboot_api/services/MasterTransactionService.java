@@ -447,8 +447,7 @@ public MasterTransaction submitFindings(Integer transactionId, String findings, 
                 break;
             case "SENIOR_AUDITOR":
                 List<MasterTransaction> activeTasks = masterTransactionRepository.findActiveSeniorAuditorTasks(userId);
-                List<MasterTransaction> approvedTasks = masterTransactionRepository
-                        .findApprovedSeniorAuditorTasks(userId);
+                List<MasterTransaction> approvedTasks = masterTransactionRepository.findApprovedSeniorAuditorTasks(userId);
                 System.out.println("SENIOR_AUDITOR active tasks: " + activeTasks.size());
                 activeTasks.forEach(task -> System.out.println("Active task: ID=" + task.getId() +
                         ", Status=" + task.getReportstatus() +
@@ -463,11 +462,15 @@ public MasterTransaction submitFindings(Integer transactionId, String findings, 
                 tasks.addAll(approvedTasks);
                 break;
             case "APPROVER":
-                List<String> underReview = Collections.singletonList("Under Review");
-                List<String> completed = Arrays.asList("Approved", "Rejected");
-                tasks.addAll(masterTransactionRepository.findApproverTasks(userId, underReview));
-                tasks.addAll(masterTransactionRepository.findCompletedApproverTasks(userId, completed));
+                List<String> activeStatuses = Arrays.asList("Under Review", "Corrected");
+                List<String> completedStatuses = Arrays.asList("Approved", "Rejected");
+                tasks.addAll(masterTransactionRepository.findApproverTasks(userId, activeStatuses));
+                tasks.addAll(masterTransactionRepository.findCompletedApproverTasks(userId, completedStatuses));
                 System.out.println("APPROVER tasks fetched: " + tasks.size());
+                tasks.forEach(task -> System.out.println("Task: ID=" + task.getId() +
+                        ", Status=" + task.getReportstatus() +
+                        ", User2=" + (task.getUser2() != null ? task.getUser2().getId() : "null") +
+                        ", Docname=" + task.getDocname()));
                 break;
             default:
                 throw new IllegalArgumentException("Invalid role: " + role);

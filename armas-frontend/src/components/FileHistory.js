@@ -23,6 +23,7 @@ import {
   Snackbar,
   Alert,
   InputAdornment,
+  Tooltip, // Ensure Tooltip is imported
 } from '@mui/material';
 import {
   Download as DownloadIcon,
@@ -182,13 +183,15 @@ export default function FileHistory() {
                   <Typography color="error" sx={{ mb: 2 }}>
                     {error}
                   </Typography>
-                  <StyledButton
-                    color="primary"
-                    onClick={fetchHistory}
-                    aria-label="Retry fetching file history"
-                  >
-                    <DownloadIcon />
-                  </StyledButton>
+                  <Tooltip title="Retry fetching file history" placement="top">
+                    <StyledButton
+                      color="primary"
+                      onClick={fetchHistory}
+                      aria-label="Retry fetching file history"
+                    >
+                      <DownloadIcon />
+                    </StyledButton>
+                  </Tooltip>
                 </Box>
               ) : (
                 <StyledTableContainer component={Paper}>
@@ -202,7 +205,9 @@ export default function FileHistory() {
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
-                            <SearchIcon />
+                            <Tooltip title="Search file history by organization, report type, year, uploader, or status" placement="top">
+                              <SearchIcon />
+                            </Tooltip>
                           </InputAdornment>
                         ),
                       }}
@@ -260,13 +265,15 @@ export default function FileHistory() {
                               <StyledTableCell>{report.fiscal_year || report.fiscalYear || 'N/A'}</StyledTableCell>
                               <StyledTableCell align="right">
                                 {report.docname && (
-                                  <StyledButton
-                                    color="primary"
-                                    onClick={() => handleDownload(report.id, report.docname, 'original')}
-                                    aria-label={`Download ${report.docname}`}
-                                  >
-                                    <DownloadIcon />
-                                  </StyledButton>
+                                  <Tooltip title="Download file" placement="top">
+                                    <StyledButton
+                                      color="primary"
+                                      onClick={() => handleDownload(report.id, report.docname, 'original')}
+                                      aria-label={`Download ${report.docname}`}
+                                    >
+                                      <DownloadIcon />
+                                    </StyledButton>
+                                  </Tooltip>
                                 )}
                               </StyledTableCell>
                             </StyledTableRow>

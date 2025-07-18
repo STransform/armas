@@ -31,6 +31,7 @@ import {
   InputAdornment,
   Typography,
   Paper,
+  Tooltip,
 } from '@mui/material';
 import {
   Visibility as VisibilityIcon,
@@ -349,7 +350,9 @@ export default function AuditorTasks() {
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
-                            <SearchIcon />
+                            <Tooltip title="Search tasks by organization, report type, year, auditor, status, or response needed" placement="top">
+                              <SearchIcon />
+                            </Tooltip>
                           </InputAdornment>
                         ),
                       }}
@@ -414,41 +417,53 @@ export default function AuditorTasks() {
                                   : task.submittedByAuditorUsername || 'N/A'}
                               </StyledTableCell>
                               <StyledTableCell align="right">
-                                <IconButton
-                                  color="success"
-                                  onClick={() => handleOpenDetails(task)}
-                                  size="small"
-                                  sx={{ mr: 1 }}
-                                >
-                                  <VisibilityIcon />
-                                </IconButton>
-                                {isSeniorAuditor && (task.reportstatus === 'Assigned' || task.reportstatus === 'Rejected') && (
+                                <Tooltip title="View task details" placement="top">
                                   <IconButton
-                                    color="primary"
-                                    onClick={() => handleSubmitFindings(task)}
+                                    color="success"
+                                    onClick={() => handleOpenDetails(task)}
                                     size="small"
                                     sx={{ mr: 1 }}
+                                    aria-label="View task details"
                                   >
-                                    <AssignmentIcon />
+                                    <VisibilityIcon />
                                   </IconButton>
+                                </Tooltip>
+                                {isSeniorAuditor && (task.reportstatus === 'Assigned' || task.reportstatus === 'Rejected') && (
+                                  <Tooltip title="Submit findings" placement="top">
+                                    <IconButton
+                                      color="primary"
+                                      onClick={() => handleSubmitFindings(task)}
+                                      size="small"
+                                      sx={{ mr: 1 }}
+                                      aria-label="Submit findings for task"
+                                    >
+                                      <AssignmentIcon />
+                                    </IconButton>
+                                  </Tooltip>
                                 )}
                                 {isApprover && (task.reportstatus === 'Under Review' || task.reportstatus === 'Corrected') && (
                                   <>
-                                    <IconButton
-                                      color="success"
-                                      onClick={() => handleApprove(task)}
-                                      size="small"
-                                      sx={{ mr: 1 }}
-                                    >
-                                      <CheckCircleIcon />
-                                    </IconButton>
-                                    <IconButton
-                                      color="error"
-                                      onClick={() => handleReject(task)}
-                                      size="small"
-                                    >
-                                      <CancelIcon />
-                                    </IconButton>
+                                    <Tooltip title="Approve report" placement="top">
+                                      <IconButton
+                                        color="success"
+                                        onClick={() => handleApprove(task)}
+                                        size="small"
+                                        sx={{ mr: 1 }}
+                                        aria-label="Approve report"
+                                      >
+                                        <CheckCircleIcon />
+                                      </IconButton>
+                                    </Tooltip>
+                                    <Tooltip title="Reject report" placement="top">
+                                      <IconButton
+                                        color="error"
+                                        onClick={() => handleReject(task)}
+                                        size="small"
+                                        aria-label="Reject report"
+                                      >
+                                        <CancelIcon />
+                                      </IconButton>
+                                    </Tooltip>
                                   </>
                                 )}
                               </StyledTableCell>
@@ -588,7 +603,9 @@ export default function AuditorTasks() {
       {/* Approval Modal */}
       <StyledDialog
         maxWidth="md"
-        fullWidth
+        full
+
+Width
         open={showApprovalModal}
         onClose={handleCloseApprovalModal}
         TransitionComponent={Fade}
@@ -714,38 +731,42 @@ export default function AuditorTasks() {
               <CFormLabel>Documents</CFormLabel>
               <Box sx={{ display: 'flex', gap: 1 }}>
                 {selectedTask?.docname && (
-                  <StyledButton
-                    variant="contained"
-                    color="primary"
-                    startIcon={<DownloadIcon />}
-                    onClick={() =>
-                      handleDownload(
-                        selectedTask.id,
-                        selectedTask.docname,
-                        selectedTask.supportingDocname,
-                        'original'
-                      )
-                    }
-                  >
-                    Report
-                  </StyledButton>
+                  <Tooltip title="Download report" placement="top">
+                    <StyledButton
+                      variant="contained"
+                      color="primary"
+                      startIcon={<DownloadIcon />}
+                      onClick={() =>
+                        handleDownload(
+                          selectedTask.id,
+                          selectedTask.docname,
+                          selectedTask.supportingDocname,
+                          'original'
+                        )
+                      }
+                    >
+                      Report
+                    </StyledButton>
+                  </Tooltip>
                 )}
                 {selectedTask?.supportingDocumentPath && (
-                  <StyledButton
-                    variant="contained"
-                    color="secondary"
-                    startIcon={<DownloadIcon />}
-                    onClick={() =>
-                      handleDownload(
-                        selectedTask.id,
-                        selectedTask.supportingDocname,
-                        selectedTask.supportingDocname,
-                        'supporting'
-                      )
-                    }
-                  >
-                    Finding
-                  </StyledButton>
+                  <Tooltip title="Download findings document" placement="top">
+                    <StyledButton
+                      variant="contained"
+                      color="secondary"
+                      startIcon={<DownloadIcon />}
+                      onClick={() =>
+                        handleDownload(
+                          selectedTask.id,
+                          selectedTask.supportingDocname,
+                          selectedTask.supportingDocname,
+                          'supporting'
+                        )
+                      }
+                    >
+                      Finding
+                    </StyledButton>
+                  </Tooltip>
                 )}
               </Box>
             </CCol>

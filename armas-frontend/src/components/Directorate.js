@@ -32,6 +32,7 @@ import {
   Typography,
   Paper,
   CircularProgress,
+  Tooltip, // Added Tooltip import
 } from '@mui/material';
 import {
   Visibility as VisibilityIcon,
@@ -321,7 +322,11 @@ export default function Directorate() {
                     <StyledButton
                       variant="contained"
                       color="primary"
-                      startIcon={<AddIcon />}
+                      startIcon={
+                        <Tooltip title="Add a new directorate" placement="top">
+                          <AddIcon />
+                        </Tooltip>
+                      }
                       onClick={() => handleOpenAddEdit('new')}
                     >
                       Add Directorate
@@ -335,7 +340,9 @@ export default function Directorate() {
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
-                            <SearchIcon />
+                            <Tooltip title="Search directorates by name or email" placement="top">
+                              <SearchIcon />
+                            </Tooltip>
                           </InputAdornment>
                         ),
                       }}
@@ -346,8 +353,6 @@ export default function Directorate() {
                     <Table stickyHeader>
                       <TableHead>
                         <StyledTableRow>
-                          {/* <StyledTableCell>#</StyledTableCell>
-                          <StyledTableCell>ID</StyledTableCell> */}
                           <StyledTableCell>Name</StyledTableCell>
                           <StyledTableCell>Telephone</StyledTableCell>
                           <StyledTableCell>Email</StyledTableCell>
@@ -359,35 +364,39 @@ export default function Directorate() {
                           .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                           .map((dir, index) => (
                             <StyledTableRow key={dir.id}>
-                              {/* <StyledTableCell>{page * rowsPerPage + index + 1}</StyledTableCell>
-                              <StyledTableCell>{dir.id || 'N/A'}</StyledTableCell> */}
                               <StyledTableCell>{dir.directoratename || 'N/A'}</StyledTableCell>
                               <StyledTableCell>{dir.telephone || ''}</StyledTableCell>
                               <StyledTableCell>{dir.email || ''}</StyledTableCell>
                               <StyledTableCell align="right">
-                                <IconButton
-                                  color="primary"
-                                  onClick={() => handleOpenDetails(dir)}
-                                  size="small"
-                                  sx={{ mr: 1 }}
-                                >
-                                  <VisibilityIcon />
-                                </IconButton>
-                                <IconButton
-                                  color="primary"
-                                  onClick={() => handleOpenEdit(dir)}
-                                  size="small"
-                                  sx={{ mr: 1 }}
-                                >
-                                  <EditIcon />
-                                </IconButton>
-                                <IconButton
-                                  color="error"
-                                  onClick={() => handleConfirmDeleteOpen(dir.id)}
-                                  size="small"
-                                >
-                                  <DeleteIcon />
-                                </IconButton>
+                                <Tooltip title="View directorate details" placement="top">
+                                  <IconButton
+                                    color="primary"
+                                    onClick={() => handleOpenDetails(dir)}
+                                    size="small"
+                                    sx={{ mr: 1 }}
+                                  >
+                                    <VisibilityIcon />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Edit directorate" placement="top">
+                                  <IconButton
+                                    color="primary"
+                                    onClick={() => handleOpenEdit(dir)}
+                                    size="small"
+                                    sx={{ mr: 1 }}
+                                  >
+                                    <EditIcon />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Delete directorate" placement="top">
+                                  <IconButton
+                                    color="error"
+                                    onClick={() => handleConfirmDeleteOpen(dir.id)}
+                                    size="small"
+                                  >
+                                    <DeleteIcon />
+                                  </IconButton>
+                                </Tooltip>
                               </StyledTableCell>
                             </StyledTableRow>
                           ))}
